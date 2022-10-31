@@ -11,7 +11,7 @@ ProbD <- function(logY, xmat, splt.vals, splt.vars, muvec, alpha, beta, d, ntree
   tau <- (max(logY) - min(logY))/(2*sqrt(20))
   PrD <- (DProb(alpha, beta, d))^(l)
   PrV <- (1/ncol(xmat))^(l)
-  PrMu <- prod((1/tau)*dnorm(muvec/tau)^(l))
+  PrMu <- prod((1/tau)*dnorm(muvec/tau))
   PrM <- 1; Pr <- c();
   for(i in 1:l){
     x <- xmat[,splt.vars[i]]
