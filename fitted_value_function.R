@@ -1,7 +1,7 @@
 
 
 ## Inputs: Predictors, Splitting values and variables, mu vectors , and tree structure (from 26 possible structures)
-## Outpot: Fitted mu value
+## Output: Fitted mu value
 
 LeftChild <- function(x){
   y <- c(2, 4, 6, 8, 10, 12, 14)
