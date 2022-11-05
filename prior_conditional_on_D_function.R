@@ -8,7 +8,7 @@
 ProbD <- function(logY, xmat, splt.vals, splt.vars, muvec, alpha, beta, d, ntree){
   n <- length(logY)
   l <- length(splt.vars)
-  tau <- (max(logY) - min(logY))/(2*sqrt(20))
+  tau <- (max(logY) - min(logY))/(2*sqrt(ntree))
   PrD <- (DProb(alpha, beta, d))^(l)
   PrV <- (1/ncol(xmat))^(l)
   PrMu <- prod((1/tau)*dnorm(muvec/tau))
