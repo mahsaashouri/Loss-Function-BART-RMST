@@ -15,16 +15,17 @@ GrowMove <- function(old_tree, X) {
   new_split <- sample(candidate_splitval, size=1, prob=ww)
   
   ## set up new tree splitting variables
-  new.splt.vars <- c(old_tree$splt.vars[1:(grow_node-1)], new_var, 
-                     old_tree$splt.vars[grow_node:length(old_tree$splt.vars)])
+  new.splt.vars <- append(old_tree$splt.vars, new_var, after=(grow_node-1))
+
   ## set up new tree splitting values
-  new.splt.vals <- c(old_tree$splt.vals[1:(grow_node-1)], new_split, 
-                     old_tree$splt.vals[grow_node:length(old_tree$splt.vals)])
-  names(new.splt.vals) <- c(names(old_tree$splt.vals[1:(grow_node-1)]), new_var, 
-                            names(old_tree$splt.vals[grow_node:length(old_tree$splt.vals)]))
+  new.splt.vals <- append(old_tree$splt.vals, new_split, after=(grow_node-1))
+  ## set name for added value
+  names(new.splt.vals)[grow_node] <- new_var
+  
   ## set up new tree dvec
-  new.dvec <- c(old_tree$dvec[1:(grow_node-1)], 1, old_tree$dvec[(grow_node+1):((grow_node*2)-1)], 2, 2, 
-                old_tree$dvec[((grow_node*2)+2):length(old_tree$dvec)])
+  new.dvec <- old_tree$dvec
+  new.dvec[grow_node] <- 1; new.dvec[c((grow_node*2), (grow_node*2)+1)] <- 2
+  
  return(list(dvec = new.dvec, splt.vars = new.splt.vars, splt.vals = new.splt.vals))
   }
 }
