@@ -1,4 +1,13 @@
 
+LeftChild <- function(x){
+  y <- c(2, 4, 6, 8, 10, 12, 14)
+  return(y[x])
+}
+RightChild <- function(x){
+  y <- c(3, 5, 7, 9, 11, 13, 15)
+  return(y[x])
+}
+
 PruneMove <- function(old_tree, X) {
   ## old_tree is a list with dvec, splitting values, and splitting variables
   internal_nodes <- which(old_tree$dvec==1)
@@ -9,8 +18,9 @@ PruneMove <- function(old_tree, X) {
     prune_node <- sample(internal_nodes, size=1)
     
     ## All the possible child nodes for sampled node number 
-    prune_node_all <- c(prune_node, prune_node*2, (prune_node*2)+1, prune_node*4, (prune_node*4)+1, 
-                        ((prune_node*2)+1)*2, (((prune_node*2)+1)*2)+1)
+    prune_node_all <- c(prune_node, LeftChild(prune_node), RightChild(prune_node), 
+                        LeftChild(prune_node+1), RightChild(prune_node+1),  
+                        LeftChild(prune_node+2), RightChild(prune_node+2))
     
     ## node numbers need to be removed
     remove_vars <- prune_node_all[prune_node_all %in% internal_nodes]
@@ -32,9 +42,11 @@ PruneMove <- function(old_tree, X) {
     new.splt.vals <-  new.splt.vals[!is.na(new.splt.vals)]
     
     ## set up new tree dvec
-    remove_nodes <- c(prune_node_all, prune_node*8, (prune_node*8)+1, ((prune_node*4)+1)*2, (((prune_node*4)+1)*2)+1,
-                      ((prune_node*2)+1)*4, (((prune_node*2)+1)*4)+1, ((((prune_node*2)+1)*2)+1)*2, (((((prune_node*2)+1)*2)+1)*2)+1)
-    remove_nodes <- remove_nodes[remove_nodes<16]
+    remove_nodes <- c(prune_node_all, LeftChild(prune_node+3), RightChild(prune_node+3),
+                      LeftChild(prune_node+4), RightChild(prune_node+4),
+                      LeftChild(prune_node+5), RightChild(prune_node+5),
+                      LeftChild(prune_node+7), RightChild(prune_node+7))
+    remove_nodes <- remove_nodes[!is.na(remove_nodes)]
     new.dvec <- old_tree$dvec
     new.dvec[remove_nodes] <- 0; new.dvec[prune_node] <- 2
     
