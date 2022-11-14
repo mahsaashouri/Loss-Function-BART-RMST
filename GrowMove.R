@@ -14,13 +14,21 @@ GrowMove <- function(old_tree, X) {
   ww <- table(X[,new_var])/nrow(X)
   new_split <- sample(candidate_splitval, size=1, prob=ww)
   
-  ## set up new tree splitting variables
-  new.splt.vars <- append(old_tree$splt.vars, new_var, after=(grow_node-1))
+  ## update splitting variables
+  splt.vars <- replace(old_tree$dvec, old_tree$dvec!=1, NA)
+  splt.vars[ which(!is.na(splt.vars))] <- old_tree$splt.vars
+  
+  ## update splitting values
+  splt.vals <- replace(old_tree$dvec, old_tree$dvec!=1, NA)
+  splt.vals[ which(!is.na(splt.vals))] <-  old_tree$splt.vals
+  
+  ## set up new splitting variables
+  new.splt.vars <- append(splt.vars, new_var, after=(grow_node-1))
+  new.splt.vars <-  new.splt.vars[!is.na(new.splt.vars)]
 
-  ## set up new tree splitting values
-  new.splt.vals <- append(old_tree$splt.vals, new_split, after=(grow_node-1))
-  ## set name for added value
-  names(new.splt.vals)[grow_node] <- new_var
+  ## set up new splitting values
+  new.splt.vals <- append(splt.vals, new_split, after=(grow_node-1))
+  new.splt.vals <-  new.splt.vals[!is.na(new.splt.vals)]
   
   ## set up new tree dvec
   new.dvec <- old_tree$dvec
