@@ -1,44 +1,77 @@
 
-FindParent <- function(x){
-  return(floor(x/2))
+
+## Inputs: Predictors, Splitting values and variables, and tree structure (from 26 possible structures)
+## Output: A vector for each x
+
+LeftChild <- function(x){
+  y <- c(2, 4, 6, 8, 10, 12, 14)
+  return(y[x])
+}
+RightChild <- function(x){
+  y <- c(3, 5, 7, 9, 11, 13, 15)
+  return(y[x])
 }
 
-UpdateA.rec <- function(Amat, splt.vars, r, c){
-  p <- FindParent(r)
-  if(p > 0){
-    i.name = splt.vars[p]
-    i = as.numeric(substr(i.name, 2, nchar(i.name)))
-    Amat[i, c] = 1
-    Amat = UpdateA.rec(Amat, splt.vars, p, c)
+
+AMatrix <- function(xvec, splt.vals.raw, splt.vars.raw, dvec){
+  if(dvec[1] == 2){
+    non_terminal <- FALSE
+    node.no <- 1
   }
-  return(Amat)
-}
-
-
-
-Amatrix <- function(xvec, splt.vars.raw, dvec){
-  
-  Amat <- matrix(0, nrow = length(xvec), ncol = length(which(dvec == 2)))
-  terminal_indexes = which(dvec == 2)
-  
-  ## update splitting variable vector
-  splt.vars <- replace(dvec, dvec!=1, NA)
-  splt.vars[ which(!is.na(splt.vars))] <- splt.vars.raw
-  
-  for(i in 1:ncol(Amat)){
-    Amat =  UpdateA.rec(Amat, splt.vars, terminal_indexes[i], i)
+  else{
+    non_terminal <- TRUE
+    current.node <- 1
+    
+    ## set up empty vector for all the terminal nodes
+    terminal_nodes <- which(dvec==2)
+    vec_terminal <-  rep(0, length(terminal_nodes))
+    names(vec_terminal)<- terminal_nodes
+    
+    ## update splitting variable vector
+    splt.vars <- replace(dvec, dvec!=1, NA)
+    splt.vars[ which(!is.na(splt.vars))] <- splt.vars.raw
+    current.var <- splt.vars[1]
+    
+    splt.vals <- replace(dvec, dvec!=1, NA)
+    splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   }
-  return(Amat)
+  while(non_terminal){
+    if(xvec[current.var] <= splt.vals[current.node]){
+      new_node <- LeftChild(current.node)
+      new.var <- splt.vars[new_node]
+    } else {
+      new_node <- RightChild(current.node)
+      new.var <- splt.vars[new_node]
+    }
+    if(dvec[new_node] == 2){
+      non_terminal <- FALSE
+      node.no <- new_node
+    } else {
+      current.var <- new.var
+      current.node <- new_node
+    }
+  }
+  vec_terminal <- ifelse(names(vec_terminal)== node.no, 1, 0)
+  return(vec_terminal)
 }
 
-
-
-##Example
-
+## Example
+xvec1 <- c('x1'=0, 'x2'=0, 'x3'=0, 'x4'=0, 'x5'=0) ## should be assigned to node 4
+xvec2 <- c('x1'=0, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 5
+xvec3 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 12
+xvec4 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=0) ## should be assigned to node 13
+xvec5 <- c('x1'=0.6, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=5) ## should be assigned to node 14
 xvec6 <- c('x1' = 1, 'x2' = 2, 'x3' = 3, 'x4' = 10, 'x5' = 5) ## should be assigned to node 15
-#splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
+splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
 splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
+xmat <- rbind.data.frame(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
+colnames(xmat) <- c('x1', 'x2', 'x3', 'x4', 'x5')
 
-Amatrix(xvec6, splt.vars.raw, dvec)
+
+A_matrix <- matrix(0, nrow = nrow(xmat), ncol = length(which(dvec ==2)))
+for(i in 1:nrow(xmat)){
+  A_matrix[i,] <- AMatrix(xmat[i,], splt.vals.raw, splt.vars.raw, dvec) 
+}
+
 
