@@ -1,4 +1,6 @@
 
+## Randomly pick a parent of two terminal nodes and turn it into a terminal node by collapsing the nodes below it
+
 LeftChild <- function(x){
   y <- c(2, 4, 6, 8, 10, 12, 14)
   return(y[x])
@@ -62,7 +64,6 @@ xvec4 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=0) ## should be assigned to node
 xvec5 <- c('x1'=0.6, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=5) ## should be assigned to node 14
 xvec6 <- c('x1' = 1, 'x2' = 2, 'x3' = 3, 'x4' = 10, 'x5' = 5) ## should be assigned to node 15
 splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
-muvec.raw <- c(0.1, 0.03, 0.2, 0, 1, 4)
 splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
 dvec <- c(1, 1, 1, 2, 1, 2, 1, 0, 0, 2, 2, 0, 0, 2, 2)
 ##
