@@ -2,10 +2,10 @@
 GrowMove <- function(old_tree, X) {
   ## old_tree is a list with dvec, splitting values, and splitting variables
   terminal_nodes <- which(old_tree$dvec==2)
-  ## avoid growing more than d = 3
+  ## avoid growing more than d = 4
   terminal_nodes_d <- terminal_nodes[terminal_nodes<8]
   if(any(terminal_nodes_d) == FALSE) 
-    print('tree can not grow')
+    print('tree cannot grow')
   else{
   grow_node <- sample(terminal_nodes_d, size=1)
   new_var <- sample(colnames(X), size=1)
@@ -30,7 +30,7 @@ GrowMove <- function(old_tree, X) {
   new.splt.vals <- append(splt.vals, new_split, after=(grow_node-1))
   new.splt.vals <-  new.splt.vals[!is.na(new.splt.vals)]
   
-  ## set up new tree dvec
+  ## set up new dvec
   new.dvec <- old_tree$dvec
   new.dvec[grow_node] <- 1; new.dvec[c((grow_node*2), (grow_node*2)+1)] <- 2
   

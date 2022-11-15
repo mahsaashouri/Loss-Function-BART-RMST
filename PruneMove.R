@@ -13,7 +13,7 @@ PruneMove <- function(old_tree, X) {
   internal_nodes <- which(old_tree$dvec==1)
   ## avoid pruning tree with one node
   if(any(internal_nodes) == FALSE) 
-    print('tree can not prone')
+    print('tree cannot prone')
   else{
     prune_node <- sample(internal_nodes, size=1)
     
@@ -41,7 +41,7 @@ PruneMove <- function(old_tree, X) {
     new.splt.vals <- splt.vals[-remove_vars]
     new.splt.vals <-  new.splt.vals[!is.na(new.splt.vals)]
     
-    ## set up new tree dvec
+    ## set up new dvec
     remove_nodes <- c(prune_node_all, LeftChild(prune_node+3), RightChild(prune_node+3),
                       LeftChild(prune_node+4), RightChild(prune_node+4),
                       LeftChild(prune_node+5), RightChild(prune_node+5),
