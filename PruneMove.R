@@ -1,6 +1,19 @@
 
 ## Randomly pick a parent of two terminal nodes and turn it into a terminal node by collapsing the nodes below it
 
+GetChildIND <- function(x){
+  d <- floor(log2(x))+1
+  node_vec <- c()
+  if(d<4){
+    for(i in 1:(4-d)){
+      for(j in 0:((2^i)-1)){
+        node_vec <- append(node_vec, ((2^i)*x)+j, after = length(node_vec))
+      }
+    }
+  }
+  return(node_vec)
+}
+
 PruneMove <- function(old_tree, X) {
   ## old_tree is a list with dvec, splitting values, and splitting variables
   internal_nodes <- which(old_tree$dvec==1)
@@ -11,12 +24,11 @@ PruneMove <- function(old_tree, X) {
     prune_node <- sample(internal_nodes, size=1)
     
     ## All the possible child nodes for sampled node number 
-    prune_node_all <- c(prune_node,prune_node*2, (prune_node*2)+1,
-                        prune_node*4, (prune_node*4)+1,
-                        ((prune_node*2)+1)*2, (((prune_node*2)+1)*2)+1)
+    prune_node_all <- c(prune_node, GetChildIND(prune_node))
+    remove_internals <- prune_node_all[prune_node_all<8]
     
     ## node numbers need to be removed
-    remove_vars <- prune_node_all[prune_node_all %in% internal_nodes]
+    remove_vars <- remove_internals[remove_internals %in% internal_nodes]
     #remove_vars <- prune_node_all[!is.na(prune_node_all)]
     
     ## update splitting variables
@@ -36,14 +48,8 @@ PruneMove <- function(old_tree, X) {
     new.splt.vals <-  new.splt.vals[!is.na(new.splt.vals)]
     
     ## set up new dvec
-    remove_nodes <- c(prune_node_all, prune_node*8, (prune_node*8)+1,
-                      ((prune_node*4)+1)*2, (((prune_node*4)+1)*2)+1, 
-                      ((prune_node*2)+1)*4, (((prune_node*2)+1)*4)+1, 
-                      ((((prune_node*2)+1)*2)+1)*2, (((((prune_node*2)+1)*2)+1)*2)+1) 
-                      
-    remove_nodes <- remove_nodes[remove_nodes<16]
     new.dvec <- old_tree$dvec
-    new.dvec[remove_nodes] <- 0; new.dvec[prune_node] <- 2
+    new.dvec[prune_node_all] <- 0; new.dvec[prune_node] <- 2
     
     return(list(dvec = new.dvec, splt.vars = new.splt.vars, splt.vals = new.splt.vals))
   }
