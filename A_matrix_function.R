@@ -13,28 +13,31 @@ RightChild <- function(x){
 }
 
 
-AMatrix <- function(xvec, splt.vals.raw, splt.vars.raw, dvec){
+AMatrix <- function(xmat, splt.vals.raw, splt.vars.raw, dvec){
   if(dvec[1] == 2){
     non_terminal <- FALSE
     node.no <- 1
   }
   else{
-    non_terminal <- TRUE
-    current.node <- 1
-    
     ## set up empty vector for all the terminal nodes
     terminal_nodes <- which(dvec==2)
     vec_terminal <-  rep(0, length(terminal_nodes))
     names(vec_terminal)<- terminal_nodes
+    mat_terminal <- matrix(0, nrow = nrow(xmat), ncol = length(terminal_nodes))
     
     ## update splitting variable vector
     splt.vars <- replace(dvec, dvec!=1, NA)
     splt.vars[ which(!is.na(splt.vars))] <- splt.vars.raw
-    current.var <- splt.vars[1]
-    
+
+    ## update splitting value vector
     splt.vals <- replace(dvec, dvec!=1, NA)
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   }
+  for (i in 1: nrow(xmat)){
+    xvec <- xmat[i,]
+    non_terminal <- TRUE
+    current.node <- 1
+    current.var <- splt.vars[1]
   while(non_terminal){
     if(xvec[current.var] <= splt.vals[current.node]){
       new_node <- LeftChild(current.node)
@@ -51,8 +54,10 @@ AMatrix <- function(xvec, splt.vals.raw, splt.vars.raw, dvec){
       current.node <- new_node
     }
   }
-  vec_terminal <- ifelse(names(vec_terminal)== node.no, 1, 0)
-  return(vec_terminal)
+  mat_terminal[i,] <- ifelse(names(vec_terminal)== node.no, 1, 0)
+  
+  }
+  return(mat_terminal)
 }
 
 ## Example
@@ -65,13 +70,9 @@ xvec6 <- c('x1' = 1, 'x2' = 2, 'x3' = 3, 'x4' = 10, 'x5' = 5) ## should be assig
 splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
 splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
-xmat <- rbind.data.frame(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
+xmat <- rbind(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
 colnames(xmat) <- c('x1', 'x2', 'x3', 'x4', 'x5')
 
-
-A_matrix <- matrix(0, nrow = nrow(xmat), ncol = length(which(dvec ==2)))
-for(i in 1:nrow(xmat)){
-  A_matrix[i,] <- AMatrix(xmat[i,], splt.vals.raw, splt.vars.raw, dvec) 
-}
+AMatrix(xmat, splt.vals.raw, splt.vars.raw, dvec) 
 
 

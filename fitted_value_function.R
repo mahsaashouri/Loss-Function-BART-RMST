@@ -22,10 +22,12 @@ FittedValue <- function(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
     ## update mu vector
     muvec <- replace(dvec, dvec!=2, NA)
     muvec[ which(!is.na(muvec))] <- muvec.raw
+    
     ## update splitting variable vector
     splt.vars <- replace(dvec, dvec!=1, NA)
     splt.vars[ which(!is.na(splt.vars))] <- splt.vars.raw
     ## update splitting value vector
+    
     splt.vals <- replace(dvec, dvec!=1, NA)
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   }
@@ -69,4 +71,5 @@ splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
 #splt.vars.raw <- c(1, 3, 5, 4, 1)
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 xmat <- rbind(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
+colnames(xmat) <- c('x1', 'x2', 'x3', 'x4', 'x5')
 FittedValue(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec)
