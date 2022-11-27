@@ -1,5 +1,5 @@
 
-Transition_Prob <- function(old_tree, proposed_tree, xmat, m){
+Transition_Prob <- function(old_tree, new_tree, xmat, m){
 
   if(m==1){
     terminal_nodes <- which(old_tree$dvec==2)
@@ -7,12 +7,12 @@ Transition_Prob <- function(old_tree, proposed_tree, xmat, m){
     terminal_nodes_d <- terminal_nodes[terminal_nodes<8]
     
     ## match spliting values and variables in old and new trees
-    matchvalue <- match(c(unname(old_tree$splt.vals)), proposed_tree$splt.vals)
-    diffvalue <- setdiff(1:length(proposed_tree$splt.vals), matchvalue)
+    matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
+    diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
     
     ## find difference between variables and values
-    new_val <- proposed_tree$splt.vals[diffvalue]
-    new_var <- proposed_tree$splt.vars[diffvalue]
+    new_val <- new_tree$splt.vals[diffvalue]
+    new_var <- new_tree$splt.vars[diffvalue]
     
     ## compute prob. of all possible values
     candidate_splitval <- sort(unique(xmat[,new_var]))
@@ -37,12 +37,12 @@ Transition_Prob <- function(old_tree, proposed_tree, xmat, m){
     internal_nodes <- which(old_tree$dvec==1)
 
     ## match splitting values and variables in old and new trees
-    matchvalue <- match(c(unname(old_tree$splt.vals)), proposed_tree$splt.vals)
-    diffvalue <- setdiff(1:length(proposed_tree$splt.vals), matchvalue)
+    matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
+    diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
     
     ## find difference between variables and values
-    new_val <- proposed_tree$splt.vals[diffvalue]
-    new_var <- proposed_tree$splt.vars[diffvalue]
+    new_val <- new_tree$splt.vals[diffvalue]
+    new_var <- new_tree$splt.vars[diffvalue]
     
     ## compute prob. of all possible values
     candidate_splitval <- sort(unique(xmat[,new_var]))
@@ -73,14 +73,14 @@ X <- rbind.data.frame(xvec1, xvec5, xvec3, xvec6)
 colnames(X) <- c('x1', 'x2', 'x3', 'x4', 'x5')
 
 ## m = 1 (GrowMove)
-proposed_tree <- list(dvec = c(1, 1, 1, 1, 2, 1, 1, 2, 2, 0, 0, 2, 2, 2, 2), splt.vars = c("x1", "x3", "x5", "x5", "x4", "x1"),
+new_tree <- list(dvec = c(1, 1, 1, 1, 2, 1, 1, 2, 2, 0, 0, 2, 2, 2, 2), splt.vars = c("x1", "x3", "x5", "x5", "x4", "x1"),
                  splt.vals = c(0.05, 0.50, 1.00, 5.00, 0.02, 0.75))
-Transition_Prob(old_tree, proposed_tree, xmat = X, m = 1)
+Transition_Prob(old_tree, new_tree, xmat = X, m = 1)
 ## m = 2 (ProneMove)
-proposed_tree <- list(dvec = c(1, 1, 1, 2, 2, 1, 2, 0, 0, 0, 0, 2, 2, 0, 0), splt.vars = c("x1", "x3", "x5", "x4"),
+new_tree <- list(dvec = c(1, 1, 1, 2, 2, 1, 2, 0, 0, 0, 0, 2, 2, 0, 0), splt.vars = c("x1", "x3", "x5", "x4"),
                  splt.vals = c(0.05, 0.50, 1.00, 0.02)) 
-Transition_Prob(old_tree, proposed_tree, xmat = X, m = 2)
+Transition_Prob(old_tree, new_tree, xmat = X, m = 2)
 ## m = 3 (ChangeMove)
-proposed_tree <- list(dvec = c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2), splt.vars = c("x1", "x3", "x5", "x4", "x5"),
+new_tree <- list(dvec = c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2), splt.vars = c("x1", "x3", "x5", "x4", "x5"),
                  splt.vals = c(0.05, 0.50, 1.00, 0.02, 0.00))
-Transition_Prob(old_tree, proposed_tree, xmat = X, m = 3)
+Transition_Prob(old_tree, new_tree, xmat = X, m = 3)

@@ -1,4 +1,4 @@
-RMST_BCART <- function(U, delta, xmat, ndraws) {
+RMST_BCART <- function(U, delta, xmat, ndraws, mu.p, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
   
@@ -26,14 +26,17 @@ RMST_BCART <- function(U, delta, xmat, ndraws) {
       new_tree <- old_tree
     }
     
-    ## Step 2: Update the mu values
-    mu.vec <- ## sample from a multivariate Normal distribution
+    ## number of terminal nodes in the new tree
+    terminal_nodes <- which(new_tree$dvec==2)
+    
+    ## Step 2: Update the mu values -  sample from a multivariate Normal distribution
+    mu.vec <- rmvnorm(length(terminal_nodes), mu.p, sigma.mu) 
       
-      ## Step 3: Update the vector of Gs
-      Gvec <- SampleG() 
+    ## Step 3: Update the vector of Gs
+    Gvec <- GPDraw(U, sgrid, num.risk, num.events, kappa0) 
     
     ## Record fitted values at each step
-    FittedValues[,k] <- fitted_value_function(new_tree, mu.vec)
+    FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, mu.vec, new_tree$dvec)
   }
   return(FittedValues)
 }
