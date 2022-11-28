@@ -1,11 +1,12 @@
-RMST_BCART <- function(U, delta, xmat, ndraws, mu.p, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
+
+RMST_BCART <- function(U, delta, xmat, tree, ndraws, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
   
   ## initialize tree
   n <- length(U)
   FittedValues <- matrix(NA, nrow=n, ncol=ndraws)
-  old_tree <- Dmat[1,]
+  old_tree <- tree
   ## old_tree holds the splitting vars, splitting values, and dvec
   for(k in 1:ndraws) {
     # Step 1: Update Tree
@@ -25,12 +26,24 @@ RMST_BCART <- function(U, delta, xmat, ndraws, mu.p, sigma.mu, sgrid, alpha, bet
     } else {
       new_tree <- old_tree
     }
-    
+    ## Step 2: Update the mu values -  sample from a multivariate Normal distribution
     ## number of terminal nodes in the new tree
     terminal_nodes <- which(new_tree$dvec==2)
-    
-    ## Step 2: Update the mu values -  sample from a multivariate Normal distribution
-    mu.vec <- rmvnorm(length(terminal_nodes), mu.p, sigma.mu) 
+    ## get mean and sigma for updating mu values
+    DG <- diag(Gvec)
+    AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
+    WTG <- t(AT) %*% solve(DG) %*% AT
+    VG <- solve(DG) %*% U
+    Z <- c()
+    for(k in 1:nrow(AT)){
+      for(j in 1:ncol(AT)){
+        tZ <- AT[k,j]*VG[k,]
+        sumZ <- tZ +sumZ
+      }
+      Z[j] <- sumZ
+    }
+    mu.vec <- rmvnorm(length(terminal_nodes), (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1), 
+                                               solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes))))) 
       
     ## Step 3: Update the vector of Gs
     Gvec <- GPDraw(U, sgrid, num.risk, num.events, kappa0) 
@@ -40,3 +53,5 @@ RMST_BCART <- function(U, delta, xmat, ndraws, mu.p, sigma.mu, sgrid, alpha, bet
   }
   return(FittedValues)
 }
+
+
