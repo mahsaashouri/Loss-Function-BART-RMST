@@ -1,8 +1,19 @@
 
-RMST_BCART <- function(U, delta, xmat, tree, ndraws, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
+RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
-  
+
+  ## organize data
+  xmat <- X[delta==1,]
+  U <- Y[delta==1]
+
+  ## Get Gvec
+  SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
+
+  lam.draw <- GPDraw(U=U, sgrid=sgrid, num.risk=SS$n.risk,
+                     num.events=SS$n.event, kappa0=1)
+  Gvec <- exp(-lam.draw)
+
   ## initialize tree
   n <- length(U)
   FittedValues <- matrix(NA, nrow=n, ncol=ndraws)
@@ -42,12 +53,9 @@ RMST_BCART <- function(U, delta, xmat, tree, ndraws, sigma.mu, sgrid, alpha, bet
       }
       Z[j] <- sumZ
     }
-    mu.vec <- rmvnorm(length(terminal_nodes), (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1), 
-                                               solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes))))) 
-      
-    ## Step 3: Update the vector of Gs
-    Gvec <- GPDraw(U, sgrid, num.risk, num.events, kappa0) 
-    
+    mu.vec <- rmvnorm(length(terminal_nodes), (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1),
+                                               solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes)))))
+
     ## Record fitted values at each step
     FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, mu.vec, new_tree$dvec)
   }
