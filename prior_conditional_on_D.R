@@ -23,7 +23,7 @@ ProbD <- function(U, xmat, splt.vals, splt.vars, muvec, alpha, beta, d, ntree){
 
 ## Example
 
-logY <- c( 17, 14, 2, 0.4, 11)
+U <- c( 17, 14, 2, 0.4, 11)
 xmat <- matrix(round(rnorm(20,10),0), ncol = 4)
 colnames(xmat) <- c('x1', 'x2', 'x3', 'x4')
 splt.vals <- c('x1' = .05, 'x3' = .5, 'x2' = 1, 'x4' = .02)
@@ -31,5 +31,5 @@ muvec <- c(0.1, 0.03, 0.2, 0, 1, 4)
 splt.vars <- c('x1', 'x3', 'x2','x4')
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 
-ProbD(logY = logY, xmat = xmat, splt.vals = splt.vals, splt.vars = splt.vars, muvec = muvec, 
+ProbD(U = U, xmat = xmat, splt.vals = splt.vals, splt.vars = splt.vars, muvec = muvec, 
       alpha = .95, beta = 2, d = 16, ntree = 20)

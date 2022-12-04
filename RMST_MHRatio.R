@@ -9,7 +9,7 @@ RMST_MHRatio <- function(U, new_tree, old_tree, muvec,sigma.mu, Gvec, xmat, m, a
   ## log-likelihood ratio
   loglike.old <- LogLik(old_tree, xmat, U, Gvec, sigma.mu)
   loglike.new <- LogLik(new_tree, xmat, U, Gvec, sigma.mu)
-  LogLikRatio <- loglike.new/loglike.old
+  LikRatio <- exp(loglike.new)/exp(loglike.old)
   
   ## prior ratio
   old.prior <- ProbD(U, xmat, old_tree$splt.vals, old_tree$splt.vars, muvec, alpha, beta, old_tree$d, ntree)
@@ -17,6 +17,6 @@ RMST_MHRatio <- function(U, new_tree, old_tree, muvec,sigma.mu, Gvec, xmat, m, a
   ratio.prior <- new.prior/old.prior
   
   ## MH ratio
-  MHratio <- min(1, ratio.transition*LogLikRatio*ratio.prior)
+  MHratio <- min(1, ratio.transition*LikRatio*ratio.prior)
   return(MHratio)
 }

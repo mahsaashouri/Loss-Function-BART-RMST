@@ -1,7 +1,7 @@
 
 
 ## Inputs: Predictors, Splitting values and variables, and tree structure (from 26 possible structures)
-## Output: A vector for each x
+## Output: A matrix for all xmat
 
 LeftChild <- function(x){
   y <- c(2, 4, 6, 8, 10, 12, 14)
