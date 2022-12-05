@@ -1,5 +1,5 @@
 
-## Output: log density U|T,G - used to calculate log likelihood ratio in MH-Ratio (alpha)
+## Output: log density U|T,G - used to calculate log likelihood 
 
 source('A_matrix.R')
 

@@ -18,8 +18,6 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, 
   n <- length(U)
   FittedValues <- matrix(NA, nrow=n, ncol=ndraws)
   old_tree <- tree
-  ## vector of Gs
-  Gvec <- GPDraw(U, sgrid, num.risk, num.events, kappa0) 
   
   ## old_tree holds the splitting vars, splitting values, and dvec
   for(k in 1:ndraws) {
@@ -40,15 +38,17 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, 
     } else {
       new_tree <- old_tree
     }
+    
     ## Step 2: Update the mu values -  sample from a Normal distribution
     ## number of terminal nodes in the new tree
     terminal_nodes <- which(new_tree$dvec==2)
-    ## get mean and sigma for updating mu values
     
+    ## get mean and sigma for updating mu values
     AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
     WTGDiag <- c(crossprod(AT, 1/Gvec))
     VG <- U/Gvec
     Z <- c(crossprod(AT, VG))
+    
     ## update mu values
     mu.mean <- (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1)
     mu.var <- solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes))))
