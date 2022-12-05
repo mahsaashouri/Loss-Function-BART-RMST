@@ -4,9 +4,9 @@
 source('A_matrix.R')
 
 
-LogLik <- function(tree, xmat, U, Gvec, sigma.mu){
+LogLik <- function(tree, X, U, Gvec, sigma.mu){
 
-  AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
+  AT <- AMatrix(X, tree$splt.vals, tree$splt.vars, tree$dvec)
   WTGDiag <- c(crossprod(AT, 1/Gvec))
   VG <- U/Gvec
 
@@ -35,6 +35,6 @@ colnames(X) <- c('x1', 'x2', 'x3', 'x4', 'x5')
 Gvec <- 1/rexp(6)
 U <- rnorm(6)
 
-LogLik(tree=old_tree, xmat=X, U=U, Gvec=Gvec, sigma.mu=1.2)
+LogLik(tree=old_tree, X=X, U=U, Gvec=Gvec, sigma.mu=1.2)
 
 

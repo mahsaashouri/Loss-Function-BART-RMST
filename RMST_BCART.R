@@ -44,19 +44,12 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, 
     ## number of terminal nodes in the new tree
     terminal_nodes <- which(new_tree$dvec==2)
     ## get mean and sigma for updating mu values
-    DG <- diag(Gvec)
-    AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
-    WTG <- t(AT) %*% solve(DG) %*% AT
-    VG <- solve(DG) %*% U
-    Z <- c()
-    for(i in 1:nrow(AT)){
-      for(j in 1:ncol(AT)){
-        tZ <- AT[i,j]*VG[i,]
-        sumZ <- tZ +sumZ
-      }
-      Z[j] <- sumZ
-    }
-
+    
+    AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
+    WTGDiag <- c(crossprod(AT, 1/Gvec))
+    VG <- U/Gvec
+    Z <- c(crossprod(AT, VG))
+    ## update mu values
     mu.mean <- (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1)
     mu.var <- solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes))))
     mu.vec <- mu.mean + sqrt(u.var)*rnorm(length(terminal_nodes))
