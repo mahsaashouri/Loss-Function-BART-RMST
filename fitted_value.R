@@ -13,7 +13,7 @@ RightChild <- function(x){
 }
 
 
-FittedValue <- function(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
+FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
   if(dvec[1] == 2){
     non_terminal <- FALSE
     mu.hat <- muvec.raw
@@ -32,8 +32,8 @@ FittedValue <- function(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   }
   mu.hat <- c()
-  for(i in 1:nrow(xmat)){
-    xvec <- xmat[i,]
+  for(i in 1:nrow(X)){
+    xvec <- X[i,]
     non_terminal <- TRUE
     current.node <- 1
     current.var <- splt.vars[1]

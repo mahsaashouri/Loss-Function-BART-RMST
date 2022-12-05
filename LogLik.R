@@ -3,40 +3,7 @@
 
 source('A_matrix.R')
 
-LogLik <- function(tree, xmat, U, Gvec, sigma.mu){
 
-  DG <- diag(Gvec)
-  AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
-  WTG <- t(AT) %*% solve(DG) %*% AT
-  WTGDiag <- diag(WTG)
-  VG <- solve(DG) %*% U
-
-  i = 1:length(U)
-  FE <- -(1/2)*sum((U[i]^2)/Gvec[i])
-<<<<<<< HEAD:LogLik.R
-  
-  Z <- c(); sumZ <- NULL
-=======
-
-  Z <- c()
->>>>>>> 48f5b88f8a46ec6a3e99ee39dff8a363596bc9fc:LogLikRatio.R
-  for(k in 1:nrow(AT)){
-    for(j in 1:ncol(AT)){
-      tZ <- AT[k,j]*VG[k,]
-      sumZ <- tZ + sumZ
-    }
-    Z[j] <- sumZ
-  }
-
-  j = 1:ncol(AT)
-  SE <- (1/2)*sum(((sigma.mu^2)*(Z[j]^2))/(1+(sigma.mu^2)*WTGDiag[j]))
-  return(FE + SE)
-}
-
-<<<<<<< HEAD:LogLik.R
-=======
-### Added a more efficient version of the function
-### and an example run
 LogLik <- function(tree, xmat, U, Gvec, sigma.mu){
 
   AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
@@ -70,5 +37,4 @@ U <- rnorm(6)
 
 LogLik(tree=old_tree, xmat=X, U=U, Gvec=Gvec, sigma.mu=1.2)
 
->>>>>>> 48f5b88f8a46ec6a3e99ee39dff8a363596bc9fc:LogLikRatio.R
 

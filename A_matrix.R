@@ -1,7 +1,7 @@
 
 
 ## Inputs: Predictors, Splitting values and variables, and tree structure (from 26 possible structures)
-## Output: A matrix for all xmat
+## Output: A matrix for all X
 
 LeftChild <- function(x){
   y <- c(2, 4, 6, 8, 10, 12, 14)
@@ -13,7 +13,7 @@ RightChild <- function(x){
 }
 
 
-AMatrix <- function(xmat, splt.vals.raw, splt.vars.raw, dvec){
+AMatrix <- function(X, splt.vals.raw, splt.vars.raw, dvec){
   if(dvec[1] == 2){
     non_terminal <- FALSE
     node.no <- 1
@@ -23,7 +23,7 @@ AMatrix <- function(xmat, splt.vals.raw, splt.vars.raw, dvec){
     terminal_nodes <- which(dvec==2)
     vec_terminal <-  rep(0, length(terminal_nodes))
     names(vec_terminal)<- terminal_nodes
-    mat_terminal <- matrix(0, nrow = nrow(xmat), ncol = length(terminal_nodes))
+    mat_terminal <- matrix(0, nrow = nrow(X), ncol = length(terminal_nodes))
     
     ## update splitting variable vector
     splt.vars <- replace(dvec, dvec!=1, NA)
@@ -33,8 +33,8 @@ AMatrix <- function(xmat, splt.vals.raw, splt.vars.raw, dvec){
     splt.vals <- replace(dvec, dvec!=1, NA)
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   }
-  for (i in 1: nrow(xmat)){
-    xvec <- xmat[i,]
+  for (i in 1: nrow(X)){
+    xvec <- X[i,]
     non_terminal <- TRUE
     current.node <- 1
     current.var <- splt.vars[1]
