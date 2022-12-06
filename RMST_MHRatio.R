@@ -9,7 +9,7 @@ RMST_MHRatio <- function(U, new_tree, old_tree, muvec, sigma.mu, Gvec, X, m, alp
   ## log-likelihood ratio
   loglike.old <- LogLik(old_tree, X, U, Gvec, sigma.mu)
   loglike.new <- LogLik(new_tree, X, U, Gvec, sigma.mu)
-  LikRatio <- exp(loglike.new)/exp(loglike.old)
+  LikRatio <- exp(loglike.new-loglike.old)
   
   ## prior ratio
   
