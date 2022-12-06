@@ -1,5 +1,5 @@
 
-RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
+RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
 
@@ -31,7 +31,11 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, 
     } else if(move_type==3) {
       proposed_tree <- ChangeMove(old_tree, xmat)
     }
-    MH_ratio <- RMST_MHRatio(U, proposed_tree, old_tree, sigma.mu, Gvec, xmat, move_type, alpha, beta, ntree)
+    MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu, 
+                             Gvec, X = xmat, m = move_type, alpha, beta, ntree)
+    if(is.na(MH_ratio) == TRUE){
+      MH_ratio <- 0
+    }
     u <- runif(1)
     if(u <= MH_ratio) {
       new_tree <- proposed_tree
@@ -45,17 +49,17 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, 
     
     ## get mean and sigma for updating mu values
     AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
-    WTGDiag <- c(crossprod(AT, 1/Gvec))
+    WTG <- t(AT)%*%solve(diag(Gvec))%*%AT
     VG <- U/Gvec
     Z <- c(crossprod(AT, VG))
     
     ## update mu values
     mu.mean <- (WTG+(sigma.mu^2*diag(1, length(terminal_nodes))))%*%matrix(Z, ncol=1)
     mu.var <- solve(WTG+(sigma.mu^(-2)*diag(1,length(terminal_nodes))))
-    mu.vec <- mu.mean + sqrt(u.var)*rnorm(length(terminal_nodes))
+    muvec <- c(mu.mean) + diag(sqrt(mu.var))*rnorm(length(terminal_nodes))
       
     ## Record fitted values at each step
-    FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, mu.vec, new_tree$dvec)
+    FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
   }
   return(FittedValues)
 }

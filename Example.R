@@ -1,4 +1,3 @@
-
 source('RMST_BCART.R')
 source('A_matrix.R')
 source('GrowMove.R')
@@ -13,7 +12,6 @@ source('RMST_MHRatio.R')
 source('Transition_Prob.R')
 source('tree-configuration.R')
 
-
 library(survival)
 
 ## German breast cancer data
@@ -22,25 +20,27 @@ head(gbsg)
 
 ## define X matrix
 X <- gbsg[ , !(names(gbsg) %in% c('status'))]
-xmat <- model.matrix(rfstime~.-1, data = X)
+X <- model.matrix(rfstime~.-1, data = X)
 Y <- gbsg$rfstime
 delta <- 1 - gbsg$status
-sgrid <- seq(0, 500, by=50)
+sgrid <- seq(0, 4000, by=1)
 alpha <- .95
 beta <- 2
 ntree <- 20
 kappa0 <- 1
 ndraws <- 15
 sigma.mu <- 1.2
+
+
 splt.vals.raw <- c('pid' = 148, 'meno' = 1, 'nodes' = 12, 'pid' = 700, 'size'=15)
 splt.vars.raw <- c('pid', 'meno', 'nodes','pid','size')
-muvec.raw <- c(0.1, 0.03, 0.2, 0, 1, 4)
+muvec <- c(0.1, 0.03, 0.2, 0, 1, 4)
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
-tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw, muvec = muvec.raw)
+tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw)
 
-RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, sgrid, alpha, beta, ntree,
-           num.risk, num.events, kappa0)
 
-Transition_Prob(tree, new_tree, X = xmat, m = 2)
-new_tree <- PruneMove(tree, xmat)
+RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
+
+
+
 

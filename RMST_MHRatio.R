@@ -20,7 +20,7 @@ RMST_MHRatio <- function(U, new_tree, old_tree, muvec, sigma.mu, Gvec, X, m, alp
   old.prior <- ProbD(U, X, old_tree$splt.vals, old_tree$splt.vars, muvec, alpha, beta, d1, ntree)
   new.prior <- ProbD(U, X, new_tree$splt.vals, new_tree$splt.vars, muvec, alpha, beta, d2, ntree)
   ratio.prior <- new.prior/old.prior
-  
+ 
   ## MH ratio
   MHratio <- min(1, ratio.transition*LikRatio*ratio.prior)
   return(MHratio)
