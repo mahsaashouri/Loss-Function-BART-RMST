@@ -28,7 +28,7 @@ alpha <- .95
 beta <- 2
 ntree <- 20
 kappa0 <- 1
-ndraws <- 15
+ndraws <- 4
 sigma.mu <- 1.2
 
 
@@ -39,7 +39,7 @@ dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw)
 
 
-RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
+tst <- RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
 
 
 

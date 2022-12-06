@@ -34,7 +34,7 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
     MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu, 
                              Gvec, X = xmat, m = move_type, alpha, beta, ntree)
     if(is.na(MH_ratio) == TRUE){
-      MH_ratio <- 0
+      MH_ratio <- 1
     }
     u <- runif(1)
     if(u <= MH_ratio) {
@@ -48,7 +48,7 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
     terminal_nodes <- which(new_tree$dvec==2)
     
     ## get mean and sigma for updating mu values
-    AT <- AMatrix(xmat, tree$splt.vals, tree$splt.vars, tree$dvec)
+    AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
     WTG <- t(AT)%*%solve(diag(Gvec))%*%AT
     VG <- U/Gvec
     Z <- c(crossprod(AT, VG))
