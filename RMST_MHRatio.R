@@ -1,5 +1,5 @@
 
-RMST_MHRatio <- function(U, new_tree, old_tree, muvec,sigma.mu, Gvec, X, m, alpha, beta, ntree){
+RMST_MHRatio <- function(U, new_tree, old_tree, muvec, sigma.mu, Gvec, X, m, alpha, beta, ntree){
   ## transition ratio
   old.new <- Transition_Prob(old_tree, new_tree, X, m)
   m2 <- ifelse(m == 1, 2, ifelse(m == 2, 1, 3))

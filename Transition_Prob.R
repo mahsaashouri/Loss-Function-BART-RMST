@@ -6,10 +6,14 @@ Transition_Prob <- function(old_tree, new_tree, X, m){
     ## avoid growing more than d = 4
     terminal_nodes_d <- terminal_nodes[terminal_nodes<8]
     
-    ## match spliting values and variables in old and new trees
-    matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
-    diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
+    ## match splitting values and variables in old and new trees
+    # matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
+    # diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
+    internal_nodes <- which(old_tree$dvec==1)
+    internal_nodes_new <- which(new_tree$dvec==1)
     
+    matchvalue <- match(internal_nodes, internal_nodes_new)
+    diffvalue <- setdiff(1:length(internal_nodes_new), matchvalue)
     ## find difference between variables and values
     new_val <- new_tree$splt.vals[diffvalue]
     new_var <- new_tree$splt.vars[diffvalue]
@@ -37,8 +41,10 @@ Transition_Prob <- function(old_tree, new_tree, X, m){
     internal_nodes <- which(old_tree$dvec==1)
 
     ## match splitting values and variables in old and new trees
-    matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
-    diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
+    internal_nodes_new <- which(new_tree$dvec==1)
+    
+    matchvalue <- match(internal_nodes, internal_nodes_new)
+    diffvalue <- setdiff(1:length(internal_nodes_new), matchvalue)
     
     ## find difference between variables and values
     new_val <- new_tree$splt.vals[diffvalue]
