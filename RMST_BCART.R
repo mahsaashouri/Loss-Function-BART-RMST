@@ -2,7 +2,7 @@
 RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
-
+   
   ## organize data
   xmat <- X[delta==1,]
   U <- Y[delta==1]
@@ -18,7 +18,7 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
   n <- length(U)
   FittedValues <- matrix(NA, nrow=n, ncol=ndraws)
   old_tree <- tree
-  
+  tau <- (max(U) - min(U))/(2*sqrt(ntree))
   ## old_tree holds the splitting vars, splitting values, and dvec
   for(k in 1:ndraws) {
     # Step 1: Update Tree
@@ -33,9 +33,9 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
     }
     MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu, 
                              Gvec, X = xmat, m = move_type, alpha, beta, ntree)
-    if(is.na(MH_ratio) == TRUE){
-      MH_ratio <- 1
-    }
+    # if(is.na(MH_ratio) == TRUE){
+    #   MH_ratio <- 1
+    # }
     u <- runif(1)
     if(u <= MH_ratio) {
       new_tree <- proposed_tree

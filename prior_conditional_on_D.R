@@ -5,10 +5,9 @@
 
 ## output: P(C (splitting values), V (splitting variables), mu|D (tree structure))
 
-ProbD <- function(U, X, splt.vals, splt.vars, muvec, alpha, beta, d, ntree){
+ProbD <- function(U, X, splt.vals, splt.vars, muvec, alpha, beta, d, tau){
   n <- length(U)
   l <- length(splt.vars)
-  tau <- (max(U) - min(U))/(2*sqrt(ntree))
   PrD <- (DProb(alpha, beta, d))^(l)
   PrV <- (1/ncol(X))^(l)
   PrMu <- prod((1/tau)*dnorm(muvec/tau))

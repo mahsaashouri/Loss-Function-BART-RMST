@@ -22,7 +22,7 @@ head(gbsg)
 X <- gbsg[ , !(names(gbsg) %in% c('status'))]
 X <- model.matrix(rfstime~.-1, data = X)
 Y <- gbsg$rfstime
-delta <- 1 - gbsg$status
+delta <- gbsg$status
 sgrid <- seq(0, 4000, by=1)
 alpha <- .95
 beta <- 2
