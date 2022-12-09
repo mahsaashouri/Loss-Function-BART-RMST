@@ -31,4 +31,4 @@ splt.vars <- c('x1', 'x3', 'x2','x4')
 dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 
 ProbD(U = U, X = xmat, splt.vals = splt.vals, splt.vars = splt.vars, muvec = muvec, 
-      alpha = .95, beta = 2, d = 16, ntree = 20)
+      alpha = .95, beta = 2, d = 16, tau = 1)
