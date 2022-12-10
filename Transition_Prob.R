@@ -7,8 +7,6 @@ Transition_Prob <- function(old_tree, new_tree, X, m){
     terminal_nodes_d <- terminal_nodes[terminal_nodes<8]
 
     ## match splitting values and variables in old and new trees
-    # matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
-    # diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
     internal_nodes <- which(old_tree$dvec==1)
     internal_nodes_new <- which(new_tree$dvec==1)
 

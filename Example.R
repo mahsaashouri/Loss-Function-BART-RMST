@@ -39,7 +39,8 @@ dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw)
 
 
-tst <- RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
+
+RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
 
 
 

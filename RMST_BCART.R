@@ -33,7 +33,7 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
       proposed_tree <- ChangeMove(old_tree, xmat)
     }
     MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu,
-                             Gvec, X = xmat, m = move_type, alpha, beta, ntree)
+                             Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
     # if(is.na(MH_ratio) == TRUE){
     #   MH_ratio <- 1
     # }
