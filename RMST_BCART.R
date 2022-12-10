@@ -2,7 +2,7 @@
 RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0) {
   ## Skeleton of function for computing
   ## Bayesian CART for the RMST loss function
-   
+
   ## organize data
   xmat <- X[delta==1,]
   U <- Y[delta==1]
@@ -17,8 +17,11 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
   ## initialize tree
   n <- length(U)
   FittedValues <- matrix(NA, nrow=n, ncol=ndraws)
+  NNodes <- loglikvals <- rep(NA, ndraws)
   old_tree <- tree
-  
+
+  NNodes[1] <- sum(old_tree$dvec==1)
+  loglikvals[1] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
   tau <- (max(U) - min(U))/(2*sqrt(ntree))
   ## old_tree holds the splitting vars, splitting values, and dvec
   for(k in 1:ndraws) {
@@ -63,11 +66,13 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
     mu.sd <- sqrt(1/(WTGDiag + 1/(sigma.mu*sigma.mu)))
     muvec <- c(mu.mean) + mu.sd*rnorm(length(terminal_nodes))
 
-
     ## Record fitted values at each step
     FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+    NNodes[k+1] <- sum(new_tree$dvec==1)
+    loglikvals[k+1] <- LogLik(tree=new_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
   }
-  return(FittedValues)
+  ans <- list(fitted.values=FittedValues, nnodes=NNodes, logliks=loglikvals)
+  return(ans)
 }
 
 
