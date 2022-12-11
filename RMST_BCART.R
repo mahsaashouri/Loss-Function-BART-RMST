@@ -4,7 +4,12 @@ RMST_BCART <- function(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, 
   ## Bayesian CART for the RMST loss function
 
   ## organize data
-  xmat <- X[delta==1,]
+  if(ncol(X) > 1) {
+    xmat <- X[delta==1,]
+  } else{
+    xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
+    colnames(xmat) <- colnames(X)
+  }
   U <- Y[delta==1]
 
   ## Get Gvec

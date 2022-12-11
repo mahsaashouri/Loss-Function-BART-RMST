@@ -1,5 +1,5 @@
 
-## Output: log density U|T,G - used to calculate log likelihood 
+## Output: log density U|T,G - used to calculate log likelihood
 
 source('A_matrix.R')
 
