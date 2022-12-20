@@ -15,8 +15,8 @@ ProbD <- function(U, X, splt.vals, splt.vars, muvec,
        log_PrM <- log(splt_prob) + log_PrM
      }
      ans <- exp(log_PrM + log_PrMu + log_PrV + log(PrD))
-     return(ans)
   }
+  return(ans)
 }
 
 U <- c( 17, 14, 2, 0.4, 11)

@@ -30,7 +30,6 @@ FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
     
     splt.vals <- replace(dvec, dvec!=1, NA)
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
-  }
   mu.hat <- c()
   for(i in 1:nrow(X)){
     xvec <- X[i,]
@@ -54,6 +53,7 @@ FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
       }
     }
     mu.hat <- c(mu.hat, mu.hat_)
+  }
   }
   return(mu.hat)
 }

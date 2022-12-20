@@ -7,7 +7,7 @@ source('D_probabilities.R')
 source('fitted_value.R')
 source('GPDraw.R')
 source('LogLik.R')
-source('prior_conditional_on_D.R')
+source('prior_conditional_on_D_V2.R')
 source('RMST_MHRatio.R')
 source('Transition_Prob.R')
 source('tree-configuration.R')
@@ -40,7 +40,7 @@ tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw)
 
 
 
-RMST_BCART(Y, delta, X, tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, ntree, num.risk, num.events, kappa0)
+RMST_BCART(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0)
 
 
 
