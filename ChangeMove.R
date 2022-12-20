@@ -4,6 +4,9 @@
 ChangeMove <- function(old_tree, X) {
   # old_tree is a list with dvec, splitting values, and splitting variables
   internal_nodes <- which(old_tree$dvec==1)
+  if(any(internal_nodes) == FALSE) 
+   print('tree cannot change')
+  else{
   change_node <- sample(internal_nodes, size=1)
   ## sample new splitting variable
   new_var <- sample(colnames(X), size=1)
@@ -31,6 +34,7 @@ ChangeMove <- function(old_tree, X) {
   new.dvec <- old_tree$dvec
   
   return(list(dvec = new.dvec, splt.vars = new.splt.vars, splt.vals = new.splt.vals))
+  }
 }
   
 
