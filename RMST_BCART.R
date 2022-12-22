@@ -13,7 +13,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 }
 
 RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
-  ## Skeleton of function for computing
+  ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
   
   ## organize data
@@ -25,7 +25,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
   }
   U <- Y[delta==1]
   
-  ## Get Gvec
+  ## get Gvec
   SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
   
   lam.draw <- GPDraw(U=U, sgrid=sgrid, num.risk=SS$n.risk,
@@ -45,10 +45,11 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
     old_tree <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
     NNodes[1,j] <- sum(old_tree$dvec==1)
     loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
-    ## old_tree holds the splitting vars, splitting values, and dvec
+    
     for(k in 1:ndraws) {
-      # Step 1: Update Tree
-      ## Sample one of three move types
+      # step 1: Update tree
+      ## sample one of three move types
+      
       move_type <- sample(1:3, size=1)
       proposed_tree <- ProposedTree(move_type, old_tree, xmat)
       if ("character" %in% class(proposed_tree)){
@@ -57,6 +58,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
           proposed_tree <- ProposedTree(move_type, old_tree, xmat)
         }
       }
+      ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu,
                                Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
       u <- runif(1)
@@ -66,7 +68,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
         new_tree <- old_tree
       }
       
-      ## Step 2: Update the mu values -  sample from a Normal distribution
+      ## Step 2: update the mu values -  sample from a normal distribution
       ## number of terminal nodes in the new tree
       terminal_nodes <- which(new_tree$dvec==2)
       
