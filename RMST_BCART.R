@@ -59,8 +59,8 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
         }
       }
       ## compute the ratio
-      MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu,
-                               Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
+        MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu,
+                                 Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
       u <- runif(1)
       if(u <= MH_ratio) {
         new_tree <- proposed_tree
@@ -94,3 +94,4 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
   ans <- list(fitted.values=FittedValues, nnodes=NNodes, logliks=loglikvals)
   return(ans)
 }
+

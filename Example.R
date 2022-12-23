@@ -28,7 +28,7 @@ alpha <- .95
 beta <- 2
 ntree <- 20
 kappa0 <- 1
-ndraws <- 4
+ndraws <- 40
 sigma.mu <- 1.2
 
 

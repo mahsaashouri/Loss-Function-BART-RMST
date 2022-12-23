@@ -40,9 +40,12 @@ Transition_Prob <- function(old_tree, new_tree, X, m){
     internal_nodes <- which(old_tree$dvec==1)
 
     ## match splitting values and variables in old and new trees
-    matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
-    diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
-
+    #matchvalue <- match(c(unname(old_tree$splt.vals)), new_tree$splt.vals)
+    #diffvalue <- setdiff(1:length(new_tree$splt.vals), matchvalue)
+    
+    matchvalue <- c(unname(old_tree$splt.vals)) - new_tree$splt.vals
+    diffvalue <- which(matchvalue != 0)
+    
     ## find difference between variables and values
     new_val <- new_tree$splt.vals[diffvalue]
     new_var <- new_tree$splt.vars[diffvalue]
