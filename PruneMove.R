@@ -13,11 +13,7 @@ PruneMove <- function(old_tree, X) {
   if(any(as.integer(internal_nodes_sample)) == FALSE) 
     print('tree cannot prone')
   else{
-    # if(length(internal_nodes_sample) == 1)
-    #   prune_node <- internal_nodes_sample
-    # else
-    # prune_node <- sample(internal_nodes_sample, size=1)
-    prune_node <- internal_nodes_sample[sample(length(internal_nodes_sample), 1)]
+    prune_node <- internal_nodes_sample[sample(length(internal_nodes_sample), size=1)]
     
     ## update splitting variables
     splt.vars <- replace(old_tree$dvec, old_tree$dvec!=1, NA)

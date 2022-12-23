@@ -7,16 +7,14 @@ ChangeMove <- function(old_tree, X) {
   if(any(internal_nodes) == FALSE) 
    print('tree cannot change')
   else{
-    # if(length(internal_nodes) == 1)
-    #   change_node <- internal_nodes
-    # else
-    #   change_node <- sample(internal_nodes, size=1)
-  change_node <- internal_nodes[sample(length(internal_nodes), 1)]
+  change_node <- internal_nodes[sample(length(internal_nodes), size=1)]
   ## sample new splitting variable
-  new_var <- sample(colnames(X), size=1)
+  new_var <- colnames(X)[sample(length(colnames(X)), size=1)]
+  
   candidate_splitval <- sort(unique(X[,new_var]))
   ww <- table(X[,new_var])/nrow(X)
-  new_split <- sample(candidate_splitval, size=1, prob=ww)
+  new_split <- candidate_splitval[sample(length(candidate_splitval), size=1, prob=ww)]
+  
   
   ## update splitting variables
   splt.vars <- replace(old_tree$dvec, old_tree$dvec!=1, NA)
