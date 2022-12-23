@@ -9,10 +9,11 @@ GrowMove <- function(old_tree, X) {
   if(any(terminal_nodes_d) == FALSE) 
     print('tree cannot grow')
   else{
-    if(length(terminal_nodes_d) == 1)
-      grow_node <-terminal_nodes_d
-    else
-      grow_node <- sample(terminal_nodes_d, size=1)
+    #if(length(terminal_nodes_d) == 1)
+      #grow_node <-terminal_nodes_d
+    #else
+      #grow_node <- sample(terminal_nodes_d, size=1)
+  grow_node <- terminal_nodes_d[sample(length(terminal_nodes_d), 1)]
   new_var <- sample(colnames(X), size=1)
   
   candidate_splitval <- sort(unique(X[,new_var]))

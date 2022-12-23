@@ -7,10 +7,11 @@ ChangeMove <- function(old_tree, X) {
   if(any(internal_nodes) == FALSE) 
    print('tree cannot change')
   else{
-    if(length(internal_nodes) == 1)
-      change_node <- internal_nodes
-    else
-      change_node <- sample(internal_nodes, size=1)
+    # if(length(internal_nodes) == 1)
+    #   change_node <- internal_nodes
+    # else
+    #   change_node <- sample(internal_nodes, size=1)
+  change_node <- internal_nodes[sample(length(internal_nodes), 1)]
   ## sample new splitting variable
   new_var <- sample(colnames(X), size=1)
   candidate_splitval <- sort(unique(X[,new_var]))
