@@ -37,7 +37,6 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
   ## initialize tree
   n <- length(U)
   
-  #NNodes <- loglikvals <- matrix(NA, nrow=ndraws+1, ncol = length(old.tree))
   
   tau <- (max(U) - min(U))/(2*sqrt(length(old.tree)))
    
@@ -47,13 +46,14 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
     FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
   }
   
+  NNodes <- loglikvals <- matrix(NA, nrow = ndraws, ncol = length(old.tree))
+  
+  Fitted.Values <- list()
+  
   for(j in 1:ndraws){
-    # old_tree <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
-    # NNodes[1,j] <- sum(old_tree$dvec==1)
-    # loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
-    
-    for(k in 1:length(old.tree)) {
-      # step 1: Update tree
+      for(k in 1:length(old.tree)) {
+        
+      # update tree
       ## sample one of three move types
       
       move_type <- sample(1:3, size=1)
@@ -64,8 +64,10 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
           proposed_tree <- ProposedTree(move_type,  old.tree[[k]], xmat)
         }
       }
-      ## update Rs (U.res)
+      
+      # update Rs (U.res)
       U.res <- U - (rowSums(FittedValues) - FittedValues[,k]) 
+      
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], muvec = muvec, sigma.mu,
                                Gvec, X = xmat, m = move_type, alpha, beta, length(old.tree), tau = tau)
@@ -76,7 +78,7 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
         new_tree <- old.tree[[k]]
       }
       
-      ## Step 2: update the mu values -  sample from a normal distribution
+      ## update the mu values -  sample from a normal distribution
       ## number of terminal nodes in the new tree
       terminal_nodes <- which(new_tree$dvec==2)
       
@@ -94,12 +96,15 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
       
       ## Record fitted values at each step
       FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
-      #NNodes[k+1,j] <- sum(new_tree$dvec==1)
-      #loglikvals[k+1,j] <- LogLik(tree=new_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+      ## record number of internal nodes and loglikelihood values
+      NNodes[j,k] <- sum(new_tree$dvec==1)
+      loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res, Gvec=Gvec, sigma.mu=sigma.mu)
+      ## replace old_tree with new_tree
       old_tree[[k]] <- new_tree
-    }
+      }
+    Fitted.Values[[length(Fitted.Values)+1]] <- FittedValues
   }
-  ans <- list(fitted.values=FittedValues, nnodes=NNodes, logliks=loglikvals)
+  ans <- list(fitted.values=Fitted.Values, nnodes=NNodes, logliks=loglikvals)
   return(ans)
 }
 
