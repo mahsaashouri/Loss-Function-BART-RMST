@@ -14,7 +14,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 ## old.tree is a list of initial trees 
 
-RMST_BCART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
+RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
   
@@ -37,13 +37,17 @@ RMST_BCART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alp
   ## initialize tree
   n <- length(U)
   
-  #FittedValues <- array(NA, c(Nrow=n,  Ncol=ndraws, Ntree=ntree))
-  #NNodes <- loglikvals <- matrix(NA, nrow=ndraws+1, ncol = ntree)
+  #NNodes <- loglikvals <- matrix(NA, nrow=ndraws+1, ncol = length(old.tree))
   
-  tau <- (max(U) - min(U))/(2*sqrt(ntree))
+  tau <- (max(U) - min(U))/(2*sqrt(length(old.tree)))
+   
+  ## initialize fitted values
+  FittedValues <- matrix(NA, nrow = n,  ncol = length(old.tree))
+  for(i in 1:length(old.tree)){
+    FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
+  }
   
   for(j in 1:ndraws){
-    ## initialize trees
     # old_tree <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
     # NNodes[1,j] <- sum(old_tree$dvec==1)
     # loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
@@ -64,7 +68,7 @@ RMST_BCART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alp
       U.res <- U - (rowSums(FittedValues) - FittedValues[,k]) 
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], muvec = muvec, sigma.mu,
-                               Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
+                               Gvec, X = xmat, m = move_type, alpha, beta, length(old.tree), tau = tau)
       u <- runif(1)
       if(u <= MH_ratio) {
         new_tree <- proposed_tree
@@ -89,10 +93,10 @@ RMST_BCART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alp
       muvec <- c(mu.mean) + mu.sd*rnorm(length(terminal_nodes))
       
       ## Record fitted values at each step
-      FittedValues[,k,j] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+      FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
       #NNodes[k+1,j] <- sum(new_tree$dvec==1)
       #loglikvals[k+1,j] <- LogLik(tree=new_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
-      old_tree <- new_tree
+      old_tree[[k]] <- new_tree
     }
   }
   ans <- list(fitted.values=FittedValues, nnodes=NNodes, logliks=loglikvals)
