@@ -15,9 +15,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 ## old.tree is a list of initial trees 
 
 RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
-  ## skeleton of function for computing
-  ## Bayesian CART for the RMST loss function
-  
+ 
   ## organize data
   if(ncol(X) > 1) {
     xmat <- X[delta==1,]
@@ -34,10 +32,8 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
                      num.events=SS$n.event, kappa0=1)
   Gvec <- exp(-lam.draw)
   
-  ## initialize tree
+
   n <- length(U)
-  
-  
   tau <- (max(U) - min(U))/(2*sqrt(length(old.tree)))
    
   ## initialize fitted values
@@ -96,9 +92,11 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
       
       ## Record fitted values at each step
       FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+      
       ## record number of internal nodes and loglikelihood values
       NNodes[j,k] <- sum(new_tree$dvec==1)
       loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res, Gvec=Gvec, sigma.mu=sigma.mu)
+      
       ## replace old_tree with new_tree
       old_tree[[k]] <- new_tree
       }
