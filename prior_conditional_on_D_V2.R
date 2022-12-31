@@ -23,7 +23,7 @@ ProbD <- function(U, X, splt.vals, splt.vars, muvec,
 #xmat <- matrix(round(rnorm(20,10),0), ncol = 4)
 #colnames(xmat) <- c('x1', 'x2', 'x3', 'x4')
 #splt.vals <- c('x1' = xmat[1,1], 'x3' = xmat[2,3], 'x2' = xmat[5,2], 'x4' = xmat[4,4])
-#muvec <- c(0.1, 0.03, 0.2, 0, 1, 4)
+#muvec <- c(0.1, 0.03, 0.2, 0, 1)
 #splt.vars <- c('x1', 'x3', 'x2','x4')
 #dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 
