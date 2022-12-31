@@ -1,5 +1,5 @@
 
-## Function calculating the probability of each tree structure; 
+## Function calculating the probability of each tree structure;
 ## d: row number in Dmat matrix (matrix involving all the 26 possible structure)
 
 DProb <- function(alpha, beta, d){
@@ -26,15 +26,15 @@ DProb <- function(alpha, beta, d){
       m = 2; l = 0; r = 4; h = 0; f = 8;
     }
     prob <- alpha*(alpha/(2^beta))^m*(1-(alpha/(2^beta)))^l*(alpha/(3^beta))^r*(1-(alpha/(3^beta)))^h*(1-(alpha/(4^beta)))^f
-  }   
+  }
   return(prob)
 }
 
 
 ## test the sum of probabilities
-SumprobD <- c()
-for(i in 1:26){
-  SumprobD[i] <- DProb(alpha = .95, beta = 2, i)
-  
-}
-sum(SumprobD)
+#SumprobD <- c()
+#for(i in 1:26){
+#  SumprobD[i] <- DProb(alpha = .95, beta = 2, i)
+
+#}
+#sum(SumprobD)

@@ -10,7 +10,6 @@ source("LogLik.R")
 source("PruneMove.R")
 source("PruneMove_V2.R")
 source("RMST_BCART.R")
-source("RMST_Loss.R")
 source("RMST_MHRatio.R")
 source("Recursive_A_matrix.R")
 source("Transition_Prob.R")
@@ -39,7 +38,8 @@ sgrid <- seq(0, 10, by=.1)
 
 
 test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=5, sigma.mu=1.2, muvec=muvec,
-                       sgrid=sgrid, alpha=0.95, beta=2, num.risk=0, num.events=0, kappa0=1)
+                       sgrid=sgrid, alpha=0.95, beta=2, num.risk=0, num.events=0,
+                       kappa0=1)
 
 
 

@@ -22,12 +22,12 @@ FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
     ## update mu vector
     muvec <- replace(dvec, dvec!=2, NA)
     muvec[ which(!is.na(muvec))] <- muvec.raw
-    
+
     ## update splitting variable vector
     splt.vars <- replace(dvec, dvec!=1, NA)
     splt.vars[ which(!is.na(splt.vars))] <- splt.vars.raw
     ## update splitting value vector
-    
+
     splt.vals <- replace(dvec, dvec!=1, NA)
     splt.vals[ which(!is.na(splt.vals))] <- splt.vals.raw
   mu.hat <- c()
@@ -59,17 +59,17 @@ FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
 }
 
 ## Example
-xvec1 <- c('x1'=0, 'x2'=0, 'x3'=0, 'x4'=0, 'x5'=0) ## should be assigned to node 4
-xvec2 <- c('x1'=0, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 5
-xvec3 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 12
-xvec4 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=0) ## should be assigned to node 13
-xvec5 <- c('x1'=0.6, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=5) ## should be assigned to node 14
-xvec6 <- c('x1' = 1, 'x2' = 2, 'x3' = 3, 'x4' = 10, 'x5' = 5) ## should be assigned to node 15
-splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
-muvec.raw <- c(0.1, 0.03, 0.2, 0, 1, 4)
-splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
+#xvec1 <- c('x1'=0, 'x2'=0, 'x3'=0, 'x4'=0, 'x5'=0) ## should be assigned to node 4
+#xvec2 <- c('x1'=0, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 5
+#xvec3 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=0, 'x5'=0) ## should be assigned to node 12
+#xvec4 <- c('x1'=1, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=0) ## should be assigned to node 13
+#xvec5 <- c('x1'=0.6, 'x2'=0, 'x3'=1, 'x4'=1, 'x5'=5) ## should be assigned to node 14
+#xvec6 <- c('x1' = 1, 'x2' = 2, 'x3' = 3, 'x4' = 10, 'x5' = 5) ## should be assigned to node 15
+#splt.vals.raw <- c('x1' = .05, 'x3' = .5, 'x5' = 1, 'x4' = .02, 'x1'=0.75)
+#muvec.raw <- c(0.1, 0.03, 0.2, 0, 1, 4)
+#splt.vars.raw <- c('x1', 'x3', 'x5','x4','x1')
 #splt.vars.raw <- c(1, 3, 5, 4, 1)
-dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
-xmat <- rbind(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
-colnames(xmat) <- c('x1', 'x2', 'x3', 'x4', 'x5')
-FittedValue(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec)
+#dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
+#xmat <- rbind(xvec1, xvec2, xvec3, xvec4, xvec5, xvec6)
+#colnames(xmat) <- c('x1', 'x2', 'x3', 'x4', 'x5')
+#FittedValue(xmat, splt.vals.raw, splt.vars.raw, muvec.raw, dvec)
