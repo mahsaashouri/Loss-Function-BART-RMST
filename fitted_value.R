@@ -16,7 +16,7 @@ RightChild <- function(x){
 FittedValue <- function(X, splt.vals.raw, splt.vars.raw, muvec.raw, dvec){
   if(dvec[1] == 2){
     non_terminal <- FALSE
-    mu.hat <- sample(muvec.raw, size = nrow(X), replace = TRUE)
+    mu.hat <- muvec.raw
   }
   else{
     ## update mu vector
