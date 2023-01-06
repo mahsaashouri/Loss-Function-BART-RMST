@@ -36,6 +36,7 @@ colnames(X) <- 'x'
 sgrid <- seq(0, 10, by=.1)
 
 ## lam.draw returns some NAs, then LOgLike function returns NA and we can not run the following function 
+## Another issue on the example: we need to define muvec in this file
 test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2, muvec=muvec,
                        sgrid=sgrid, alpha=0.95, beta=2, num.risk=0, num.events=0,
                        kappa0=1)
