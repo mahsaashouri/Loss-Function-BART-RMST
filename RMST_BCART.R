@@ -12,7 +12,12 @@ ProposedTree <- function(move_type, old_tree, xmat){
   return(proposed_tree)
 }
 
-RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
+## To do:
+##    1. I don't think muvec needs to be input into the function.
+##    2. Need to give a burn-in number and discard burn-in iterations in returned result
+
+RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
+                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
 
@@ -23,12 +28,18 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
     xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
     colnames(xmat) <- colnames(X)
   }
-  U <- Y[delta==1]
+
+  if(is.null(tau)) {
+      tau <- max(Y[delta==1])
+  }
+  U <- pmin(Y[delta==1], tau)
 
   ## get Gvec
-  SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
-
-  lam.draw <- GPDraw(U=U, sgrid=sgrid, num.risk=SS$n.risk,
+  if(is.null(sgrid)) {
+      sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
+  }
+  SS <- ComputeSurvStatistics(sgrid=sgrid, times=exp(Y), status=1 - delta)
+  lam.draw <- GPDraw(eU=exp(U), sgrid=sgrid, num.risk=SS$n.risk,
                      num.events=SS$n.event, kappa0=1)
   Gvec <- exp(-lam.draw)
 
@@ -37,8 +48,6 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,sgrid, alpha,
 
   FittedValues <- array(NA, c(Nrow=n,  Ncol=ndraws, Ntree=ntree))
   NNodes <- loglikvals <- matrix(NA, nrow=ndraws+1, ncol = ntree)
-
-  tau <- (max(U) - min(U))/(2*sqrt(ntree))
 
   for(j in 1:ntree){
     ## initialize trees
