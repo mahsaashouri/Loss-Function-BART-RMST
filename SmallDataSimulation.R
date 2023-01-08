@@ -1,6 +1,7 @@
 
 ## A way to generate a small dataset to test
 ##  the RMST_BCART function
+setwd("~/Documents/LossFunctionBART/Loss-Function--BART")
 source("A_matrix.R")
 source("ChangeMove.R")
 source("D_probabilities.R")
@@ -34,12 +35,12 @@ delta <- ifelse(logT <= logCC, 1, 0)
 X <- matrix(xx, nrow=n, ncol=1)
 colnames(X) <- 'x'
 sgrid <- seq(0, 10, by=.1)
+muvec <- 0
 
-## lam.draw returns some NAs, then LOgLike function returns NA and we can not run the following function 
+## lam.draw returns some NAs, then LOgLike function returns NA and we can not run the following function
 ## Another issue on the example: we need to define muvec in this file
-test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2, muvec=muvec,
-                       sgrid=sgrid, alpha=0.95, beta=2, num.risk=0, num.events=0,
-                       kappa0=1)
+test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2, muvec=muvec)
+
 
 pmean <- rowMeans(test_run$fitted.values[,,1])
 plot(xx[delta==1], pmean, ylim=c(0, 8))
