@@ -14,7 +14,8 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 ## old.tree is a list of initial trees 
 
-RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alpha, beta, num.risk, num.events, kappa0) {
+RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec, 
+                      alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
  
   ## organize data
   if(ncol(X) > 1) {
@@ -23,30 +24,31 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
     xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
     colnames(xmat) <- colnames(X)
   }
-  U <- Y[delta==1]
+  if(is.null(tau)) {
+    tau <- max(Y[delta==1])
+  }
+  U <- pmin(Y[delta==1], tau)
   
   ## get Gvec
-  SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
-  
-  lam.draw <- GPDraw(U=U, sgrid=sgrid, num.risk=SS$n.risk,
+  if(is.null(sgrid)) {
+    sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
+  }
+  SS <- ComputeSurvStatistics(sgrid=sgrid, times=exp(Y), status=1 - delta)
+  lam.draw <- GPDraw(eU=exp(U), sgrid=sgrid, num.risk=SS$n.risk,
                      num.events=SS$n.event, kappa0=1)
   Gvec <- exp(-lam.draw)
   
-
   n <- length(U)
-  tau <- (max(U) - min(U))/(2*sqrt(length(old.tree)))
-   
   ## initialize fitted values
   FittedValues <- matrix(NA, nrow = n,  ncol = length(old.tree))
   for(i in 1:length(old.tree)){
     FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
   }
   
-  NNodes <- loglikvals <- matrix(NA, nrow = ndraws, ncol = length(old.tree))
+  NNodes <- loglikvals <- matrix(NA, nrow = (ndraws+burnIn), ncol = length(old.tree))
   
   Fitted.Values <- list()
-  
-  for(j in 1:ndraws){
+  for(j in 1:(ndraws+burnIn)){
       for(k in 1:length(old.tree)) {
         
       # update tree
@@ -98,11 +100,12 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,sgrid, alph
       loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res, Gvec=Gvec, sigma.mu=sigma.mu)
       
       ## replace old_tree with new_tree
-      old_tree[[k]] <- new_tree
+      old.tree[[k]] <- new_tree
       }
     Fitted.Values[[length(Fitted.Values)+1]] <- FittedValues
   }
-  ans <- list(fitted.values=Fitted.Values, nnodes=NNodes, logliks=loglikvals)
+  ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)], nnodes=tail(NNodes, ndraws), 
+              logliks=tail(loglikvals, ndraws))
   return(ans)
 }
 

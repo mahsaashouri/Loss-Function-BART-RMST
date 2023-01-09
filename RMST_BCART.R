@@ -17,7 +17,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 ##    2. Need to give a burn-in number and discard burn-in iterations in returned result
 
 RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
-                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn = 100) {
+                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
 

@@ -11,6 +11,7 @@ source("LogLik.R")
 source("PruneMove.R")
 #source("PruneMove_V2.R")
 source("RMST_BCART.R")
+source("RMST_BART.R")
 source("RMST_MHRatio.R")
 source("Recursive_A_matrix.R")
 source("Transition_Prob.R")
@@ -43,4 +44,13 @@ test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2, muvec=muv
 pmean <- rowMeans(test_run$fitted.values[,,1])
 plot(xx[delta==1], pmean, ylim=c(0, 8))
 lines(xx[order(xx)], mean_fn[order(xx)], type="s")
+
+
+## BART
+
+test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
+old.tree <- list(test)[rep(1,10)]
+
+test_run_BART <- RMST_BART(Y, delta, X, old.tree = old.tree, ndraws=500, sigma.mu=1.2, muvec=muvec)
+
 
