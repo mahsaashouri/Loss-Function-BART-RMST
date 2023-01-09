@@ -17,7 +17,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 ##    2. Need to give a burn-in number and discard burn-in iterations in returned result
 
 RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
-                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL) {
+                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn = 100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
 
@@ -46,8 +46,8 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
   ## initialize tree
   n <- length(U)
 
-  FittedValues <- array(NA, c(Nrow=n,  Ncol=ndraws, Ntree=ntree))
-  NNodes <- loglikvals <- matrix(NA, nrow=ndraws+1, ncol = ntree)
+  FittedValues <- array(NA, c(Nrow=n,  Ncol=(ndraws+burnIn), Ntree=ntree))
+  NNodes <- loglikvals <- matrix(NA, nrow=(ndraws+burnIn+1), ncol = ntree)
 
   for(j in 1:ntree){
     ## initialize trees
@@ -56,7 +56,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
     loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
     muvec <- rep(0, NNodes[1,j])
 
-    for(k in 1:ndraws) {
+    for(k in 1:(ndraws + burnIn)) {
       # step 1: Update tree
       ## sample one of three move types
 
@@ -101,7 +101,12 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
       old_tree <- new_tree
     }
   }
-  ans <- list(fitted.values=FittedValues, nnodes=NNodes, logliks=loglikvals)
+  Fitted.Values <- array(NA, c(Nrow=n,  Ncol=ndraws, Ntree=ntree))
+  for(i in 1:ntree){
+    Fitted.Values[,,i] <- FittedValues[,c((burnIn+1):(ndraws+burnIn)),i]
+  }
+  ans <- list(fitted.values=Fitted.Values, nnodes=tail(NNodes, ndraws), 
+              logliks=tail(loglikvals, ndraws))
   return(ans)
 }
 
