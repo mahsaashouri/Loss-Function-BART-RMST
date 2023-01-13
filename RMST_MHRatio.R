@@ -1,5 +1,5 @@
 
-RMST_MHRatio <- function(U, new_tree, old_tree, muvec, sigma.mu, Gvec,
+RMST_MHRatio <- function(U, new_tree, old_tree, sigma.mu, Gvec,
                          X, m, alpha, beta, ntree, tau){
   ## transition ratio
   old.new <- Transition_Prob(old_tree, new_tree, X, m)
@@ -18,8 +18,8 @@ RMST_MHRatio <- function(U, new_tree, old_tree, muvec, sigma.mu, Gvec,
   d1 <- which(apply(Dmat, 1, function(x) all.equal(x[1:ncol(Dmat)], old_tree$dvec)) == "TRUE")
   d2 <- which(apply(Dmat, 1, function(x) all.equal(x[1:ncol(Dmat)], new_tree$dvec)) == "TRUE")
 
-  old.prior <- ProbD(U, X, old_tree$splt.vals, old_tree$splt.vars, muvec, alpha, beta, d1, tau)
-  new.prior <- ProbD(U, X, new_tree$splt.vals, new_tree$splt.vars, muvec, alpha, beta, d2, tau)
+  old.prior <- ProbD(U, X, old_tree$splt.vals, old_tree$splt.vars, alpha, beta, d1, tau)
+  new.prior <- ProbD(U, X, new_tree$splt.vals, new_tree$splt.vars, alpha, beta, d2, tau)
   ratio.prior <- new.prior/old.prior
 
   ## MH ratio

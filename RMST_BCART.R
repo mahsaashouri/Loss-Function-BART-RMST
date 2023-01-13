@@ -12,11 +12,9 @@ ProposedTree <- function(move_type, old_tree, xmat){
   return(proposed_tree)
 }
 
-## To do:
-##    1. I don't think muvec needs to be input into the function.
-##    2. Need to give a burn-in number and discard burn-in iterations in returned result
 
-RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
+
+RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
                        alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
@@ -69,8 +67,8 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, muvec,
         }
       }
       ## compute the ratio
-      MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, muvec = muvec, sigma.mu,
-                               Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
+      MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, sigma.mu,
+                               Gvec = Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
       u <- runif(1)
       if(u <= MH_ratio) {
         new_tree <- proposed_tree

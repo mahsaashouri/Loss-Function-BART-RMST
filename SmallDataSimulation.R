@@ -38,7 +38,7 @@ colnames(X) <- 'x'
 sgrid <- seq(0, 10, by=.1)
 muvec <- 0
 
-test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2, muvec=muvec)
+test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2)
 
 
 pmean <- rowMeans(test_run$fitted.values[,,1])

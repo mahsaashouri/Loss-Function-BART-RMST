@@ -1,11 +1,12 @@
-ProbD <- function(U, X, splt.vals, splt.vars, muvec,
+ProbD <- function(U, X, splt.vals, splt.vars, #muvec,
                   alpha, beta, d, tau){
   n <- length(U)
   l <- length(splt.vars)
   PrD <- DProb(alpha, beta, d)
-  log_PrMu <- sum( dnorm(muvec, mean=0, sd=tau, log=TRUE) )
+  #log_PrMu <- sum( dnorm(muvec, mean=0, sd=tau, log=TRUE) )
   if(l==0) {
-     ans <- exp(log_PrMu + log(PrD))
+     #ans <- exp(log_PrMu + log(PrD))
+    ans <- exp(log(PrD))
   } else{
      log_PrV <- -l*log( ncol(X) )
      log_PrM <- 0
@@ -14,7 +15,8 @@ ProbD <- function(U, X, splt.vals, splt.vars, muvec,
        splt_prob <- mean( which(xm == splt.vals[i]) )
        log_PrM <- log(splt_prob) + log_PrM
      }
-     ans <- exp(log_PrM + log_PrMu + log_PrV + log(PrD))
+     #ans <- exp(log_PrM + log_PrMu + log_PrV + log(PrD))
+     ans <- exp(log_PrM + log_PrV + log(PrD))
   }
   return(ans)
 }
