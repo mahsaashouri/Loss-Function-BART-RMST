@@ -26,11 +26,12 @@ set.seed(123)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 sigma = 1.0  
-n = 10000 # number of training observation   
-k = 500  # total number of predictors  
+n = 1000 # number of training observation   
+k = 10  # total number of predictors  
 
 # simulate training set
 X.train <- matrix(runif(n*k), n, k)
+colnames(X.train) <- paste0('X', 1:k)
 ET.train <- f.test(X.train)
 T.train <- ET.train+sigma*rexp(n)
 C.train <- rexp(n)
@@ -38,19 +39,27 @@ Y.train <- pmin(T.train, C.train)
 delta.train <- ifelse(Y.train <= C.train, 1, 0)
 
 # simulate test set
-m <- 1000 # number of test observation
-X.test <- matrix(runif(m*k), m, k)
-ET.test <- f.test(X.test)
-T.test <- ET.test+sigma*rexp(m)
-C.test <- rexp(m)
-Y.test <- pmin(T.test, C.test)
-delta.test <- ifelse(Y.train <= C.train, 1, 0)
+#m <- 100 # number of test observation
+#X.test <- matrix(runif(m*k), m, k)
+#colnames(X.test) <- paste0('X', 1:k)
+#ET.test <- f.test(X.test)
+#T.test <- ET.test+sigma*rexp(m)
+#C.test <- rexp(m)
+#Y.test <- pmin(T.test, C.test)
+#delta.test <- ifelse(Y.train <= C.train, 1, 0)
 
 sgrid <- seq(0, 10, by=.1)
 
 ##run BCART 
 
-train <- RMST_BCART(Y.train, delta, X.train, ntree=1, ndraws=1000, sigma.mu=1.2)
+train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=1000, sigma.mu=1.2)
+#test <- predict(train, X.test)
+
+
+Y.min <- min(Y.train)
+Y.max <- max(Y.train)
+plot(Y.train, rowMeans(train$fitted.values[,,1]), asp=1, pch='.',
+     xlim=c(Y.min, Y.max), ylab='BCART')
 
 
 
