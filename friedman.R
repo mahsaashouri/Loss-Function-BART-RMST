@@ -34,9 +34,9 @@ X.train <- matrix(runif(n*k), n, k)
 colnames(X.train) <- paste0('X', 1:k)
 ET.train <- f.test(X.train)
 T.train <- ET.train+sigma*rexp(n)
-C.train <- rexp(n)
+C.train <- rexp(n, rate = .05)
 Y.train <- pmin(T.train, C.train)
-delta.train <- ifelse(Y.train <= C.train, 1, 0)
+delta.train <- ifelse(T.train <= C.train, 1, 0)
 
 # simulate test set
 #m <- 100 # number of test observation
@@ -56,12 +56,11 @@ train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=1000, sigma.m
 #test <- predict(train, X.test)
 
 
+plot(rowMeans(train$fitted.values), ET.train)
+
+
 Y.min <- min(Y.train)
 Y.max <- max(Y.train)
-plot(Y.train, rowMeans(train$fitted.values[,,1]), asp=1, pch='.',
+plot(rowMeans(train$fitted.values[,,1]), ET.train[delta.train==1], asp=1, pch='.',
      xlim=c(Y.min, Y.max), ylab='BCART')
-
-
-
-
 
