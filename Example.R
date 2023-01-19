@@ -40,14 +40,14 @@ dvec <- c(1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2)
 tree <-  list(dvec = dvec, splt.vars = splt.vars.raw, splt.vals = splt.vals.raw)
 ## BCART
 
-RMST_BCART(Y, delta, X, ntree, ndraws, sigma.mu, muvec)
+RMST_BCART(Y, delta, X, ntree = 1, ndraws = 10, sigma.mu)
 
 ## BART
 
 test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
 old.tree <- list(test)[rep(1,10)]
 
-RMST_BART(Y, delta, X, old.tree, ndraws, sigma.mu, muvec)
+RMST_BART(Y, delta, X, old.tree, ndraws = 10, sigma.mu)
 
 
 

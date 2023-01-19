@@ -14,7 +14,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 ## old.tree is a list of initial trees 
 
-RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec, 
+RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
  
   ## organize data
@@ -40,10 +40,11 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,
   
   n <- length(U)
   ## initialize fitted values
-  FittedValues <- matrix(NA, nrow = n,  ncol = length(old.tree))
-  for(i in 1:length(old.tree)){
-    FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
-  }
+  #FittedValues <- matrix(NA, nrow = n,  ncol = length(old.tree))
+  #for(i in 1:length(old.tree)){
+  #  FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
+  #}
+  FittedValues <- matrix(0, nrow = n,  ncol = length(old.tree))
   
   NNodes <- loglikvals <- matrix(NA, nrow = (ndraws+burnIn), ncol = length(old.tree))
   
@@ -67,8 +68,9 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu, muvec,
       U.res <- U - (rowSums(FittedValues) - FittedValues[,k]) 
       
       ## compute the ratio
-      MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], muvec = muvec, sigma.mu,
+      MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], sigma.mu,
                                Gvec, X = xmat, m = move_type, alpha, beta, length(old.tree), tau = tau)
+      
       u <- runif(1)
       if(u <= MH_ratio) {
         new_tree <- proposed_tree
