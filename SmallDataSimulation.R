@@ -42,7 +42,8 @@ test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2)
 
 
 pmean <- rowMeans(test_run$fitted.values[,,1])
-plot(xx[delta==1], pmean, ylim=c(0, 8))
+#plot(xx[delta==1], pmean, ylim=c(0, 8))
+plot(xx, pmean, ylim=c(0, 8))
 lines(xx[order(xx)], mean_fn[order(xx)], type="s")
 
 

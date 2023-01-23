@@ -1,13 +1,13 @@
 
 ## function to return the proposed tree
 
-ProposedTree <- function(move_type, old_tree, xmat){
+ProposedTree <- function(move_type, old_tree, X){
   if(move_type==1) {
-    proposed_tree <- GrowMove(old_tree, xmat)
+    proposed_tree <- GrowMove(old_tree, X)
   } else if(move_type==2) {
-    proposed_tree <- PruneMove(old_tree, xmat)
+    proposed_tree <- PruneMove(old_tree, X)
   } else if(move_type==3) {
-    proposed_tree <- ChangeMove(old_tree, xmat)
+    proposed_tree <- ChangeMove(old_tree, X)
   }
   return(proposed_tree)
 }
@@ -20,18 +20,18 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
   ## Bayesian CART for the RMST loss function
 
   ## organize data
-  if(ncol(X) > 1) {
-    xmat <- X[delta==1,]
-  } else{
-    xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
-    colnames(xmat) <- colnames(X)
-  }
+  #if(ncol(X) > 1) {
+  #  xmat <- X[delta==1,]
+  #} else{
+  #  xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
+  #  colnames(xmat) <- colnames(X)
+  #}
 
   if(is.null(tau)) {
       tau <- max(Y[delta==1])
   }
-  U <- pmin(Y[delta==1], tau)
-
+  #U <- pmin(Y[delta==1], tau)
+  U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
       sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
@@ -51,7 +51,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
     ## initialize trees
     old_tree <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
     NNodes[1,j] <- sum(old_tree$dvec==1)
-    loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+    loglikvals[1,j] <- LogLik(tree=old_tree, X=X, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
     muvec <- rep(0, NNodes[1,j])
 
     for(k in 1:(ndraws + burnIn)) {
@@ -59,16 +59,16 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       ## sample one of three move types
 
       move_type <- sample(1:3, size=1)
-      proposed_tree <- ProposedTree(move_type, old_tree, xmat)
+      proposed_tree <- ProposedTree(move_type, old_tree, X)
       if ("character" %in% class(proposed_tree)){
         while(("character" %in% class(proposed_tree))){
           move_type <- sample(1:3, size=1)
-          proposed_tree <- ProposedTree(move_type, old_tree, xmat)
+          proposed_tree <- ProposedTree(move_type, old_tree, X)
         }
       }
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, sigma.mu,
-                               Gvec = Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
+                               Gvec = Gvec, X = X, m = move_type, alpha, beta, ntree, tau = tau)
       u <- runif(1)
       if(u <= MH_ratio) {
         new_tree <- proposed_tree
@@ -81,7 +81,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       terminal_nodes <- which(new_tree$dvec==2)
 
       ## get mean and sigma for updating mu values
-      AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
+      AT <- AMatrix(X, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
       WTGDiag <- c(crossprod(AT, 1/Gvec))
       VG <- U/Gvec
       Z <- c(crossprod(AT, VG))
@@ -93,9 +93,9 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       muvec <- c(mu.mean) + mu.sd*rnorm(length(terminal_nodes))
 
       ## Record fitted values at each step
-      FittedValues[,k,j] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+      FittedValues[,k,j] <- FittedValue(X, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
       NNodes[k+1,j] <- sum(new_tree$dvec==1)
-      loglikvals[k+1,j] <- LogLik(tree=new_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+      loglikvals[k+1,j] <- LogLik(tree=new_tree, X=X, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
       old_tree <- new_tree
     }
   }
