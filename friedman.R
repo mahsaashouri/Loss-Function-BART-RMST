@@ -61,6 +61,30 @@ plot(rowMeans(train$fitted.values), ET.train)
 
 Y.min <- min(Y.train)
 Y.max <- max(Y.train)
-plot(rowMeans(train$fitted.values[,,1]), ET.train[delta.train==1], asp=1, pch='.',
-     xlim=c(Y.min, Y.max), ylab='BCART')
+plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
+          xlim=c(Y.min, Y.max), ylab='BCART')
+#plot(rowMeans(train$fitted.values[,,1]), ET.train[delta.train==1], asp=1, pch='.',
+#     xlim=c(Y.min, Y.max), ylab='BCART')
 
+
+## coxph model
+library(survival)
+coxph <- coxph(Surv(Y.train, delta.train) ~ X.train)
+
+
+## regularized coxph model with glmnet
+library(glmnet)
+rcoxph <-  glmnet(X.train, cbind('time' = Y.train, 'status' = delta.train), family = "cox")
+
+
+## basic AFT model
+library(survival)
+BAFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
+
+## penalized AFT model
+
+## survival boosting
+
+## AFT BART
+library(BART)
+AFTBART <- abart(X.train, Y.train, delta.train)
