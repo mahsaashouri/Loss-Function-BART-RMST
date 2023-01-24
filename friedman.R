@@ -70,12 +70,12 @@ plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
 ## coxph model
 library(survival)
 coxph <- coxph(Surv(Y.train, delta.train) ~ X.train)
-
+plot(survfit(coxph))
 
 ## regularized coxph model with glmnet
 library(glmnet)
-rcoxph <-  glmnet(X.train, cbind('time' = Y.train, 'status' = delta.train), family = "cox")
-
+rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox")
+#plot(survfit(rcoxph, x = X.train, y = Surv(Y.train, delta.train)))
 
 ## basic AFT model
 library(survival)
