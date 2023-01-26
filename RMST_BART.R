@@ -27,8 +27,9 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
   if(is.null(tau)) {
     tau <- max(Y[delta==1])
   }
-  U <- pmin(Y[delta==1], tau)
   
+  U <- pmin(Y[delta==1], tau)
+  #U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
     sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))

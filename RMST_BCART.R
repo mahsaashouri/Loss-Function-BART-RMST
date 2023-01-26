@@ -1,13 +1,13 @@
 
 ## function to return the proposed tree
 
-ProposedTree <- function(move_type, old_tree, X){
+ProposedTree <- function(move_type, old_tree, xmat){
   if(move_type==1) {
-    proposed_tree <- GrowMove(old_tree, X)
+    proposed_tree <- GrowMove(old_tree, xmat)
   } else if(move_type==2) {
-    proposed_tree <- PruneMove(old_tree, X)
+    proposed_tree <- PruneMove(old_tree, xmat)
   } else if(move_type==3) {
-    proposed_tree <- ChangeMove(old_tree, X)
+    proposed_tree <- ChangeMove(old_tree, xmat)
   }
   return(proposed_tree)
 }
@@ -20,17 +20,17 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
   ## Bayesian CART for the RMST loss function
 
   ## organize data
-  #if(ncol(X) > 1) {
-  #  xmat <- X[delta==1,]
-  #} else{
-  #  xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
-  #  colnames(xmat) <- colnames(X)
-  #}
+  if(ncol(X) > 1) {
+    xmat <- X[delta==1,]
+  } else{
+    xmat <- matrix(X[delta==1,], nrow=sum(delta==1), ncol=1)
+    colnames(xmat) <- colnames(X)
+  }
 
   if(is.null(tau)) {
       tau <- max(Y[delta==1])
   }
-  #U <- pmin(Y[delta==1], tau)
+  Ud <- pmin(Y[delta==1], tau)
   U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
@@ -59,11 +59,11 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       ## sample one of three move types
 
       move_type <- sample(1:3, size=1)
-      proposed_tree <- ProposedTree(move_type, old_tree, X)
+      proposed_tree <- ProposedTree(move_type, old_tree, xmat)
       if ("character" %in% class(proposed_tree)){
         while(("character" %in% class(proposed_tree))){
           move_type <- sample(1:3, size=1)
-          proposed_tree <- ProposedTree(move_type, old_tree, X)
+          proposed_tree <- ProposedTree(move_type, old_tree, xmat)
         }
       }
       ## compute the ratio
@@ -81,7 +81,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       terminal_nodes <- which(new_tree$dvec==2)
 
       ## get mean and sigma for updating mu values
-      AT <- AMatrix(X, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
+      AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
       WTGDiag <- c(crossprod(AT, 1/Gvec))
       VG <- U/Gvec
       Z <- c(crossprod(AT, VG))

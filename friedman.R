@@ -71,6 +71,8 @@ plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
 library(survival)
 coxph <- coxph(Surv(Y.train, delta.train) ~ X.train)
 plot(survfit(coxph))
+coxhaz <- basehaz(coxph)
+plot(coxhaz$time, coxhaz$hazard)
 
 ## regularized coxph model with glmnet
 library(glmnet)
@@ -81,9 +83,15 @@ rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox")
 library(survival)
 BAFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
 
+tau <- 20
+
+pre1 <- pmin(BAFT$linear.predictors, log(tau))
+pre2 <- pmin(exp(BAFT$linear.predictors), tau)
+plot(pmin(ET.train, tau), pre2)
+
 ## penalized AFT model
 
-## survival boosting
+## survival boosting - Hothorn paper
 
 ## AFT BART
 library(BART)
