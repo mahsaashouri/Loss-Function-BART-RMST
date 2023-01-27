@@ -25,9 +25,9 @@ set.seed(123)
 # sample function
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
-sigma = 1.0  
-n = 1000 # number of training observation   
-k = 10  # total number of predictors  
+sigma = 1.0
+n = 1000 # number of training observation
+k = 10  # total number of predictors
 
 # simulate training set
 X.train <- matrix(runif(n*k), n, k)
@@ -50,7 +50,7 @@ delta.train <- ifelse(T.train <= C.train, 1, 0)
 
 sgrid <- seq(0, 10, by=.1)
 
-##run BCART 
+##run BCART
 
 train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=1000, sigma.mu=1.2)
 #test <- predict(train, X.test)
@@ -69,10 +69,36 @@ plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
 
 ## coxph model
 library(survival)
-coxph <- coxph(Surv(Y.train, delta.train) ~ X.train)
-plot(survfit(coxph))
-coxhaz <- basehaz(coxph)
-plot(coxhaz$time, coxhaz$hazard)
+coxph_mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
+plot(survfit(coxph_mod))
+coxhaz <- basehaz(coxph_mod)
+plot(c(0, coxhaz$time), c(0, coxhaz$hazard))
+H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
+                  yright=max(coxhaz$hazard))
+
+CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
+   ## This function computes E( min(T_i, tau) |x_i) for
+   ## a cox ph model
+   mu.x <- colMeans(X)
+   integrand <- function(time, xi, beta_val) {
+       nu <- sum(xi*beta_val)
+       ans <- exp(-H0fn(time)*exp(nu))
+       return(ans)
+   }
+   nn <- nrow(X)
+   fitted_vals <- rep(NA, nn)
+   for(k in 1:nn) {
+       II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
+                       beta_val=beta_val, subdivisions=500L)
+       fitted_vals[k] <- II$value
+   }
+   return(fitted_vals)
+}
+
+coxmod_mus <- CoxExpectedSurv(X=X.train, beta_val=coxph_mod$coefficients,
+                              H0fn=H0fn, tau=25)
+
+plot(pmin(ET.train, 25), coxmod_mus)
 
 ## regularized coxph model with glmnet
 library(glmnet)
