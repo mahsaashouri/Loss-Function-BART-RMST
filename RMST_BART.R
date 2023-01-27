@@ -28,8 +28,8 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
     tau <- max(Y[delta==1])
   }
   
-  U <- pmin(Y[delta==1], tau)
-  #U <- pmin(Y, tau)
+  #U <- pmin(Y[delta==1], tau)
+  U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
     sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
@@ -70,7 +70,7 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
       
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], sigma.mu,
-                               Gvec, X = xmat, m = move_type, alpha, beta, length(old.tree), tau = tau)
+                               Gvec, X = X, m = move_type, alpha, beta, length(old.tree), tau = tau)
       
       u <- runif(1)
       if(u <= MH_ratio) {
@@ -85,8 +85,8 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
       
       ## get mean and sigma for updating mu values
       AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
-      WTGDiag <- c(crossprod(AT, 1/Gvec))
-      VG <- U/Gvec
+      WTGDiag <- c(crossprod(AT, 1/Gvec[delta==1]))
+      VG <- U[delta==1]/Gvec[delta==1]
       Z <- c(crossprod(AT, VG))
       
       ## update mu values
@@ -96,11 +96,11 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
       muvec <- c(mu.mean) + mu.sd*rnorm(length(terminal_nodes))
       
       ## Record fitted values at each step
-      FittedValues[,k] <- FittedValue(xmat, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+      FittedValues[,k] <- FittedValue(X, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
       
       ## record number of internal nodes and loglikelihood values
       NNodes[j,k] <- sum(new_tree$dvec==1)
-      loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res, Gvec=Gvec, sigma.mu=sigma.mu)
+      loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res[delta==1], Gvec=Gvec[delta==1], sigma.mu=sigma.mu)
       
       ## replace old_tree with new_tree
       old.tree[[k]] <- new_tree

@@ -30,7 +30,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
   if(is.null(tau)) {
       tau <- max(Y[delta==1])
   }
-  Ud <- pmin(Y[delta==1], tau)
+  #U <- pmin(Y[delta==1], tau)
   U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
@@ -51,7 +51,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
     ## initialize trees
     old_tree <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
     NNodes[1,j] <- sum(old_tree$dvec==1)
-    loglikvals[1,j] <- LogLik(tree=old_tree, X=X, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+    loglikvals[1,j] <- LogLik(tree=old_tree, X=xmat, U=U[delta==1], Gvec=Gvec[delta==1], sigma.mu=sigma.mu)
     muvec <- rep(0, NNodes[1,j])
 
     for(k in 1:(ndraws + burnIn)) {
@@ -82,8 +82,8 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
 
       ## get mean and sigma for updating mu values
       AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
-      WTGDiag <- c(crossprod(AT, 1/Gvec))
-      VG <- U/Gvec
+      WTGDiag <- c(crossprod(AT, 1/Gvec[delta==1]))
+      VG <- U[delta==1]/Gvec[delta==1]
       Z <- c(crossprod(AT, VG))
 
       ## update mu values
@@ -95,7 +95,7 @@ RMST_BCART <- function(Y, delta, X, ntree, ndraws, sigma.mu, #muvec,
       ## Record fitted values at each step
       FittedValues[,k,j] <- FittedValue(X, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
       NNodes[k+1,j] <- sum(new_tree$dvec==1)
-      loglikvals[k+1,j] <- LogLik(tree=new_tree, X=X, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+      loglikvals[k+1,j] <- LogLik(tree=new_tree, X=xmat, U=U[delta==1], Gvec=Gvec[delta==1], sigma.mu=sigma.mu)
       old_tree <- new_tree
     }
   }
