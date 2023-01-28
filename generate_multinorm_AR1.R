@@ -24,11 +24,14 @@ AR1Cor <- function(n, Rho) {
 }
 
 ## function to simulate linear model
-sim.reg <- function(nobs, coef, mu, sd, Rho){
+sim.reg <- function(nobs, coef, mu, sd, Rho){ 
+                    
   num.var = length(coef)  
   beta = as.matrix(coef)
   ## generate data from multivariate normal with AR(1) - using the above function and MASS package
-  H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
+  #H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
+  ## generate data from multivariate normal with AR(1) - using 'arima.sim' function
+  H = t(replicate(nobs, arima.sim(n = length(coef), model = list(ar = Rho))))
   Y = H %*% beta + rnorm(nobs, 0, sd)
   return(list(Z = H, Y = c(Y), coeff = coef))
 }
