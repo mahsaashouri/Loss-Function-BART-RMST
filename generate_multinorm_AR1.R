@@ -32,7 +32,7 @@ sim.reg <- function(nobs, coef, mu, sd, Rho){
   #H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
   ## generate data from multivariate normal with AR(1) - using 'arima.sim' function
   H = t(replicate(nobs, arima.sim(n = length(coef), model = list(ar = Rho))))
-  Y = H %*% beta + rnorm(nobs, 0, sd)
+  Y = exp(H %*% beta + rnorm(nobs, 0, sd))
   return(list(Z = H, Y = c(Y), coeff = coef))
 }
 
@@ -49,12 +49,10 @@ Rho = 0.9
 DataSim <- sim.reg(n = 1000, coef = coef, mu = mu, sd = sd, Rho = Rho) 
 X.train <- DataSim$Z
 colnames(X.train) <- paste0('X', 1:k)
-alpha <- ifelse(DataSim$Y>=0, 1, -1)
-C.train <- rgamma(n, shape = abs(alpha), scale = alpha*DataSim$Y)
+alpha <- 1
+C.train <- rgamma(n, shape =alpha, scale = alpha*DataSim$Y)
 Y.train <- pmin(DataSim$Y, C.train)
 delta.train <- ifelse(DataSim$Y <= C.train, 1, 0)
-
-
 sgrid <- seq(0, 10, by=.1)
 
 ##run BCART 
@@ -64,6 +62,6 @@ train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=1000, sigma.m
 
 Y.min <- min(Y.train)
 Y.max <- max(Y.train)
-plot(rowMeans(train$fitted.values[,,1]), DataSim$Y[delta.train==1], asp=1, pch='.',
+plot(rowMeans(train$fitted.values[,,1]), DataSim$Y, asp=1, pch='.',
      xlim=c(Y.min, Y.max), ylab='BCART')
 
