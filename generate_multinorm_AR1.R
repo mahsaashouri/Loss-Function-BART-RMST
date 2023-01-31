@@ -43,7 +43,7 @@ k = 10  # total number of predictors
 coef = c(0.1,0,0.05,0.1,1,0.03,0.9,0,0.25,1)
 mu = rep(0,k)
 sd = 1
-Rho = 0.9
+Rho = 0.5
 
 # simulate training set
 DataSim <- sim.reg(n = 1000, coef = coef, mu = mu, sd = sd, Rho = Rho) 

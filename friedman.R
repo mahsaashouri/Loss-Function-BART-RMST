@@ -37,7 +37,7 @@ T.train <- ET.train+sigma*rexp(n)
 C.train <- rexp(n, rate = .05)
 Y.train <- pmin(T.train, C.train)
 delta.train <- ifelse(T.train <= C.train, 1, 0)
-
+ndraws <- 500
 # simulate test set
 #m <- 100 # number of test observation
 #X.test <- matrix(runif(m*k), m, k)
@@ -51,20 +51,42 @@ delta.train <- ifelse(T.train <= C.train, 1, 0)
 sgrid <- seq(0, 10, by=.1)
 
 ##run BCART
+train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=500, sigma.mu=1.2)
 
-train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=1000, sigma.mu=1.2)
-#test <- predict(train, X.test)
+## run BART
+test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
+old.tree <- list(test)[rep(1,5)]
 
+train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=500, sigma.mu=1.2)
 
+## arrange BART fitted values
+fitted.values.m <- matrix(NA, nrow = n, ncol = ndraws)
+fitted.values.s <- matrix(NA, nrow = length(old.tree), ncol = n)
+for(i in 1:length(old.tree)){
+  for(j in 1:ndraws){
+    fitted.values.m[,j] <- train.BART$fitted.values[[j]][,i]
+  }
+  fitted.values.s[i,] <- rowMeans(fitted.values.m)
+}
+
+## plot BCART and BART
+# BCART
 plot(rowMeans(train$fitted.values), ET.train)
 
-
-Y.min <- min(Y.train)
-Y.max <- max(Y.train)
 plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
-          xlim=c(Y.min, Y.max), ylab='BCART')
-#plot(rowMeans(train$fitted.values[,,1]), ET.train[delta.train==1], asp=1, pch='.',
-#     xlim=c(Y.min, Y.max), ylab='BCART')
+     xlim=c(min(Y.train), max(Y.train)), ylab='BCART')
+# BART
+plot(colMeans(fitted.values.s), ET.train)
+
+plot(colMeans(fitted.values.s), ET.train, asp=1, pch='.',
+     xlim=c(min(Y.train), max(Y.train)), ylab='BART')
+
+
+
+
+################
+## other methods
+################
 
 
 ## coxph model
