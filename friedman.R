@@ -88,8 +88,9 @@ plot(colMeans(fitted.values.s), ET.train, asp=1, pch='.',
 ## other methods
 ################
 
-
+###############
 ## coxph model
+###############
 library(survival)
 coxph_mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
 plot(survfit(coxph_mod))
@@ -122,12 +123,15 @@ coxmod_mus <- CoxExpectedSurv(X=X.train, beta_val=coxph_mod$coefficients,
 
 plot(pmin(ET.train, 25), coxmod_mus)
 
+###############
 ## regularized coxph model with glmnet
+###############
 library(glmnet)
 rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox")
 
-
+###############
 ## basic AFT model
+###############
 library(survival)
 BAFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
 
@@ -136,16 +140,51 @@ pre1 <- pmin(BAFT$linear.predictors, log(tau))
 pre2 <- pmin(exp(BAFT$linear.predictors), tau)
 plot(pmin(ET.train, tau), pre2)
 
-## penalized AFT model
 
-## survival boosting - Hothorn paper
+###############
+## survival boosting 
+###############
+## Using gbm package
+library(survival)
+library(gbm)
+SurveBoost1 <- gbm(Surv(Y.train, delta.train)~X.train, distribution = "gaussian", n.trees = 1000)
+# Make predictions
+pred1 <- predict(SurveBoost1, type = "response")
+# Plot the model's performance
+plot(survfit(Surv(Y.train, delta.train) ~ pred1), lty = 1:2, mark.time = FALSE)
+
+
+## Using mboost package
 library(mboost)
-SurveBoost <- glmboost(Surv(Y.train, delta.train)~X.train, family = CoxPH(),
-                control=boost_control(mstop = 500))
-# plot Survival Curves for a Cox Proportional Hazards Model
-plot(survFit(SurveBoost))
+SurveMBoost <- glmboost(Surv(Y.train, delta.train)~X.train, family = Gehan(), control = boost_control(mstop = 100))
+# Make predictions
+predSurveMBoost <- predict(SurveMBoost)#, type = "response")
+# Plot the model's performance
+plot(survfit(Surv(Y.train, delta.train) ~ predSurveMBoost), lty = 1:2, mark.time = FALSE)
 
+###############
+## Survival ensembles - Hothorn paper ## removed from CRAN (library(survivalEnsemble))
+###############
+library(ranger)
+data.sample <- cbind.data.frame(time = Y.train, status = delta.train, X.train)
+SurvEns <- ranger(Surv(time, status)~., data = data.sample, num.trees = 500, importance = "permutation")
 
+predSurvEns <- predict(SurvEns, data.sample)
+
+###############
+## boosting AFT
+###############
+library(ranger)
+data.sample <- cbind.data.frame(time = Y.train, status = delta.train, X.train)
+
+SurveBoostAFT <- ranger(Surv(time, status) ~ ., data = data.sample, importance = "impurity", num.trees = 500)
+
+# Summary of the fitted model
+print(SurveBoostAFT)
+
+###############
 ## AFT BART
+###############
 library(BART)
 AFTBART <- abart(X.train, Y.train, delta.train)
+
