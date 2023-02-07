@@ -54,6 +54,6 @@ lines(xx[order(xx)], mean_fn[order(xx)], type="s")
 test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
 old.tree <- list(test)[rep(1,10)]
 
-test_run_BART <- RMST_BART(Y, delta, X, old.tree = old.tree, ndraws=500, sigma.mu=1.2)
+test_run_BART <- RMST_BART(Y, delta, X, X.test, old.tree = old.tree, ndraws=500, sigma.mu=1.2)
 
 

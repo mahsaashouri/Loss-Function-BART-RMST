@@ -16,7 +16,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
- 
+  
   ## organize data
   if(ncol(X) > 1) {
     xmat <- X[delta==1,]
@@ -46,13 +46,13 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
   #  FittedValues[,i] <- FittedValue(xmat, old.tree[[i]]$splt.vals, old.tree[[i]]$splt.vars, muvec, old.tree[[i]]$dvec)
   #}
   FittedValues <- matrix(0, nrow = n,  ncol = length(old.tree))
-  
+  FittedValues.test <- matrix(0, nrow = nrow(X.test),  ncol = length(old.tree))
   NNodes <- loglikvals <- matrix(NA, nrow = (ndraws+burnIn), ncol = length(old.tree))
   
   Fitted.Values <- list()
   for(j in 1:(ndraws+burnIn)){
-      for(k in 1:length(old.tree)) {
-        
+    for(k in 1:length(old.tree)) {
+      
       # update tree
       ## sample one of three move types
       
@@ -101,14 +101,16 @@ RMST_BART <- function(Y, delta, X, old.tree, ndraws, sigma.mu,
       ## record number of internal nodes and loglikelihood values
       NNodes[j,k] <- sum(new_tree$dvec==1)
       loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res[delta==1], Gvec=Gvec[delta==1], sigma.mu=sigma.mu)
-      
+      if(j==(ndraws+burnIn)){
+        FittedValues.test[,k] <- FittedValue(X.test, new_tree$splt.vals, new_tree$splt.vars, muvec, new_tree$dvec)
+      }
       ## replace old_tree with new_tree
       old.tree[[k]] <- new_tree
-      }
+    }
     Fitted.Values[[length(Fitted.Values)+1]] <- FittedValues
   }
   ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)], nnodes=tail(NNodes, ndraws), 
-              logliks=tail(loglikvals, ndraws))
+              logliks=tail(loglikvals, ndraws), fitted.values.test=FittedValues.test)
   return(ans)
 }
 
