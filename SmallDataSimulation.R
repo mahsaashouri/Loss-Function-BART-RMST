@@ -34,11 +34,13 @@ Y <- pmin(logT, logCC)
 Y <- pmin(Y, 10)
 delta <- ifelse(logT <= logCC, 1, 0)
 X <- matrix(xx, nrow=n, ncol=1)
+X.test <- matrix(sample(X, 100), nrow = 100, ncol = 1)
 colnames(X) <- 'x'
+colnames(X.test) <- 'x'
 sgrid <- seq(0, 10, by=.1)
 muvec <- 0
 
-test_run <- RMST_BCART(Y, delta, X, ntree=1, ndraws=500, sigma.mu=1.2)
+test_run <- RMST_BCART(Y, delta, X, X.test, ntree=1, ndraws=10, sigma.mu=1.2)
 
 
 pmean <- rowMeans(test_run$fitted.values[,,1])
