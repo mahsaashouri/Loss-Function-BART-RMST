@@ -51,13 +51,13 @@ ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 
 ##run BCART
-train <- RMST_BCART(Y.train, delta.train, X.train, ntree=1, ndraws=500, sigma.mu=1.2)
+train <- RMST_BCART(Y.train, delta.train, X.train, ndraws=500, sigma.mu=1.2)
 
 ## run BART
 test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
 old.tree <- list(test)[rep(1,5)]
 
-train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=500, sigma.mu=1.2)
+train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=50, sigma.mu=1.2)
 
 ## arrange BART fitted values
 fitted.values.m <- matrix(NA, nrow = n, ncol = ndraws)
@@ -71,7 +71,7 @@ for(i in 1:length(old.tree)){
 
 ## plot BCART and BART
 # BCART
-plot(rowMeans(train$fitted.values), ET.train)
+plot(ET.train, rowMeans(train$fitted.values))
 
 plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BCART')
@@ -142,7 +142,7 @@ plot(pmin(ET.train, tau), pre2)
 
 
 ###############
-## survival boosting 
+## survival boosting
 ###############
 ## Using gbm package
 library(survival)
