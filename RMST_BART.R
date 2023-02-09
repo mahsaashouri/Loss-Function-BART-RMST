@@ -74,7 +74,7 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
 
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], sigma.mu,
-                               Gvec, X = X, m = move_type, alpha, beta, length(old.tree), tau = tau)
+                               Gvec, X = xmat, m = move_type, alpha, beta, length(old.tree), tau = tau)
 
       u <- runif(1)
       if(u <= MH_ratio) {
