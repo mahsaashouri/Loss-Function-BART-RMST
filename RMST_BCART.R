@@ -37,7 +37,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
   if(is.null(sgrid)) {
     sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
   }
-  SS <- ComputeSurvStatistics(sgrid=sgrid, times=exp(Y), status=1 - delta)
+  SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
   lam.draw <- GPDraw(eU=exp(U), sgrid=sgrid, num.risk=SS$n.risk,
                      num.events=SS$n.event, kappa0=1)
   Gvec <- exp(-lam.draw)
