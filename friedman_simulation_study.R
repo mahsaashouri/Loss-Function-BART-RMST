@@ -1,4 +1,9 @@
 
+
+library(survival)
+library(BART)
+library(glmnet)
+library(mboost)
 ##  the RMST_BCART function
 setwd("~/Documents/LossFunctionBART/Loss-Function--BART")
 source("A_matrix.R")
@@ -30,12 +35,16 @@ n = 1000 # number of training observation
 k = 10  # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
+## choosing this big tau value cause warning
+#Warning message:
+ # In regularize.values(x, y, ties, missing(ties), na.rm = na.rm) :
+#  collapsing to unique 'x' values
 tau <- 50000
 gam_alph <- 20
 nreps <- 5 # number of simulation replications
 
 cens_prop <- rep(NA, nreps)
-rmse_bcart <- rmse_aft <- rmse_aft_null <- rep(NA, nreps)
+rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rmse_aft <- rmst_aft_bart<- rmse_aft_null <- rep(NA, nreps)
 for(j in 1:nreps) {
     X.train <- matrix(runif(n*k), n, k)
     colnames(X.train) <- paste0('X', 1:k)
@@ -47,17 +56,39 @@ for(j in 1:nreps) {
     C.train <- runif(n, min=1, max=3)
     Y.train <- pmin(T.train, C.train)
     delta.train <- ifelse(T.train <= C.train, 1, 0)
-    bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, ndraws=500, tau=tau, sigma.mu=1.2)
+    bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, ndraws=500, tau=500, sigma.mu=1.2)
     bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values), log(tau))
+    
+    ## Coxph
+    COXPH <- coxph(Surv(Y.train, delta.train) ~ X.train)
+    COXPH_fitted <- pmin(COXPH$linear.predictors, log(tau))
+    
+    ## regularized coxph model
+    RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0)
+    RCOXPH_fitted <- pmin(c(predict(RCOXPH, X.train, type = 'response')), log(tau))
+    
+    ## survival boosting
+    SBOOST <- glmboost(Surv(Y.train, delta.train)~X.train, family = Gehan(), control = boost_control(mstop = 100))
+    SBOOST_fitted <- pmin(c(predict(SBOOST)), log(tau))
 
+    ## AFT
     AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
     AFT_fitted <- pmin(AFT$linear.predictors, log(tau))
+    
+    ## AFT BART
+    AFT_BART <- abart(X.train, Y.train, delta.train)
+    AFT_BART_fitted <-  pmin(AFT_BART$yhat.train, log(tau))
 
+    ## AFT null
     AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
     AFT_null_fitted <- pmin(AFT_null$linear.predictors, log(tau))
 
     rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.train)*(bcart_fitted - mu.train)))
+    rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.train)*(COXPH_fitted - mu.train)))
+    rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.train)*(RCOXPH_fitted - mu.train)))
+    rmse_sboost[j] <- sqrt(mean((SBOOST_fitted - mu.train)*(SBOOST_fitted - mu.train)))
     rmse_aft[j] <- sqrt(mean((AFT_fitted - mu.train)*(AFT_fitted - mu.train)))
+    rmst_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.train)*(AFT_BART_fitted - mu.train)))
     rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.train)*(AFT_null_fitted - mu.train)))
     cens_prop[j] <- mean(delta.train) # also record censoring proportion
 }

@@ -127,7 +127,7 @@ plot(pmin(ET.train, 25), coxmod_mus)
 ## regularized coxph model with glmnet
 ###############
 library(glmnet)
-rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox")
+rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0)
 
 ###############
 ## basic AFT model
