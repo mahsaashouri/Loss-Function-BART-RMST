@@ -66,7 +66,7 @@ for(i in 1:length(old.tree)){
   for(j in 1:ndraws){
     fitted.values.m[,j] <- train.BART$fitted.values[[j]][,i]
   }
-  fitted.values.s[i,] <- rowMeans(fitted.values.m)
+  fitted.values.s[i,] <- rowSums(fitted.values.m)
 }
 
 ## plot BCART and BART

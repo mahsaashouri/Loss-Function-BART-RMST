@@ -43,6 +43,27 @@ tau <- 50000
 gam_alph <- 20
 nreps <- 5 # number of simulation replications
 
+## function we need for cox model
+CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
+  ## This function computes E( min(T_i, tau) |x_i) for
+  ## a cox ph model
+  mu.x <- colMeans(X)
+  integrand <- function(time, xi, beta_val) {
+    nu <- sum(xi*beta_val)
+    ans <- exp(-H0fn(time)*exp(nu))
+    return(ans)
+  }
+  nn <- nrow(X)
+  fitted_vals <- rep(NA, nn)
+  for(k in 1:nn) {
+    II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
+                    beta_val=beta_val, subdivisions=500L)
+    fitted_vals[k] <- II$value
+  }
+  return(fitted_vals)
+}
+
+
 cens_prop <- rep(NA, nreps)
 rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rmse_aft <- rmst_aft_bart<- rmse_aft_null <- rep(NA, nreps)
 for(j in 1:nreps) {
@@ -60,8 +81,13 @@ for(j in 1:nreps) {
     bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values), log(tau))
     
     ## Coxph
-    COXPH <- coxph(Surv(Y.train, delta.train) ~ X.train)
-    COXPH_fitted <- pmin(COXPH$linear.predictors, log(tau))
+    COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
+    coxhaz <- basehaz(COXPH.mod)
+    H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
+                      yright=max(coxhaz$hazard))
+    COXPH <- CoxExpectedSurv(X=X.train, beta_val=COXPH.mod$coefficients,
+                    H0fn=H0fn, tau=1)
+    COXPH_fitted <- pmin(COXPH, log(tau))
     
     ## regularized coxph model
     RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0)
@@ -77,7 +103,7 @@ for(j in 1:nreps) {
     
     ## AFT BART
     AFT_BART <- abart(X.train, Y.train, delta.train)
-    AFT_BART_fitted <-  pmin(AFT_BART$yhat.train, log(tau))
+    AFT_BART_fitted <-  pmin(AFT_BART$yhat.train.mean, log(tau))
 
     ## AFT null
     AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
