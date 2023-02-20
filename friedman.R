@@ -58,16 +58,9 @@ test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
 old.tree <- list(test)[rep(1,5)]
 
 train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=500, sigma.mu=1.2)
+sum_list <- lapply(train.BART$fitted.values, rowSums)
+train_BART_sum <- as.data.frame(do.call(cbind, sum_list))
 
-## arrange BART fitted values
-fitted.values.m <- matrix(NA, nrow = n, ncol = ndraws)
-fitted.values.s <- matrix(NA, nrow = length(old.tree), ncol = n)
-for(i in 1:length(old.tree)){
-  for(j in 1:ndraws){
-    fitted.values.m[,j] <- train.BART$fitted.values[[j]][,i]
-  }
-  fitted.values.s[i,] <- rowSums(fitted.values.m)
-}
 
 ## plot BCART and BART
 # BCART
@@ -76,7 +69,7 @@ plot(ET.train, rowMeans(train$fitted.values))
 plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BCART')
 # BART
-plot(ET.train, colMeans(fitted.values.s))
+plot(ET.train, rowMeans(train_BART_sum))
 
 plot(colMeans(fitted.values.s), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BART')
