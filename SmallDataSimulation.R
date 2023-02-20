@@ -40,7 +40,9 @@ colnames(X.test) <- 'x'
 sgrid <- seq(0, 10, by=.1)
 muvec <- 0
 
-test_run <- RMST_BCART(Y, delta, X, X.test, ntree=1, ndraws=10, sigma.mu=1.2)
+
+## warnings: Gvec returns NA
+test_run <- RMST_BCART(Y, delta, X, X.test, ndraws=10)
 
 
 pmean <- rowMeans(test_run$fitted.values[,,1])

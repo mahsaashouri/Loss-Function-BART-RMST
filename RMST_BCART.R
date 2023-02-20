@@ -47,7 +47,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
 
   FittedValues <- matrix(NA, nrow=n,  ncol=ndraws+burnIn)
   if(!is.null(X.test)) {
-      FittedValues.test <- matrix(NA, nrow = nrow(X.test), ncol = ntree)
+      FittedValues.test <- matrix(NA, nrow = nrow(X.test), ncol = ndraws+burnIn)
   } else {
       FittedValues.test <- NULL
   }
@@ -75,7 +75,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
      }
      ## compute the ratio
      MH_ratio <- RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree, sigma.mu,
-                              Gvec = Gvec, X = xmat, m = move_type, alpha, beta, ntree, tau = tau)
+                              Gvec = Gvec, X = xmat, m = move_type, alpha, beta, tau = tau)
      u <- runif(1)
      if(u <= MH_ratio) {
         new_tree <- proposed_tree
