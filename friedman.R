@@ -57,7 +57,7 @@ train <- RMST_BCART(Y.train, delta.train, X.train, ndraws=500, sigma.mu=1.2)
 test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
 old.tree <- list(test)[rep(1,5)]
 
-train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=50, sigma.mu=1.2)
+train.BART <- RMST_BART(Y.train, delta.train, X.train, old.tree, ndraws=500, sigma.mu=1.2)
 
 ## arrange BART fitted values
 fitted.values.m <- matrix(NA, nrow = n, ncol = ndraws)
@@ -76,7 +76,7 @@ plot(ET.train, rowMeans(train$fitted.values))
 plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BCART')
 # BART
-plot(colMeans(fitted.values.s), ET.train)
+plot(ET.train, colMeans(fitted.values.s))
 
 plot(colMeans(fitted.values.s), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BART')
