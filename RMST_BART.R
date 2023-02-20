@@ -28,8 +28,8 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
     tau <- max(Y[delta==1])
   }
 
-  #U <- pmin(Y[delta==1], tau)
-  U <- pmin(Y, tau)
+  U <- pmin(Y[delta==1], tau)
+  #U <- pmin(Y, tau)
   ## get Gvec
   if(is.null(sgrid)) {
     sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
@@ -39,7 +39,7 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
                      num.events=SS$n.event, kappa0=1)
   Gvec <- exp(-lam.draw)
 
-  n <- length(U)
+  n <- length(Y)
   ## initialize fitted values
   #FittedValues <- matrix(NA, nrow = n,  ncol = length(old.tree))
   #for(i in 1:length(old.tree)){
@@ -70,7 +70,7 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
       }
 
       # update Rs (U.res)
-      U.res <- U - (rowSums(FittedValues) - FittedValues[,k])
+      U.res <- U - (rowSums(FittedValues[delta==1,]) - FittedValues[delta==1,k])
 
       ## compute the ratio
       MH_ratio <- RMST_MHRatio(U = U.res, new_tree = proposed_tree, old_tree = old.tree[[k]], sigma.mu,
@@ -89,8 +89,8 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
 
       ## get mean and sigma for updating mu values
       AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
-      WTGDiag <- c(crossprod(AT, 1/Gvec[delta==1]))
-      VG <- U[delta==1]/Gvec[delta==1]
+      WTGDiag <- c(crossprod(AT, 1/Gvec))
+      VG <- U/Gvec
       Z <- c(crossprod(AT, VG))
 
       ## update mu values
@@ -104,7 +104,7 @@ RMST_BART <- function(Y, delta, X, old.tree, X.test=NULL, ndraws=100, sigma.mu=1
 
       ## record number of internal nodes and loglikelihood values
       NNodes[j,k] <- sum(new_tree$dvec==1)
-      loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res[delta==1], Gvec=Gvec[delta==1], sigma.mu=sigma.mu)
+      loglikvals[j,k] <- LogLik(tree=new_tree, X=xmat, U=U.res, Gvec=Gvec, sigma.mu=sigma.mu)
 
       if(!is.null(X.test)) {
          if(j==(ndraws+burnIn)){
