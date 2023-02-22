@@ -66,7 +66,7 @@ train_BART_sum <- as.data.frame(do.call(cbind, sum_list))
 # BCART
 plot(ET.train, rowMeans(train$fitted.values))
 
-plot(rowMeans(train$fitted.values[,,1]), ET.train, asp=1, pch='.',
+plot(rowMeans(train$fitted.values), ET.train, asp=1, pch='.',
      xlim=c(min(Y.train), max(Y.train)), ylab='BCART')
 # BART
 plot(ET.train, rowMeans(train_BART_sum))
@@ -86,7 +86,6 @@ plot(colMeans(fitted.values.s), ET.train, asp=1, pch='.',
 ###############
 library(survival)
 coxph_mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
-plot(survfit(coxph_mod))
 coxhaz <- basehaz(coxph_mod)
 plot(c(0, coxhaz$time), c(0, coxhaz$hazard))
 H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
@@ -120,7 +119,8 @@ plot(pmin(ET.train, 25), coxmod_mus)
 ## regularized coxph model with glmnet
 ###############
 library(glmnet)
-rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0)
+
+rcoxph <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0, alpha = 1)
 
 ###############
 ## basic AFT model

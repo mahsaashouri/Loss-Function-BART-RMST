@@ -39,7 +39,7 @@ sgrid <- seq(0, 10, by=.1)
 #Warning message:
  # In regularize.values(x, y, ties, missing(ties), na.rm = na.rm) :
 #  collapsing to unique 'x' values
-tau <- 50000
+tau <- 500
 gam_alph <- 20
 nreps <- 5 # number of simulation replications
 
@@ -90,7 +90,7 @@ for(j in 1:nreps) {
     COXPH_fitted <- pmin(COXPH, log(tau))
     
     ## regularized coxph model
-    RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 0)
+    RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 1, alpha = 1)
     RCOXPH_fitted <- pmin(c(predict(RCOXPH, X.train, type = 'response')), log(tau))
     
     ## survival boosting
