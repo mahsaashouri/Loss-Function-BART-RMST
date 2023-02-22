@@ -31,8 +31,8 @@ set.seed(123)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 sigma = 1.0
-n = 1000 # number of training observation
-k = 10  # total number of predictors
+n = 250 # 250 or 2000 # number of training observation
+k = 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
@@ -74,9 +74,10 @@ for(j in 1:nreps) {
     ## might need to input tau into this calculation?
 
     T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
-    C.train <- runif(n, min=1, max=3)
+    C.train <- runif(n, min=.5, max=3) ## min = 0.5 or 2
     Y.train <- pmin(T.train, C.train)
-    delta.train <- ifelse(T.train <= C.train, 1, 0)
+    delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
+    mean(delta.train)
     bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, ndraws=500, tau=500, sigma.mu=1.2)
     bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values), log(tau))
     
@@ -94,8 +95,9 @@ for(j in 1:nreps) {
     RCOXPH_fitted <- pmin(c(predict(RCOXPH, X.train, type = 'response')), log(tau))
     
     ## survival boosting
-    SBOOST <- glmboost(Surv(Y.train, delta.train)~X.train, family = Gehan(), control = boost_control(mstop = 100))
+    SBOOST <- glmboost(Surv(Y.train, delta.train)~X.train, family = Gehan(), control = boost_control(mstop = 300))
     SBOOST_fitted <- pmin(c(predict(SBOOST)), log(tau))
+    sqrt(mean((SBOOST_fitted - mu.train)*(SBOOST_fitted - mu.train)))
 
     ## AFT
     AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
