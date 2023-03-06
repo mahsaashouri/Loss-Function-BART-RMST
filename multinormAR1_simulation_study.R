@@ -97,7 +97,6 @@ for(j in 1:nreps) {
   C.test <- runif(n, min=10, max=900) ## max = 50 or 900
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  mean(delta.test) 
   mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
   
   ## RMST-BCART
