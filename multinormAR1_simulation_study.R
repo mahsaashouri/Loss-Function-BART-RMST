@@ -50,7 +50,7 @@ sim.reg <- function(nobs, coef, mu, sd, Rho){
   #H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
   ## generate data from multivariate normal with AR(1) - using 'arima.sim' function
   H = t(replicate(nobs, c(arima.sim(length(coef), model = list(ar = Rho)))))
-  Y = exp(H %*% beta + rnorm(nobs, 0, sd))
+  Y = exp(H %*% beta)
   return(list(Z = H, Y = c(Y), coeff = coef))
 }
 
@@ -79,14 +79,14 @@ cens_prop <- rep(NA, nreps)
 rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rep(NA, nreps)
 for(j in 1:nreps) {
   ## training set
-  DataSim <- sim.reg(n, coef = coef, mu = mu, sd = 1, Rho = Rho) 
+  DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho) 
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:k)
   T.train <- rgamma(n, shape = gam_alpha, rate = DataSim$Y)
-  C.train <- runif(n, min=.5, max=3) ## min = 0.5 or 2
+  C.train <- runif(n, min=10, max=900) ## max = 50 or 900
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  mu.train <- digamma(gam_alph) - log(DataSim$Y)
+  mu.train <- digamma(gam_alpha) - log(DataSim$Y)
   ## might need to input tau into this calculation?
   
   ## test set
@@ -94,10 +94,11 @@ for(j in 1:nreps) {
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:k)
   T.test <- rgamma(n, shape = gam_alpha, rate = DataSim.test$Y)
-  C.test <- runif(n, min=.5, max=3) ## min = 0.5 or 2
+  C.test <- runif(n, min=10, max=900) ## max = 50 or 900
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  mu.test <- digamma(gam_alph) - log(DataSim.test$Y)
+  mean(delta.test) 
+  mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
   
   ## RMST-BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test, ndraws=500, tau=500, sigma.mu=1.2)
