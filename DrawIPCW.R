@@ -1,3 +1,16 @@
+LogSumExp <- function(lseq) {
+    ## This function computes
+    ##.   sum(exp(lseq))
+
+    cstar <- max(lseq)
+    ans <- exp(cstar)*sum(exp(lseq - cstar))
+    return(ans)
+}
+
+
+
+
+
 LambdaCDF <- function(t, nevent, nrisk, c0, delta_alpha) {
 
   even_seq <- seq(0, nevent, by=2)
