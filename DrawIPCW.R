@@ -8,9 +8,6 @@ LogSumExp <- function(lseq) {
 }
 
 
-
-
-
 LambdaCDF <- function(t, nevent, nrisk, c0, delta_alpha) {
 
   even_seq <- seq(0, nevent, by=2)
