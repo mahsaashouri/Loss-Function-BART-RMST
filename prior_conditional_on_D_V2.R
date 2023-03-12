@@ -1,9 +1,8 @@
 ProbD <- function(U, X, splt.vals, splt.vars, #muvec,
-                  alpha, beta, d, tau){
+                  alpha, beta, d){
   n <- length(U)
   l <- length(splt.vars)
   PrD <- DProb(alpha, beta, d)
-  #log_PrMu <- sum( dnorm(muvec, mean=0, sd=tau, log=TRUE) )
   if(l==0) {
      #ans <- exp(log_PrMu + log(PrD))
     ans <- exp(log(PrD))
