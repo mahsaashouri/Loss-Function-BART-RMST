@@ -10,7 +10,7 @@ LogLik <- function(tree, X, U, Gvec, sigma.mu){
   WTGDiag <- c(crossprod(AT, 1/Gvec))
   VG <- U/Gvec
 
-  FE <- -(1/2)*sum((U*U)/Gvec)
+  FE <- -0.5*sum( log1p(sigma.mu*sigma.mu*WTGDiag) )
 
   Z <- c(crossprod(AT, VG))
 
