@@ -88,11 +88,24 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     ## need dvec, splt.vals, and splt.vars components of old.tree
     old.tree[[h]]$dvec <- FindDvec(tree_structure)
     ## Get number of internal nodes
-    splt.vars <- sample(1:nvars, size=nnodes, replace=TRUE)
-    old.tree$splt.vars <- splt.vars
+    old.nnodes <- sum(old.tree[[h]]$dvec==1)
+    ## sample splt.vars
+    if(old.nnodes == 0){
+      old.tree[[h]]$splt.vars <- numeric(0)
+      old.tree[[h]]$splt.vals <- numeric(0)
+    }
+    else{
+    splt.vars <- sample(colnames(X), size=old.nnodes, replace=TRUE)
+    old.tree[[h]]$splt.vars <- splt.vars
     ## sample splt.vals
-    old.tree$splt.vals <-
-
+    splt.vals <- c()
+    for(k in 1:length(splt.vars)){
+      candidate_splitval <- unique(X[,splt.vars[k]])
+      ww <- table(X[,splt.vars[k]])/nrow(X)
+      splt.vals[k] <- candidate_splitval[sample(length(candidate_splitval), size=1,prob=ww)]
+    }
+    old.tree[[h]]$splt.vals <- splt.vals
+    }
   }
 
 
