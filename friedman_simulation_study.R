@@ -22,6 +22,7 @@ source("Transition_Prob.R")
 source("fitted_value.R")
 source("prior_conditional_on_D_V2.R")
 source("tree-configuration.R")
+source("DrawIPCW.R")
 
 ## Friedman test function
 

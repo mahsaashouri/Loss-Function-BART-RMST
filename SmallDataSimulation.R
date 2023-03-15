@@ -18,6 +18,7 @@ source("Transition_Prob.R")
 source("fitted_value.R")
 source("prior_conditional_on_D_V2.R")
 source("tree-configuration.R")
+source("DrawIPCW.R")
 
 
 n <- 500
@@ -53,9 +54,4 @@ lines(xx[order(xx)], mean_fn[order(xx)], type="s")
 
 ## BART
 
-test <- list(dvec = Dmat[1,], splt.vars = c(), splt.vals = c())
-old.tree <- list(test)[rep(1,10)]
-
-test_run_BART <- RMST_BART(Y, delta, X, X.test, old.tree = old.tree, ndraws=500, sigma.mu=1.2)
-
-
+test_run_BART <- RMST_BART(Y, delta, X, X.test, sigma.mu=1.2)
