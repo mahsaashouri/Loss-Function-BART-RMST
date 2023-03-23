@@ -13,3 +13,8 @@ Y <- METABRIC$overall_survival_months
 delta <- METABRIC$overall_survival
 sgrid <- seq(0, 4000, by=1)
 
+tau <- 500
+gam_alph <- 20
+sigma <- 1.0
+
+bcart_mod <- RMST_BCART(Y, delta, DATA, ndraws=500, tau=500, sigma.mu=1.2)

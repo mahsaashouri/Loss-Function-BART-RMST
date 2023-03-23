@@ -31,10 +31,10 @@ set.seed(123)
 # sample function
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
-sigma = 1.0
-n = 250 # 250 or 2000 # number of training observation
-n.test = 2000 # 2000 or 4000 # number of test observation
-k = 10 # 10 or 100 # total number of predictors
+sigma <- 1.0
+n <- 250 # 250 or 2000 # number of training observation
+n.test <- 2000 # 2000 or 4000 # number of test observation
+k <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
