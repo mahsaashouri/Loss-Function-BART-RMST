@@ -15,6 +15,10 @@ RMST_MHRatio <- function(U, new_tree, old_tree, sigma.mu, Gvec,
   ## prior ratio
 
   ## find the dvec row number (in Dmat matrix - all the possible tree structures matrix) for old and new tree
+  Dmat <- matrix(NA, nrow = 26, ncol = 15)
+  for (k in 1:26) {
+    Dmat[k,] <- FindDvec(k)
+  }
   d1 <- which(apply(Dmat, 1, function(x) all.equal(x[1:ncol(Dmat)], old_tree$dvec)) == "TRUE")
   d2 <- which(apply(Dmat, 1, function(x) all.equal(x[1:ncol(Dmat)], new_tree$dvec)) == "TRUE")
 

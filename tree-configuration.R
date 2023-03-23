@@ -37,5 +37,5 @@ FindDvec <- function(tree_structure) {
 }
 #Dmat <- matrix(NA, nrow = 26, ncol = 15)
 #for (k in 1:26) {
-#  Dmat[k,] <- dlist[[k]]
+#  Dmat[k,] <- FindDvec(k)
 #}
