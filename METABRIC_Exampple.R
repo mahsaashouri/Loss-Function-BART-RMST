@@ -56,6 +56,10 @@ METABRIC$neoplasm_histologic_grade <- as.factor(METABRIC$neoplasm_histologic_gra
 table(METABRIC$mutation_count)
 METABRIC$mutation_count[is.na(METABRIC$mutation_count)] <- 0
 
+## flip 1 and 0 valves in overall survival
+table(METABRIC$overall_survival)
+METABRIC$overall_survival <- ifelse(METABRIC$overall_survival == 1, 0, ifelse(METABRIC$overall_survival == 0, 1, 
+                                                                              METABRIC$overall_survival))
 
 ## running the analysis
 
