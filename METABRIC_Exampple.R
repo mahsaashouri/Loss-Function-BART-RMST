@@ -67,7 +67,7 @@ METABRIC$overall_survival <- ifelse(METABRIC$overall_survival == 1, 0, ifelse(ME
 ## split dataset into training and test set
 set.seed(123)
 ## 400 rows as test set (~20%)
-DATA <- train.set[ , !(names(METABRIC) %in% c('overall_survival'))]
+DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 
 index <- sample(1:nrow(DATA), 400)
@@ -76,11 +76,56 @@ train.set <- DATA[-index,]
 Y <- METABRIC[-index,]$overall_survival_months
 delta <- METABRIC[-index,]$overall_survival
 
+Y.test <- METABRIC[index,]$overall_survival_months
+mu.test <- log(Y.test)
+
 ## BCART
 sgrid <- seq(0, 4000, by=1)
 tau <- 500
 gam_alph <- 20
 sigma <- 1.0
 
-bcart_mod <- RMST_BCART(Y, delta, data.BCART, test.set,ndraws=500, tau=500, sigma.mu=1.2)
+bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=500, tau=500, sigma.mu=1.2)
+bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values.test), log(tau))
+
+## Coxph
+COXPH.mod <- coxph(Surv(Y, delta) ~ train.set)
+coxhaz <- basehaz(COXPH.mod)
+H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
+                  yright=max(coxhaz$hazard))
+COXPH <- CoxExpectedSurv(X=test.set, beta_val=COXPH.mod$coefficients,
+                         H0fn=H0fn, tau=1)
+COXPH_fitted <- pmin(COXPH, log(tau))
+
+## regularized coxph model
+RCOXPH <-  glmnet(train.set, Surv(Y, delta), family = "cox", lambda = 1, alpha = 1)
+RCOXPH_fitted <- pmin(c(predict(RCOXPH, test.set, type = 'response')), log(tau))
+
+## survival boosting
+SBOOST <- glmboost(Surv(Y, delta)~train.set, family = Gehan(), control = boost_control(mstop = 300))
+## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
+SBOOST_fitted <- pmin(c(predict(SBOOST, newdata = data.frame(test.set))), log(tau))
+
+## AFT
+AFT <- survreg(Surv(Y, delta) ~ train.set)
+## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
+AFT_fitted <- pmin(predict(AFT, newdata = data.frame(test.set), type = 'response'), log(tau))
+#AFT_fitted <- pmin(AFT$linear.predictors, log(tau))
+
+## AFT BART
+AFT_BART <- abart(train.set, Y, x.test = test.set, delta)
+AFT_BART_fitted <-  pmin(AFT_BART$yhat.test.mean, log(tau))
+
+## AFT null
+AFT_null <- survreg(Surv(Y, delta) ~ 1)
+AFT_null_fitted <- pmin(predict(AFT_null, newdata = data.frame(test.set), type = 'response'), log(tau))
+
+rmse_bcart <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
+rmse_coxph <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
+rmse_rcoxph <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
+rmse_sboost <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
+rmse_aft <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
+rmse_aft_bart <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
+rmse_aft_null <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
+
 
