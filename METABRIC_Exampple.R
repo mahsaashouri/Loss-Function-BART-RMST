@@ -60,17 +60,27 @@ METABRIC$mutation_count[is.na(METABRIC$mutation_count)] <- 0
 table(METABRIC$overall_survival)
 METABRIC$overall_survival <- ifelse(METABRIC$overall_survival == 1, 0, ifelse(METABRIC$overall_survival == 0, 1, 
                                                                               METABRIC$overall_survival))
+############################
+## running different methods
+############################
 
-## running the analysis
-
-DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
+## split dataset into training and test set
+set.seed(123)
+## 400 rows as test set (~20%)
+DATA <- train.set[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
-Y <- METABRIC$overall_survival_months
-delta <- METABRIC$overall_survival
-sgrid <- seq(0, 4000, by=1)
 
+index <- sample(1:nrow(DATA), 400)
+test.set <- DATA[index,]
+train.set <- DATA[-index,]
+Y <- METABRIC[-index,]$overall_survival_months
+delta <- METABRIC[-index,]$overall_survival
+
+## BCART
+sgrid <- seq(0, 4000, by=1)
 tau <- 500
 gam_alph <- 20
 sigma <- 1.0
 
-bcart_mod <- RMST_BCART(Y, delta, DATA, ndraws=500, tau=500, sigma.mu=1.2)
+bcart_mod <- RMST_BCART(Y, delta, data.BCART, test.set,ndraws=500, tau=500, sigma.mu=1.2)
+
