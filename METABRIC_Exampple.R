@@ -1,5 +1,10 @@
 
+library(survival)
+library(BART)
+library(glmnet)
+library(mboost)
 library(tidyverse)
+
 setwd("~/Documents/LossFunctionBART/Loss-Function--BART")
 source("A_matrix.R")
 source("ChangeMove.R")
@@ -78,6 +83,27 @@ delta <- METABRIC[-index,]$overall_survival
 
 Y.test <- METABRIC[index,]$overall_survival_months
 mu.test <- log(Y.test)
+
+## function we need for cox model
+CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
+  ## This function computes E( min(T_i, tau) |x_i) for
+  ## a cox ph model
+  mu.x <- colMeans(X)
+  integrand <- function(time, xi, beta_val) {
+    nu <- sum(xi*beta_val)
+    ans <- exp(-H0fn(time)*exp(nu))
+    return(ans)
+  }
+  nn <- nrow(X)
+  fitted_vals <- rep(NA, nn)
+  for(k in 1:nn) {
+    II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
+                    beta_val=beta_val, subdivisions=500L)
+    fitted_vals[k] <- II$value
+  }
+  return(fitted_vals)
+}
+
 
 ## BCART
 sgrid <- seq(0, 4000, by=1)
