@@ -33,10 +33,13 @@ METABRIC <- read.csv('METABRIC_RNA_Mutation.csv', header = TRUE)[,c(1:31)]
 
 ## drop unwanted columns
 METABRIC <- METABRIC %>% 
-  select(-c('patient_id', 'cancer_type', 'cancer_type_detailed', 'her2_status_measured_by_snp6', 'er_status_measured_by_ihc', 
-            'death_from_cancer', 'X3.gene_classifier_subtype'))
+  select(-c('patient_id', 'cancer_type', 'cancer_type_detailed', 'her2_status_measured_by_snp6', 'er_status', 
+            'death_from_cancer', 'X3.gene_classifier_subtype', 'oncotree_code', 'cellularity'))
 ## check number of missing in each column of the dataset
 colSums(is.na(METABRIC))
+
+## combine 4ER+ and 4ER- as 4 in integrative_cluster column
+METABRIC$integrative_cluster[METABRIC$integrative_cluster %in% c("4ER+","4ER-")] <- "4"
 
 ## drop tumor_stage = 0 
 table(METABRIC$tumor_stage)
@@ -60,6 +63,14 @@ METABRIC$neoplasm_histologic_grade <- as.factor(METABRIC$neoplasm_histologic_gra
 ## replace mutation_count = NA with 0
 table(METABRIC$mutation_count)
 METABRIC$mutation_count[is.na(METABRIC$mutation_count)] <- 0
+
+## drop rows empty in type_of_surgery
+table(METABRIC$type_of_breast_surgery) ## 16 rows empty
+METABRIC <- subset(METABRIC, !(type_of_breast_surgery == ''))
+
+## drop rows empty in er_status_measured_by_ihc
+table(METABRIC$er_status_measured_by_ihc) ## 25 rows empty
+METABRIC <- subset(METABRIC, !(er_status_measured_by_ihc == ''))
 
 ## flip 1 and 0 valves in overall survival
 table(METABRIC$overall_survival)
@@ -120,7 +131,7 @@ coxhaz <- basehaz(COXPH.mod)
 H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
                   yright=max(coxhaz$hazard))
 COXPH <- CoxExpectedSurv(X=test.set, beta_val=COXPH.mod$coefficients,
-                         H0fn=H0fn, tau=1)
+                         H0fn=H0fn, tau=500)
 COXPH_fitted <- pmin(COXPH, log(tau))
 
 ## regularized coxph model
