@@ -78,7 +78,6 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
 
   ## initialize trees
   old_tree <- list(dvec = FindDvec(1), splt.vars = c(), splt.vals = c())
-  print(old_tree)
   NNodes[1] <- sum(old_tree$dvec==1)
   loglikvals[1] <- LogLik(tree=old_tree, X=xmat, U=Y_tau,
                             Gvec=Gvec, sigma.mu=sigma.mu)
@@ -97,6 +96,7 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
        }
      }
      ## compute the ratio
+     print(Gvec)
      MH_ratio <- RMST_MHRatio(U = Y_tau, new_tree = proposed_tree, old_tree = old_tree,
                               sigma.mu=sigma.mu, Gvec=Gvec, X = xmat, m = move_type,
                               alpha=alpha, beta=beta)
