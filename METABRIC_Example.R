@@ -122,8 +122,12 @@ tau <- 500
 gam_alph <- 20
 sigma <- 1.0
 
-bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=500, tau=500, sigma.mu=1.2)
+## Gfull length is 841? train dataset has 1439 rows? we get NA values because of this difference
+
+bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=500, tau=50, sigma.mu=1.2)
 bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values.test), log(tau))
+
+bart_mod <- RMST_BART(Y, delta, train.set, test.set)
 
 ## Coxph
 COXPH.mod <- coxph(Surv(Y, delta) ~ train.set)
