@@ -58,7 +58,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   ## and set sigma.mu if its values was not input to the function
   if(transformation=="identity") {
     ## compute muhatb
-    muhatb <- sum((delta*U_tau)/GKM_weights)
+    muhatb <- sum(U_tau/GKM_weights)
     Y_tau <- U_tau - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
@@ -66,7 +66,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     }
   } else if(transformation=="log") {
     ## compute muhatb
-    muhatb <- sum((delta*log(U_tau))/GKM_weights)
+    muhatb <- sum(log(U_tau)/GKM_weights)
     Y_tau <- log(U_tau) - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
@@ -173,7 +173,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     }
   }
   ## Add back in muhatb at the end.
-  ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)],
+  ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)] + muhatb,
               nnodes=tail(NNodes, ndraws),
               logliks=tail(loglikvals, ndraws),
               fitted.values.test=FittedValues.test)
