@@ -29,18 +29,24 @@ DrawLambdas <- function(nevents, nrisks, kappa0, delta_alpha) {
   eta <- kappa0*delta_alpha
   bbeta <- nrisks - nevents + kappa0
   for(k in 1:nbins) {
-    done <- FALSE
-    while(!done) {
-      theta <- rgamma(1, shape=eta + nevents[k], rate=bbeta[k])
-      u <- runif(1)
-      thresh <- log1p(-exp(-theta)) - log(theta)
-      #print(c(thresh, nevents[k]*thresh, log(u)))
-      # This approach doesn't work too well if
-      #  nevents[k] is large
-      if(log(u) < nevents[k]*thresh) {
-         lambda_draw[k] <- theta
-         done <- TRUE
-      }
+
+    if(eta==1) {
+        rax <- rbeta(1, shape1=bbeta[k], shape2=nevents[k] + 1)
+        lambda_draw[k] <- -log(rax)
+    } else {
+        done <- FALSE
+        while(!done) {
+            theta <- rgamma(1, shape=eta + nevents[k], rate=bbeta[k])
+            u <- runif(1)
+            thresh <- log1p(-exp(-theta)) - log(theta)
+            #print(c(thresh, nevents[k]*thresh, log(u)))
+            # This approach doesn't work too well if
+            #  nevents[k] is large
+            if(log(u) < nevents[k]*thresh) {
+               lambda_draw[k] <- theta
+               done <- TRUE
+            }
+         }
     }
   }
   return(lambda_draw)
