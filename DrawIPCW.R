@@ -34,6 +34,9 @@ DrawLambdas <- function(nevents, nrisks, kappa0, delta_alpha) {
       theta <- rgamma(1, shape=eta + nevents[k], rate=bbeta[k])
       u <- runif(1)
       thresh <- log1p(-exp(-theta)) - log(theta)
+      #print(c(thresh, nevents[k]*thresh, log(u)))
+      # This approach doesn't work too well if
+      #  nevents[k] is large
       if(log(u) < nevents[k]*thresh) {
          lambda_draw[k] <- theta
          done <- TRUE
