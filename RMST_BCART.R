@@ -14,8 +14,9 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 
 
-RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
-                       alpha=0.95, beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
+RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="identity",
+                       sigma.mu=NULL, alpha=0.95, beta=2, kappa0=1,
+                       sgrid=NULL, tau=NULL, burnIn=100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
 
@@ -28,22 +29,27 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
   }
 
   if(is.null(tau)) {
-    tau <- max(Y[delta==1])
+    tau <- max(U[delta==1])
   }
-  U <- pmin(log(Y[delta==1]), tau)
-  ## want to add an option for not taking the log
-  #U <- pmin(Y, tau)
-  ## get Gvec
+  U_tau <- pmin(U[delta==1], tau)
+
   if(is.null(sgrid)) {
-    sgrid <- c(0, exp(seq(tau/101, tau, length.out=100)))
+    sgrid <- seq(0, tau, length.out=100)
   }
-  SS <- ComputeSurvStatistics(sgrid=sgrid, times=Y, status=1 - delta)
-  lam.draw <- GPDraw(eU=exp(U), sgrid=sgrid, num.risk=SS$n.risk,
-                     num.events=SS$n.event, kappa0=1)
-  Gvec <- exp(-lam.draw)
+  ## Draw Gvec weights here.
+  delta_alpha <- 1
+
+  Gfull <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+                    kappa0=kappa0, delta_alpha=delta_alpha)
+  Gvec <- Gfull[delta==1]
+
+  ## Get KM estimate of censoring distribution and KM inverse censoring weights
+  KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
+  GKMfn <- stepfun(c(0, KM_cens$time), c(1, KM_cens$surv, min(KM_cens$surv)))
+  GKM_weights <- GKMfn(U_tau)
 
   ## initialize tree
-  n <- length(Y)
+  n <- length(U)
 
   FittedValues <- matrix(NA, nrow=n,  ncol=ndraws+burnIn)
   if(!is.null(X.test)) {
@@ -52,12 +58,29 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
       FittedValues.test <- NULL
   }
   NNodes <- loglikvals <- rep(NA, ndraws+burnIn+1)
-
+  if(transformation=="identity") {
+    ## compute muhatb
+    muhatb <- sum(U_tau/GKM_weights)
+    Y_tau <- U_tau - muhatb
+    if(is.null(sigma.mu)) {
+      Ymin <- min(U_tau)
+      sigma.mu <- (tau - muhatb - Ymin)/4
+    }
+  } else if(transformation=="log") {
+    ## compute muhatb
+    muhatb <- sum(log(U_tau)/GKM_weights)
+    Y_tau <- log(U_tau) - muhatb
+    if(is.null(sigma.mu)) {
+      Ymin <- min(U_tau)
+      sigma.mu <- (log(tau) - muhatb - log(Ymin))/4
+    }
+  }
 
   ## initialize trees
   old_tree <- list(dvec = FindDvec(1), splt.vars = c(), splt.vals = c())
+  print(old_tree)
   NNodes[1] <- sum(old_tree$dvec==1)
-  loglikvals[1] <- LogLik(tree=old_tree, X=xmat, U=U,
+  loglikvals[1] <- LogLik(tree=old_tree, X=xmat, U=Y_tau,
                             Gvec=Gvec, sigma.mu=sigma.mu)
   muvec <- rep(0, NNodes[1])
 
@@ -74,10 +97,10 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
        }
      }
      ## compute the ratio
-     MH_ratio <-  RMST_MHRatio(U = U, new_tree = proposed_tree, old_tree = old_tree,
-                  sigma.mu=sigma.mu, Gvec=Gvec, X = xmat, m = move_type,
-                  alpha=alpha, beta=beta)
-     
+     MH_ratio <- RMST_MHRatio(U = Y_tau, new_tree = proposed_tree, old_tree = old_tree,
+                              sigma.mu=sigma.mu, Gvec=Gvec, X = xmat, m = move_type,
+                              alpha=alpha, beta=beta)
+     print(MH_ratio)
      u <- runif(1)
      if(u <= MH_ratio) {
         new_tree <- proposed_tree
@@ -92,7 +115,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
      ## get mean and sigma for updating mu values
      AT <- AMatrix(xmat, new_tree$splt.vals, new_tree$splt.vars, new_tree$dvec)
      WTGDiag <- c(crossprod(AT, 1/Gvec))
-     VG <- U/Gvec
+     VG <- Y_tau/Gvec
      Z <- c(crossprod(AT, VG))
 
      ## update mu values
@@ -104,7 +127,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
      FittedValues[,k] <- FittedValue(X, new_tree$splt.vals, new_tree$splt.vars,
                                      muvec, new_tree$dvec)
      NNodes[k+1] <- sum(new_tree$dvec==1)
-     loglikvals[k+1] <- LogLik(tree=new_tree, X=xmat, U=U, Gvec=Gvec, sigma.mu=sigma.mu)
+      loglikvals[k+1] <- LogLik(tree=new_tree, X=xmat, U=Y_tau, Gvec=Gvec, sigma.mu=sigma.mu)
      old_tree <- new_tree
      if(!is.null(X.test)) {
         FittedValues.test[,k] <- FittedValue(X.test, new_tree$splt.vals, new_tree$splt.vars,
@@ -112,7 +135,7 @@ RMST_BCART <- function(Y, delta, X, X.test=NULL, ndraws=500, sigma.mu=1,
      }
   }
 
-  Fitted.Values <- FittedValues[,(burnIn+1):(ndraws+burnIn)]
+  Fitted.Values <- FittedValues[,(burnIn+1):(ndraws+burnIn)] + muhatb
 
   ans <- list(fitted.values=Fitted.Values, nnodes=NNodes,
               logliks=loglikvals, fitted.values.test=FittedValues.test)
