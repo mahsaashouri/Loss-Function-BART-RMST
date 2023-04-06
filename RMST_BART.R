@@ -33,9 +33,8 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   }
   ## Draw Gvec weights here.
   delta_alpha <- 1
-  Gfull <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+  Gvec <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
                     kappa0=kappa0, delta_alpha=delta_alpha)
-  Gvec <- Gfull[delta==1]
 
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
