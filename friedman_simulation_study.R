@@ -67,7 +67,7 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
 
 
 cens_prop <- rep(NA, nreps)
-rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
+rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 for(j in 1:nreps) {
     ## training set
@@ -92,7 +92,7 @@ for(j in 1:nreps) {
     Y.test <- pmin(T.test, C.test)
     delta.test <- ifelse(T.test <= C.test, 1, 0)
 
-    ###1. AFT linear model
+    ### 1. AFT linear model
     AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
     XX <- model.matrix(Y.test ~ X.test)
     aft_linpred <- as.numeric(XX%*%AFT$coefficients)
@@ -164,8 +164,14 @@ for(j in 1:nreps) {
     bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
                             ndraws=ndraws, tau=tau)
     bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
+    
+    ## 8. RMST BART
+    bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
+                            ndraws=ndraws, tau=tau)
+    bart_fitted <- rowMeans(bart_mod$fitted.values.test)
 
     rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
+    rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
     rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
     rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
     #rmse_sboost[j] <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
@@ -177,10 +183,10 @@ for(j in 1:nreps) {
 }
 
 
-nmethods <- 7
+nmethods <- 8
 Results <- matrix(NA, nrow=nmethods, ncol=2)
 rownames(Results) <- c("AFT Null", "CoxPH", "Cox glmnet", "AFT linear",
-                       "Boosting", "BCART", "AFT BART")
+                       "Boosting", "AFT BART", "BCART", "BART")
 colnames(Results) <- c("Mean RMSE", "Median RMSE")
 
 Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
@@ -188,8 +194,9 @@ Results[2,1:2] <- c(mean(rmse_coxph), mean(rmse_coxph))
 Results[3,1:2] <- c(mean(rmse_rcoxph), median(rmse_rcoxph))
 Results[4,1:2] <- c(mean(rmse_aft), median(rmse_aft))
 Results[5,1:2] <- c(mean(rmse_sboost), median(rmse_sboost))
-Results[6,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
-Results[7,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
+Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
+Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
+Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
 
 round(Results, 4)
 

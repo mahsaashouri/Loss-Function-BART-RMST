@@ -94,13 +94,13 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
       old.tree[[h]]$splt.vals <- numeric(0)
     }
     else{
-    splt.vars <- sample(colnames(X), size=old.nnodes, replace=TRUE)
+    splt.vars <- sample(colnames(xmat), size=old.nnodes, replace=TRUE)
     old.tree[[h]]$splt.vars <- splt.vars
     ## sample splt.vals
     splt.vals <- c()
     for(m in 1:length(splt.vars)){
-      candidate_splitval <- unique(X[,splt.vars[m]])
-      ww <- table(X[,splt.vars[m]])/nrow(X)
+      candidate_splitval <- unique(xmat[,splt.vars[m]])
+      ww <- table(xmat[,splt.vars[m]])/nrow(xmat)
       splt.vals[m] <- candidate_splitval[sample(length(candidate_splitval), size=1,prob=ww)]
     }
     old.tree[[h]]$splt.vals <- splt.vals
