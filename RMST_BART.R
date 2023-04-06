@@ -172,7 +172,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     }
   }
   ## Add back in muhatb at the end.
-  ans <- list(fitted.values=Fitted.Values[,(burnIn+1):(ndraws+burnIn)] + muhatb,
+  ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)] + muhatb,
               nnodes=tail(NNodes, ndraws),
               logliks=tail(loglikvals, ndraws),
               fitted.values.test=FittedValues.test)

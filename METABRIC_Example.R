@@ -25,7 +25,7 @@ source("tree-configuration.R")
 source("DrawIPCW.R")
 
 ## reading data
-METABRIC <- read.csv('METABRIC_RNA_Mutation.csv', header = TRUE)[,c(1:31)]
+METABRIC <- read.csv('METABRIC_RNA_Mutation.csv', header = TRUE)[,c(1:41)]
 
 ######################
 ## data pre-processing
@@ -71,6 +71,9 @@ METABRIC <- subset(METABRIC, !(type_of_breast_surgery == ''))
 ## drop rows empty in er_status_measured_by_ihc
 table(METABRIC$er_status_measured_by_ihc) ## 25 rows empty
 METABRIC <- subset(METABRIC, !(er_status_measured_by_ihc == ''))
+
+## make cohort as a factor column
+METABRIC$cohort <- as.factor(METABRIC$cohort)
 
 ## flip 1 and 0 valves in overall survival
 table(METABRIC$overall_survival)
