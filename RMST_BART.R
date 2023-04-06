@@ -61,7 +61,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     Y_tau <- U_tau - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
-      sigma.mu <- (tau - muhatb - Ymin)/(4*sqrt(ntrees))
+      sigma.mu <- (tau - muhatb - Ymin)/4
     }
   } else if(transformation=="log") {
     ## compute muhatb
@@ -69,7 +69,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     Y_tau <- log(U_tau) - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
-      sigma.mu <- (log(tau) - muhatb - log(Ymin))/(4*sqrt(ntrees))
+      sigma.mu <- (log(tau) - muhatb - log(Ymin))/4
     }
   }
 
@@ -172,7 +172,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     }
   }
   ## Add back in muhatb at the end.
-  ans <- list(fitted.values=Fitted.Values[(burnIn+1):(ndraws+burnIn)] + muhatb,
+  ans <- list(fitted.values=Fitted.Values[,(burnIn+1):(ndraws+burnIn)] + muhatb,
               nnodes=tail(NNodes, ndraws),
               logliks=tail(loglikvals, ndraws),
               fitted.values.test=FittedValues.test)
