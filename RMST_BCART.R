@@ -39,9 +39,8 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   ## Draw Gvec weights here.
   delta_alpha <- 1
 
-  Gfull <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+  Gvec <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
                     kappa0=kappa0, delta_alpha=delta_alpha)
-  Gvec <- Gfull[delta==1]
 
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
@@ -96,11 +95,9 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
        }
      }
      ## compute the ratio
-     print(Gvec)
      MH_ratio <- RMST_MHRatio(U = Y_tau, new_tree = proposed_tree, old_tree = old_tree,
                               sigma.mu=sigma.mu, Gvec=Gvec, X = xmat, m = move_type,
                               alpha=alpha, beta=beta)
-     print(MH_ratio)
      u <- runif(1)
      if(u <= MH_ratio) {
         new_tree <- proposed_tree
