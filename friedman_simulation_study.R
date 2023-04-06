@@ -34,16 +34,16 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 sigma <- 1.0
 n <- 250 # 250 or 2000 # number of training observation
 n.test <- 2000 # 2000 or 4000 # number of test observation
-k <- 10 # 10 or 100 # total number of predictors
+num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
 #Warning message:
  # In regularize.values(x, y, ties, missing(ties), na.rm = na.rm) :
 #  collapsing to unique 'x' values
-tau <- 500
+tau <- 5
 gam_alph <- 20
-nreps <- 5 # number of simulation replications
+nreps <- 3 # number of simulation replications
 
 ## function we need for cox model
 CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
@@ -67,11 +67,12 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
 
 
 cens_prop <- rep(NA, nreps)
-rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rep(NA, nreps)
+rmse_bcart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
+rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 for(j in 1:nreps) {
     ## training set
-    X.train <- matrix(runif(n*k), n, k)
-    colnames(X.train) <- paste0('X', 1:k)
+    X.train <- matrix(runif(n*num_covar), n, num_covar)
+    colnames(X.train) <- paste0('X', 1:num_covar)
     ET.train <- f.test(X.train)
     mu.train <- digamma(gam_alph) - log(ET.train)
     ## might need to input tau into this calculation?
@@ -82,8 +83,8 @@ for(j in 1:nreps) {
     delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
     ## test set
-    X.test <- matrix(runif(n.test*k), n.test, k)
-    colnames(X.test) <- paste0('X', 1:k)
+    X.test <- matrix(runif(n.test*num_covar), n.test, num_covar)
+    colnames(X.test) <- paste0('X', 1:num_covar)
     ET.test <- f.test(X.test)
     mu.test <- digamma(gam_alph) - log(ET.test)
     T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
@@ -91,46 +92,84 @@ for(j in 1:nreps) {
     Y.test <- pmin(T.test, C.test)
     delta.test <- ifelse(T.test <= C.test, 1, 0)
 
-    ## RMST-BCART
-    bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test, ndraws=500, tau=500, sigma.mu=1.2)
-    bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values.test), log(tau))
-
-    ## Coxph
-    COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
-    coxhaz <- basehaz(COXPH.mod)
-    H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
-                      yright=max(coxhaz$hazard))
-    COXPH <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
-                    H0fn=H0fn, tau=1)
-    COXPH_fitted <- pmin(COXPH, log(tau))
-
-    ## regularized coxph model
-    RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox", lambda = 1, alpha = 1)
-    RCOXPH_fitted <- pmin(c(predict(RCOXPH, X.test, type = 'response')), log(tau))
-
-    ## survival boosting
-    SBOOST <- glmboost(Surv(Y.train, delta.train)~X.train, family = Gehan(), control = boost_control(mstop = 300))
-    ## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
-    SBOOST_fitted <- pmin(c(predict(SBOOST, newdata = data.frame(X.test))), log(tau))
-
-    ## AFT
+    ###1. AFT linear model
     AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
-    ## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
-    AFT_fitted <- pmin(predict(AFT, newdata = data.frame(X.test), type = 'response'), log(tau))
-    #AFT_fitted <- pmin(AFT$linear.predictors, log(tau))
+    XX <- model.matrix(Y.test ~ X.test)
+    aft_linpred <- as.numeric(XX%*%AFT$coefficients)
+    aft_sigma <- AFT$scale
+    aft_sigsq <- aft_sigma*aft_sigma
+    ## exp(aft_linpred) is an approximate fitted value
+    ## For RMST, a more precise definition of fitted value is
 
-    ## AFT BART
-    AFT_BART <- abart(X.train, Y.train, x.test = X.test, delta.train)
-    AFT_BART_fitted <-  pmin(AFT_BART$yhat.test.mean, log(tau))
+    gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
+    lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
+    AFT_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
 
-    ## AFT null
+    ##### 2. AFT intercept-only model
     AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
-    AFT_null_fitted <- pmin(predict(AFT_null, newdata = data.frame(X.test), type = 'response'), log(tau))
+    aft_linpred <- rep(AFT_null$coefficients[1], nrow(X.test))
+    aft_sigma <- AFT_null$scale
+    aft_sigsq <- aft_sigma*aft_sigma
+
+    gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
+    lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
+    AFT_null_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
+
+    #### 3. AFT_BART model
+    AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test)
+    ndraw_abart <- nrow(AFT_BART$yhat.test)
+    AFT_fit_reps <- matrix(NA, nrow=ndraw_abart, ncol=nrow(X.test))
+    for(k in 1:ndraw_abart) {
+      aft_bart_mu <- AFT_BART$yhat.test[k,]
+      aft_bart_sig <- AFT_BART$sigma[k]
+      aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
+      ## exp(aft_linpred) is an approximate fitted value
+      ## For RMST, a more precise definition of fitted value is
+
+      gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
+      lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
+
+      AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
+    }
+    AFT_BART_fitted <- colMeans(AFT_fit_reps)
+
+    ## 4. Boosting with IPCW weights
+    ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
+    IPW_boost <- glmboost(x=X.train[delta.train==1,], y=pmin(Y.train[delta.train==1], tau),
+                          weights = ipcw_weights[delta.train==1])
+    IPW_fitted <- as.numeric(predict(IPW_boost, newdata=X.test))
+
+    ## 5. Cox-PH model without penalization of regression coefficients
+    COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
+    #coxhaz <- basehaz(COXPH.mod)
+    coxhaz <- survfit(COXPH.mod, x=X.train, y=Surv(Y.train, delta.train))
+    H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$cumhaz),
+                      yright=max(coxhaz$cumhaz))
+    COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
+                                    H0fn=H0fn, tau=tau)
+
+    ### 6. Cox-PH model with lasso penalty
+    rcox_tmp <- cv.glmnet(x=X.train, y=Surv(Y.train, delta.train), family = "cox",
+                          type.measure = "deviance")
+    RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox",
+                      lambda = rcox_tmp$lambda.min)
+    Rcoxhaz <- survfit(RCOXPH, x=X.train, y=Surv(Y.train, delta.train))
+    RH0fn <- approxfun(c(0, Rcoxhaz$time), c(0, Rcoxhaz$cumhaz),
+                       yright=max(Rcoxhaz$cumhaz))
+    lasso_betahat <- as.numeric(coef(RCOXPH))
+    RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat,
+                                     H0fn=RH0fn, tau=tau)
+
+    ## 7. RMST BCART
+    bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
+                            ndraws=ndraws, tau=tau)
+    bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
 
     rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
     rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
     rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
-    rmse_sboost[j] <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
+    #rmse_sboost[j] <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
+    rmse_ipcw[j] <- sqrt(mean((IPW_fitted - mu.test)*(IPW_fitted - mu.test)))
     rmse_aft[j] <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
     rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
     rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
