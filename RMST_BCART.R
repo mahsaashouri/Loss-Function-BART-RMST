@@ -59,7 +59,7 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   NNodes <- loglikvals <- rep(NA, ndraws+burnIn+1)
   if(transformation=="identity") {
     ## compute muhatb
-    muhatb <- sum(U_tau/GKM_weights)
+    muhatb <- mean(U_tau/GKM_weights)
     Y_tau <- U_tau - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
@@ -67,7 +67,7 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
     }
   } else if(transformation=="log") {
     ## compute muhatb
-    muhatb <- sum(log(U_tau)/GKM_weights)
+    muhatb <- mean(log(U_tau)/GKM_weights)
     Y_tau <- log(U_tau) - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
@@ -132,7 +132,9 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
      }
   }
 
+
   Fitted.Values <- FittedValues[,(burnIn+1):(ndraws+burnIn)] + muhatb
+  FittedValues.test <- FittedValues.test[,(burnIn+1):(ndraws+burnIn)] + muhatb
 
   ans <- list(fitted.values=Fitted.Values, nnodes=NNodes,
               logliks=loglikvals, fitted.values.test=FittedValues.test)
