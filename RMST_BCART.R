@@ -46,8 +46,10 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
   GKMfn <- stepfun(c(0, KM_cens$time), c(1, KM_cens$surv, min(KM_cens$surv)))
   GKM_weights <- GKMfn(U_tau)
-  
-  
+  if(sum(GKM_weights == 0) > 0) {
+    GKM_weights[GKM_weights==0] <- min(KM_cens$surv[KM_cens$surv > 0])
+  }
+
 
   ## initialize tree
   n <- length(U)
