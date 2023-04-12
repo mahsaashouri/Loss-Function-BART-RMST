@@ -32,8 +32,8 @@ set.seed(123)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
@@ -145,6 +145,8 @@ for(j in 1:nreps) {
     coxhaz <- survfit(COXPH.mod, x=X.train, y=Surv(Y.train, delta.train))
     H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$cumhaz),
                       yright=max(coxhaz$cumhaz))
+    ## for some datasets returns this error: Error in integrate(integrand, lower = 0, upper = tau, xi = X[k, ] - mu.x, :
+    #maximum number of subdivisions reached
     COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
                                     H0fn=H0fn, tau=tau)
 
