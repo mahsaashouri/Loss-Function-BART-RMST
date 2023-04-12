@@ -131,6 +131,7 @@ bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=500, tau=50, sigma.
 bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values.test), log(tau))
 
 bart_mod <- RMST_BART(Y, delta, train.set, test.set)
+bart_fitted <- pmin(rowMeans(bart_mod$fitted.values.test), log(tau))
 
 ## Coxph
 COXPH.mod <- coxph(Surv(Y, delta) ~ train.set)
