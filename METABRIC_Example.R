@@ -89,88 +89,57 @@ set.seed(123)
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 
-index <- sample(1:nrow(DATA), 400)
-test.set <- DATA[index,]
-train.set <- DATA[-index,]
-Y <- METABRIC[-index,]$overall_survival_months
-delta <- METABRIC[-index,]$overall_survival
 
-Y.test <- METABRIC[index,]$overall_survival_months
-mu.test <- log(Y.test)
+# Define the number of iterations and the proportion of data to be used for training
+n_iterations <- 5
+train_prop <- 0.7
 
-## function we need for cox model
-CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
-  ## This function computes E( min(T_i, tau) |x_i) for
-  ## a cox ph model
-  mu.x <- colMeans(X)
-  integrand <- function(time, xi, beta_val) {
-    nu <- sum(xi*beta_val)
-    ans <- exp(-H0fn(time)*exp(nu))
-    return(ans)
+bcart_fitted <- bart_fitted <- AFT_BART_fitted <- list()
+# Loop through the iterations
+for (i in 1:n_iterations) {
+  
+  # Randomly select index numbers for the training and test sets
+  train_idx <- sample(1:nrow(DATA), round(train_prop * nrow(DATA)), replace = FALSE)
+  test_idx <- setdiff(1:nrow(DATA), train_idx)
+  
+  # Create training and test sets using the selected index numbers
+  train.set <- DATA[train_idx, ]
+  test.set <- DATA[test_idx, ]
+  
+  Y <- METABRIC[train_idx,]$overall_survival_months
+  delta <- METABRIC[train_idx,]$overall_survival
+  
+  Y.test <- METABRIC[test_idx,]$overall_survival_months
+  mu.test <- log(Y.test)
+  
+  sgrid <- seq(0, 4000, by=1)
+  tau <- 500
+  gam_alph <- 20
+  sigma <- 1.0
+  ndraws <- 500
+  
+  ## BCART
+  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
+  bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
+  
+  ## BART
+  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
+  bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
+  
+  #### 3. AFT_BART model
+  AFT_BART <- abart(train.set, Y, delta, x.test=test.set)
+  ndraw_abart <- nrow(AFT_BART$yhat.test)
+  AFT_fit_reps <- matrix(NA, nrow=ndraw_abart, ncol=nrow(test.set))
+  for(k in 1:ndraw_abart) {
+    aft_bart_mu <- AFT_BART$yhat.test[k,]
+    aft_bart_sig <- AFT_BART$sigma[k]
+    aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
+    gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
+    lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
+    
+    AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
-  nn <- nrow(X)
-  fitted_vals <- rep(NA, nn)
-  for(k in 1:nn) {
-    II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=500L)
-    fitted_vals[k] <- II$value
-  }
-  return(fitted_vals)
+  AFT_BART_fitted[[i]] <- colMeans(AFT_fit_reps)
 }
-
-
-## BCART
-sgrid <- seq(0, 4000, by=1)
-tau <- 500
-gam_alph <- 20
-sigma <- 1.0
-
-## Gfull length is 841? train dataset has 1439 rows? we get NA values because of this difference
-
-bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=500, tau=50, sigma.mu=1.2)
-bcart_fitted <- pmin(rowMeans(bcart_mod$fitted.values.test), log(tau))
-
-bart_mod <- RMST_BART(Y, delta, train.set, test.set)
-bart_fitted <- pmin(rowMeans(bart_mod$fitted.values.test), log(tau))
-
-## Coxph
-COXPH.mod <- coxph(Surv(Y, delta) ~ train.set)
-coxhaz <- basehaz(COXPH.mod)
-H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$hazard),
-                  yright=max(coxhaz$hazard))
-COXPH <- CoxExpectedSurv(X=test.set, beta_val=COXPH.mod$coefficients,
-                         H0fn=H0fn, tau=500)
-COXPH_fitted <- pmin(COXPH, log(tau))
-
-## regularized coxph model
-RCOXPH <-  glmnet(train.set, Surv(Y, delta), family = "cox", lambda = 1, alpha = 1)
-RCOXPH_fitted <- pmin(c(predict(RCOXPH, test.set, type = 'response')), log(tau))
-
-## survival boosting
-SBOOST <- glmboost(Surv(Y, delta)~train.set, family = Gehan(), control = boost_control(mstop = 300))
-## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
-SBOOST_fitted <- pmin(c(predict(SBOOST, newdata = data.frame(test.set))), log(tau))
-
-## AFT
-AFT <- survreg(Surv(Y, delta) ~ train.set)
-## we have warnings in predict function: 'newdata' had 2000 rows but variables found have 250 rows
-AFT_fitted <- pmin(predict(AFT, newdata = data.frame(test.set), type = 'response'), log(tau))
-#AFT_fitted <- pmin(AFT$linear.predictors, log(tau))
-
-## AFT BART
-AFT_BART <- abart(train.set, Y, x.test = test.set, delta)
-AFT_BART_fitted <-  pmin(AFT_BART$yhat.test.mean, log(tau))
-
-## AFT null
-AFT_null <- survreg(Surv(Y, delta) ~ 1)
-AFT_null_fitted <- pmin(predict(AFT_null, newdata = data.frame(test.set), type = 'response'), log(tau))
-
-rmse_bcart <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
-rmse_coxph <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
-rmse_rcoxph <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
-rmse_sboost <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
-rmse_aft <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
-rmse_aft_bart <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
-rmse_aft_null <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
 
 
