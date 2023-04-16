@@ -34,7 +34,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 sigma <- 1.0
 n <- 2000 # 250 or 2000 # number of training observation
 n.test <- 4000 # 2000 or 4000 # number of test observation
-num_covar <- 10 # 10 or 100 # total number of predictors
+num_covar <- 100 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
@@ -59,7 +59,7 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=500L)
+                    beta_val=beta_val, subdivisions=5000L)
     fitted_vals[k] <- II$value
   }
   return(fitted_vals)
@@ -188,14 +188,14 @@ for(j in 1:nreps) {
 nmethods <- 8
 Results <- matrix(NA, nrow=nmethods, ncol=2)
 rownames(Results) <- c("AFT Null", "CoxPH", "Cox glmnet", "AFT linear",
-                       "Boosting", "AFT BART", "BCART", "BART")
+                       "ipwc", "AFT BART", "BCART", "BART")
 colnames(Results) <- c("Mean RMSE", "Median RMSE")
 
 Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
 Results[2,1:2] <- c(mean(rmse_coxph), mean(rmse_coxph))
 Results[3,1:2] <- c(mean(rmse_rcoxph), median(rmse_rcoxph))
 Results[4,1:2] <- c(mean(rmse_aft), median(rmse_aft))
-Results[5,1:2] <- c(mean(rmse_sboost), median(rmse_sboost))
+Results[5,1:2] <- c(mean(rmse_ipcw), median(rmse_ipcw))
 Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
 Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
 Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
