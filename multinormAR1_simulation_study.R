@@ -69,7 +69,7 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=500L)
+                    beta_val=beta_val, subdivisions=5000L)
     fitted_vals[k] <- II$value
   }
   return(fitted_vals)

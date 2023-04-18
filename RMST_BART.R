@@ -111,9 +111,11 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
 
 
   Fitted.Values <- matrix(NA, nrow=n, ncol=ndraws)
+  SplitVarList <- list()
   for(j in 1:(ndraws+burnIn)){
+    SplitVarList[[j]] <- matrix(NA, nrow = ntrees, ncol = ncol(xmat))
+    colnames(SplitVarList[[j]]) <- colnames(xmat)
     for(k in 1:ntrees) {
-
       # update tree k
       ## sample one of three move types
       move_type <- sample(1:3, size=1)
@@ -165,6 +167,12 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
       }
       ## replace old_tree with new_tree
       old.tree[[k]] <- new_tree
+      for(f in 1:ncol(xmat)){
+        if(colnames(xmat)[f]%in%new_tree$splt.vars==TRUE)
+          SplitVarList[[j]][k,f]<- 1
+        else
+          SplitVarList[[j]][k,f]<- 0
+      }
     }
     if(j > burnIn) {
       Fitted.Values[,j-burnIn] <- rowSums(FittedValues)
@@ -177,6 +185,8 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   ans <- list(fitted.values=Fitted.Values + muhatb,
               nnodes=tail(NNodes, ndraws),
               logliks=tail(loglikvals, ndraws),
-              fitted.values.test=FittedValues.test + muhatb)
+              fitted.values.test=FittedValues.test + muhatb, split.vars=do.call("rbind", SplitVarList[(burnIn+1):ndraws]))
   return(ans)
 }
+
+
