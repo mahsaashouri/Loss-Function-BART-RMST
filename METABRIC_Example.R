@@ -145,4 +145,25 @@ for (i in 1:n_iterations) {
   AFT_BART_fitted[[i]] <- AFT_fit_reps
 }
 
+## plotting the first 10 repeated variables in one iteration - BART
+VarImp <- tail(sort(colSums(bart_fitted[[1]]$split.vars)),10)
+
+library(ggplot2)
+# Create a data frame with the numbers and names
+VarImpDataF <- data.frame(numbers = c(VarImp),
+                 names = c(names(VarImp)))
+# Create the plot
+ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
+  geom_line(size = 1, color = "black") +
+  geom_point(size = 3, color = "blue") +
+  geom_text(aes(label = names), hjust = 1.1, vjust = -.5, size = 6, color = "blue") +
+  labs(x = "Variable", y = "Count") +
+  theme_light() +
+  theme(
+    axis.title.x = element_text(size = 15),
+    axis.text.x = element_blank(),
+    axis.title.y = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    legend.title=element_text(size=15), 
+    legend.text=element_text(size=15))
 
