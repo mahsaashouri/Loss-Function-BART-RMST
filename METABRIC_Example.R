@@ -91,7 +91,7 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 
 
 # Define the number of iterations and the proportion of data to be used for training
-n_iterations <- 5
+n_iterations <- 3
 train_prop <- 0.7
 
 bcart_fitted <- bart_fitted <- AFT_BART_fitted <- list()
@@ -120,11 +120,13 @@ for (i in 1:n_iterations) {
   
   ## BCART
   bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
-  bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
+  #bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
+  bcart_fitted[[i]] <- bcart_mod
   
   ## BART
   bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
-  bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
+  #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
+  bart_fitted[[i]] <- bart_mod
   
   #### 3. AFT_BART model
   AFT_BART <- abart(train.set, Y, delta, x.test=test.set)
@@ -139,7 +141,8 @@ for (i in 1:n_iterations) {
     
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
-  AFT_BART_fitted[[i]] <- colMeans(AFT_fit_reps)
+  #AFT_BART_fitted[[i]] <- colMeans(AFT_fit_reps)
+  AFT_BART_fitted[[i]] <- AFT_fit_reps
 }
 
 
