@@ -88,7 +88,7 @@ for(j in 1:nreps) {
   C.train <- runif(n, min=10, max=50) ## max = 50 or 2000
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  #mu.train <- digamma(gam_alpha) - log(DataSim$Y)
+  mu.train <- digamma(gam_alpha) - log(DataSim$Y)
   
   ## test set
   DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho) 
@@ -98,7 +98,7 @@ for(j in 1:nreps) {
   C.test <- runif(n, min=10, max=50) ## max = 50 or 2000
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  #mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
+  mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
   
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
