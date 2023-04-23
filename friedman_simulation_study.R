@@ -32,8 +32,8 @@ set.seed(123)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
 num_covar <- 100 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
@@ -59,7 +59,7 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=500L)
+                    beta_val=beta_val, subdivisions=5000L)
     fitted_vals[k] <- II$value
   }
   return(fitted_vals)
@@ -74,7 +74,7 @@ for(j in 1:nreps) {
   X.train <- matrix(runif(n*num_covar), n, num_covar)
   colnames(X.train) <- paste0('X', 1:num_covar)
   ET.train <- f.test(X.train)
-  mu.train <- digamma(gam_alph) - log(ET.train)
+  #mu.train <- digamma(gam_alph) - log(ET.train)
   ## might need to input tau into this calculation?
   
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
@@ -86,7 +86,9 @@ for(j in 1:nreps) {
   X.test <- matrix(runif(n.test*num_covar), n.test, num_covar)
   colnames(X.test) <- paste0('X', 1:num_covar)
   ET.test <- f.test(X.test)
-  mu.test <- digamma(gam_alph) - log(ET.test)
+  #mu.test <- digamma(gam_alph) - log(ET.test)
+  mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) + 
+    tau*pgamma(tau, shape = gam_alph, rate = ET.test, lower.tail = FALSE)
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
   C.test <- runif(n.test, min=2, max=3) ## min = 0.5 or 2
   Y.test <- pmin(T.test, C.test)
