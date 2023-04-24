@@ -28,8 +28,8 @@ set.seed(123)
 
 
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
@@ -69,7 +69,7 @@ CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=5000L)
+                    beta_val=beta_val, subdivisions=50000L)
     fitted_vals[k] <- II$value
   }
   return(fitted_vals)

@@ -93,6 +93,11 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 # Define the number of iterations and the proportion of data to be used for training
 n_iterations <- 3
 train_prop <- 0.7
+sgrid <- seq(0, 4000, by=1)
+tau <- 500
+gam_alph <- 20
+sigma <- 1.0
+ndraws <- 500
 
 bcart_fitted <- bart_fitted <- AFT_BART_fitted <- list()
 # Loop through the iterations
@@ -110,13 +115,10 @@ for (i in 1:n_iterations) {
   delta <- METABRIC[train_idx,]$overall_survival
   
   Y.test <- METABRIC[test_idx,]$overall_survival_months
-  mu.test <- log(Y.test)
+  #mu.test <- log(Y.test)
+  mu.test <- (Y.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = Y.test) + 
+    tau*pgamma(tau, shape = gam_alph, rate = Y.test, lower.tail = FALSE)
   
-  sgrid <- seq(0, 4000, by=1)
-  tau <- 500
-  gam_alph <- 20
-  sigma <- 1.0
-  ndraws <- 500
   
   ## BCART
   bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
