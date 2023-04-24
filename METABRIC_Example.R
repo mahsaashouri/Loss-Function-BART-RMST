@@ -118,7 +118,7 @@ for (i in 1:n_iterations) {
   #mu.test <- log(Y.test)
   mu.test <- (Y.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = Y.test) + 
     tau*pgamma(tau, shape = gam_alph, rate = Y.test, lower.tail = FALSE)
-  
+  delta.test <- METABRIC[test_idx,]$overall_survival
   
   ## BCART
   bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
@@ -128,7 +128,6 @@ for (i in 1:n_iterations) {
   ## BART
   bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
-  bart_fitted[[i]] <- bart_mod
   
   #### 3. AFT_BART model
   AFT_BART <- abart(train.set, Y, delta, x.test=test.set)
@@ -147,12 +146,15 @@ for (i in 1:n_iterations) {
   AFT_BART_fitted[[i]] <- AFT_fit_reps
 }
 
+
+
+
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- tail(sort(colSums(bart_fitted[[1]]$split.vars)),10)
+VarImp <- tail(sort(colSums(bart_fitted[[3]]$split.vars)),10)
 
 library(ggplot2)
 # Create a data frame with the numbers and names
-VarImpDataF <- data.frame(numbers = c(VarImp),
+VarImpDataF <- data.frame(numbers = c(VarImp)/ndraws,
                  names = c(names(VarImp)))
 # Create the plot
 ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
@@ -168,4 +170,22 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
     axis.text.y = element_text(size = 15),
     legend.title=element_text(size=15), 
     legend.text=element_text(size=15))
+
+## Error 
+delta_alpha <- 1
+Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=sgrid,
+                 kappa0=1, delta_alpha=delta_alpha)
+## BART
+sd.test.bart <- matrixStats::rowSds(bart_fitted[[3]]$fitted.values.test, na.rm=TRUE)
+mean.test.bart <- rowMeans(bart_fitted[[3]]$fitted.values.test)
+
+# calculate error.bart
+error.cen.bart <- sum((sd.test.bart/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
+
+## BACRT
+sd.test.bcart <- matrixStats::rowSds(bcart_fitted[[3]]$fitted.values.test, na.rm=TRUE)
+mean.test.bcart <- rowMeans(bcart_fitted[[3]]$fitted.values.test)
+
+# calculate error.bcart
+error.cen.bcart <- sum((sd.test.bcart/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
