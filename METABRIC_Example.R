@@ -91,7 +91,7 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 
 
 # Define the number of iterations and the proportion of data to be used for training
-n_iterations <- 3
+n_iterations <- 1
 train_prop <- 0.7
 sgrid <- seq(0, 4000, by=1)
 tau <- 500
@@ -128,6 +128,7 @@ for (i in 1:n_iterations) {
   ## BART
   bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
+  bart_fitted[[i]] <- bart_mod
   
   #### 3. AFT_BART model
   AFT_BART <- abart(train.set, Y, delta, x.test=test.set)
@@ -171,20 +172,28 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
     legend.title=element_text(size=15), 
     legend.text=element_text(size=15))
 
+## Average RMST
+bcart.r <- rowMeans(bcart_mod$fitted.values.test)
+sqrt(mean((bcart.r - mu.test)*(bcart.r - mu.test)))
+bart.r <- rowMeans(bart_mod$fitted.values.test)
+sqrt(mean((bart.r - mu.test)*(bart.r - mu.test)))
+AFT.r <- colMeans(AFT_fit_reps)
+sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
+
 ## Error 
 delta_alpha <- 1
 Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=sgrid,
                  kappa0=1, delta_alpha=delta_alpha)
 ## BART
-sd.test.bart <- matrixStats::rowSds(bart_fitted[[3]]$fitted.values.test, na.rm=TRUE)
-mean.test.bart <- rowMeans(bart_fitted[[3]]$fitted.values.test)
+sd.test.bart <- matrixStats::rowSds(bart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
+mean.test.bart <- rowMeans(bart_fitted[[1]]$fitted.values.test)
 
 # calculate error.bart
 error.cen.bart <- sum((sd.test.bart/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
 
 ## BACRT
-sd.test.bcart <- matrixStats::rowSds(bcart_fitted[[3]]$fitted.values.test, na.rm=TRUE)
-mean.test.bcart <- rowMeans(bcart_fitted[[3]]$fitted.values.test)
+sd.test.bcart <- matrixStats::rowSds(bcart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
+mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 
 # calculate error.bcart
 error.cen.bcart <- sum((sd.test.bcart/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
