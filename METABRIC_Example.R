@@ -199,6 +199,21 @@ mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
 ## Confidence interval for each case - plot 
+means <- apply(bart_fitted[[1]]$fitted.values.test, 1, mean)
+ses <- apply(bart_fitted[[1]]$fitted.values.test, 1, function(x) sd(x) / sqrt(length(x)))
+df_summary <- data.frame(row = 1:nrow(bart_fitted[[1]]$fitted.values.test), mean = means, se = ses)
 
+df_summary$max <- df_summary$mean + 1.96 * df_summary$se
+df_summary$min <- df_summary$mean - 1.96 * df_summary$se
+df_summary <- subset(df_summary, select = -c(se))
 
+# Reshape data into long format
+df_long <- reshape2::melt(df_summary, id.vars = "row")
 
+# Plot each row as a horizontal line
+ggplot(df_long, aes(x = value, y = row, group = variable, color = variable)) +
+  geom_segment(aes(xend = 0, yend = row)) +
+  ylab("") +
+  xlab("") +
+  #scale_color_discrete(name = "") +
+  theme_classic()
