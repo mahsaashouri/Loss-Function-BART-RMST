@@ -97,7 +97,7 @@ sgrid <- seq(0, 4000, by=1)
 tau <- 500
 gam_alph <- 20
 sigma <- 1.0
-ndraws <- 500
+ndraws <- 5
 
 bcart_fitted <- bart_fitted <- AFT_BART_fitted <- list()
 # Loop through the iterations
@@ -121,12 +121,12 @@ for (i in 1:n_iterations) {
   delta.test <- METABRIC[test_idx,]$overall_survival
   
   ## BCART
-  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
+  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau, burnIn = 2)
   #bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
   bcart_fitted[[i]] <- bcart_mod
   
   ## BART
-  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
+  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau, ntrees = 5, burnIn = 2)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
   bart_fitted[[i]] <- bart_mod
   
@@ -151,7 +151,7 @@ for (i in 1:n_iterations) {
 
 
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- tail(sort(colSums(bart_fitted[[3]]$split.vars)),10)
+VarImp <- tail(sort(colSums(bart_fitted[[1]]$split.vars)),10)
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -188,13 +188,17 @@ Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=
 sd.test.bart <- matrixStats::rowSds(bart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 mean.test.bart <- rowMeans(bart_fitted[[1]]$fitted.values.test)
 
-# calculate error.bart
-error.cen.bart <- sum((sd.test.bart/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
+# calculate IPCW test performance - BART
+IPCW.test.bart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
 
 ## BACRT
 sd.test.bcart <- matrixStats::rowSds(bcart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 
-# calculate error.bcart
-error.cen.bcart <- sum((sd.test.bcart/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
+# calculate IPCW test performance - BCART
+IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
+
+## Confidence interval for each case - plot 
+
+
 
