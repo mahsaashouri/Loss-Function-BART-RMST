@@ -44,8 +44,8 @@ gam_alpha <- 20
 nreps <- 1 # number of simulation replications
 
 ## function to simulate linear model AR1
-sim.reg <- function(nobs, coef, mu, sd, Rho){ 
-  num.var = length(coef)  
+sim.reg <- function(nobs, coef, mu, sd, Rho){
+  num.var = length(coef)
   beta = as.matrix(coef)
   ## generate data from multivariate normal with AR(1) - using the above function and MASS package
   #H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
@@ -74,6 +74,7 @@ sim.reg <- function(nobs, coef, mu, sd, Rho){
   #}
   #return(fitted_vals)
 #}
+
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
   ## a cox ph model
@@ -81,14 +82,14 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   tpoints <- c(time[time < tau], tau)
   Hpoints <- H0.vals[time < tau]
   nn <- nrow(X)
-  
+
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     nu <- sum((X[k,] - mu.x)*beta_val)
     fitted_vals[k] <- sum( exp(-Hpoints*exp(nu)*diff(tpoints)) )
   }
   return(fitted_vals)
-}  
+}
 
 
 
@@ -97,7 +98,7 @@ rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, n
 rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 for(j in 1:nreps) {
   ## training set
-  DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho) 
+  DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho)
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
   T.train <- rgamma(n, shape = gam_alpha, rate = DataSim$Y)
@@ -105,9 +106,9 @@ for(j in 1:nreps) {
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.train <- digamma(gam_alpha) - log(DataSim$Y)
-  
+
   ## test set
-  DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho) 
+  DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho)
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
   T.test <- rgamma(n.test, shape = gam_alpha, rate = DataSim.test$Y)
@@ -115,9 +116,9 @@ for(j in 1:nreps) {
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
-  mu.test <- (DataSim.test$Y/gam_alpha)*pgamma(tau, shape = gam_alpha+1, rate = DataSim.test$Y) + 
+  mu.test <- (DataSim.test$Y/gam_alpha)*pgamma(tau, shape = gam_alpha+1, rate = DataSim.test$Y) +
     tau*pgamma(tau, shape = gam_alpha, rate = DataSim.test$Y, lower.tail = FALSE)
-  
+
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -126,21 +127,21 @@ for(j in 1:nreps) {
   aft_sigsq <- aft_sigma*aft_sigma
   ## exp(aft_linpred) is an approximate fitted value
   ## For RMST, a more precise definition of fitted value is
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
-  
+
   ##### 2. AFT intercept-only model
   AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
   aft_linpred <- rep(AFT_null$coefficients[1], nrow(X.test))
   aft_sigma <- AFT_null$scale
   aft_sigsq <- aft_sigma*aft_sigma
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_null_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
-  
+
   #### 3. AFT_BART model
   AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test)
   ndraw_abart <- nrow(AFT_BART$yhat.test)
@@ -151,30 +152,30 @@ for(j in 1:nreps) {
     aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
     ## exp(aft_linpred) is an approximate fitted value
     ## For RMST, a more precise definition of fitted value is
-    
+
     gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
     lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
-    
+
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted <- colMeans(AFT_fit_reps)
-  
+
   ## 4. Boosting with IPCW weights
   ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
   IPW_boost <- glmboost(x=X.train[delta.train==1,], y=pmin(Y.train[delta.train==1], tau),
                         weights = ipcw_weights[delta.train==1])
   IPW_fitted <- as.numeric(predict(IPW_boost, newdata=X.test))
-  
+
   ## 5. Cox-PH model without penalization of regression coefficients
   COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
   #coxhaz <- basehaz(COXPH.mod)
   coxhaz <- survfit(COXPH.mod, x=X.train, y=Surv(Y.train, delta.train))
-  H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$cumhaz),
-                    yright=max(coxhaz$cumhaz))
+
   ## for some datasets returns this error: Error in integrate(integrand, lower = 0, upper = tau, xi = X[k, ] - mu.x, :
   #maximum number of subdivisions reached
-  COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients, time = DataSim.test$Y,
-                                  H0.vals=H0fn, tau=tau)
+  COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
+                                  time = coxhaz$time, H0.vals=coxhaz$cumhaz,
+                                  tau=tau)
 
   ### 6. Cox-PH model with lasso penalty
   rcox_tmp <- cv.glmnet(x=X.train, y=Surv(Y.train, delta.train), family = "cox",
@@ -182,22 +183,22 @@ for(j in 1:nreps) {
   RCOXPH <-  glmnet(X.train, Surv(Y.train, delta.train), family = "cox",
                     lambda = rcox_tmp$lambda.min)
   Rcoxhaz <- survfit(RCOXPH, x=X.train, y=Surv(Y.train, delta.train))
-  RH0fn <- approxfun(c(0, Rcoxhaz$time), c(0, Rcoxhaz$cumhaz),
-                     yright=max(Rcoxhaz$cumhaz))
+
   lasso_betahat <- as.numeric(coef(RCOXPH))
-  RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat, time, 
-                                   H0.vals=RH0fn, tau=tau)
-  
+  RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat,
+                                   time=Rcoxhaz$time,
+                                   H0.vals=Rcoxhaz$cumhaz, tau=tau)
+
   ## 7. RMST BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
                           ndraws=ndraws, tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
-  
+
   ## 8. RMST BART
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
                         ndraws=ndraws, tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
-  
+
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
   rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
@@ -208,7 +209,7 @@ for(j in 1:nreps) {
   rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
   cens_prop[j] <- mean(delta.test) # also record censoring proportion
-  
+
  }
 
 
