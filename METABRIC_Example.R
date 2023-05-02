@@ -97,7 +97,7 @@ sgrid <- seq(0, 4000, by=1)
 tau <- 500
 gam_alph <- 20
 sigma <- 1.0
-ndraws <- 5
+ndraws <- 500
 
 bcart_fitted <- bart_fitted <- AFT_BART_fitted <- list()
 # Loop through the iterations
@@ -121,12 +121,12 @@ for (i in 1:n_iterations) {
   delta.test <- METABRIC[test_idx,]$overall_survival
   
   ## BCART
-  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau, burnIn = 2)
+  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
   #bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
   bcart_fitted[[i]] <- bcart_mod
   
   ## BART
-  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau, ntrees = 5, burnIn = 2)
+  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
   bart_fitted[[i]] <- bart_mod
   
@@ -185,35 +185,33 @@ delta_alpha <- 1
 Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=sgrid,
                  kappa0=1, delta_alpha=delta_alpha)
 ## BART
-sd.test.bart <- matrixStats::rowSds(bart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 mean.test.bart <- rowMeans(bart_fitted[[1]]$fitted.values.test)
 
 # calculate IPCW test performance - BART
 IPCW.test.bart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
 
 ## BACRT
-sd.test.bcart <- matrixStats::rowSds(bcart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 
 # calculate IPCW test performance - BCART
 IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
 ## Confidence interval for each case - plot 
-means <- apply(bart_fitted[[1]]$fitted.values.test, 1, mean)
-ses <- apply(bart_fitted[[1]]$fitted.values.test, 1, function(x) sd(x) / sqrt(length(x)))
+means <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
+ses <- matrixStats::rowSds(bcart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 df_summary <- data.frame(row = 1:nrow(bart_fitted[[1]]$fitted.values.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
 df_summary$min <- df_summary$mean - 1.96 * df_summary$se
 df_summary <- subset(df_summary, select = -c(se))
+## plot sample of lines
+sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
+sample_df_summary <- df_summary[sample_idx,]
+sample_long <- reshape2::melt(sample_df_summary, id.vars = "row")
 
-# Reshape data into long format
-df_long <- reshape2::melt(df_summary, id.vars = "row")
-
-# Plot each row as a horizontal line
-ggplot(df_long, aes(x = value, y = row, group = variable, color = variable)) +
+ggplot(sample_long, aes(x = value, y = row, group = variable))+#, color = variable)) +
   geom_segment(aes(xend = 0, yend = row)) +
-  ylab("") +
-  xlab("") +
-  #scale_color_discrete(name = "") +
   theme_classic()
+
+
+
