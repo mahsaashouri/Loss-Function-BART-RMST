@@ -41,7 +41,7 @@ Rho <- 0.5
 #  collapsing to unique 'x' values
 tau <- 50
 gam_alpha <- 20
-nreps <- 1 # number of simulation replications
+nreps <- 3 # number of simulation replications
 
 ## function to simulate linear model AR1
 sim.reg <- function(nobs, coef, mu, sd, Rho){

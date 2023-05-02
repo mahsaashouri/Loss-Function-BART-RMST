@@ -148,8 +148,6 @@ for (i in 1:n_iterations) {
 }
 
 
-
-
 ## plotting the first 10 repeated variables in one iteration - BART
 VarImp <- tail(sort(colSums(bart_fitted[[1]]$split.vars)),10)
 
@@ -207,11 +205,21 @@ df_summary <- subset(df_summary, select = -c(se))
 ## plot sample of lines
 sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
 sample_df_summary <- df_summary[sample_idx,]
-sample_long <- reshape2::melt(sample_df_summary, id.vars = "row")
+#sample_long <- reshape2::melt(sample_df_summary, id.vars = "row")
 
-ggplot(sample_long, aes(x = value, y = row, group = variable))+#, color = variable)) +
-  geom_segment(aes(xend = 0, yend = row)) +
-  theme_classic()
+# create the plot
+plot(1, type='n', xlim=c(min(df_summary$min), max(df_summary$max)), 
+     ylim=c(0.5, nrow(df_summary)+0.5), ylab='Case number', xlab='Prediction interval')
 
+# loop through the rows and draw a line for each
+for (i in 1:nrow(df_summary)) {
+  segments(df_summary$min[i], i, df_summary$max[i], i)
+  points(df_summary$mean[i], i, pch=19, col='blue')
+}
 
+## Partial correlation plots
+pp <- seq(-3,3, length.out = 100)
 
+for(k in 1:100){
+  Xtmp[,k] <- rep(pp[k], n)
+}
