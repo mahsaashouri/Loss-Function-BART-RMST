@@ -185,13 +185,13 @@ Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=
 ## BART
 mean.test.bart <- rowMeans(bart_fitted[[1]]$fitted.values.test)
 
-# calculate IPCW test performance - BART
+# calculate IPCW test performance - BART # 1151.15
 IPCW.test.bart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
 
 ## BACRT
 mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 
-# calculate IPCW test performance - BCART
+# calculate IPCW test performance - BCART # 948.4491
 IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
 ## Confidence interval for each case - plot 

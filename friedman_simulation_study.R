@@ -32,9 +32,9 @@ set.seed(123)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 sigma <- 1.0
-n <- 2000 # 250 or 2000 # number of training observation
-n.test <- 4000 # 2000 or 4000 # number of test observation
-num_covar <- 100 # 10 or 100 # total number of predictors
+n <- 250 # 250 or 2000 # number of training observation
+n.test <- 2000 # 2000 or 4000 # number of test observation
+num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
@@ -46,24 +46,41 @@ gam_alph <- 20
 nreps <- 3 # number of simulation replications
 
 ## function we need for cox model
-CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
+#CoxExpectedSurv <- function(X, beta_val, H0fn, tau) {
+## This function computes E( min(T_i, tau) |x_i) for
+## a cox ph model
+# mu.x <- colMeans(X)
+#integrand <- function(time, xi, beta_val) {
+# nu <- sum(xi*beta_val)
+#ans <- exp(-H0fn(time)*exp(nu))
+#return(ans)
+#}
+#nn <- nrow(X)
+#fitted_vals <- rep(NA, nn)
+#for(k in 1:nn) {
+# II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
+#                beta_val=beta_val, subdivisions=5000L)
+#fitted_vals[k] <- II$value
+#}
+#return(fitted_vals)
+#}
+
+CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
   ## a cox ph model
   mu.x <- colMeans(X)
-  integrand <- function(time, xi, beta_val) {
-    nu <- sum(xi*beta_val)
-    ans <- exp(-H0fn(time)*exp(nu))
-    return(ans)
-  }
+  tpoints <- c(time[time < tau], tau)
+  Hpoints <- H0.vals[time < tau]
   nn <- nrow(X)
+  
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
-    II <- integrate(integrand, lower=0, upper=tau, xi=X[k,] - mu.x,
-                    beta_val=beta_val, subdivisions=5000L)
-    fitted_vals[k] <- II$value
+    nu <- sum((X[k,] - mu.x)*beta_val)
+    fitted_vals[k] <- sum( exp(-Hpoints*exp(nu)*diff(tpoints)) )
   }
   return(fitted_vals)
 }
+
 
 
 cens_prop <- rep(NA, nreps)
@@ -78,7 +95,9 @@ for(j in 1:nreps) {
   ## might need to input tau into this calculation?
   
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
-  C.train <- runif(n, min=2, max=3) ## min = 0.5 or 2
+  #C.train <- runif(n, min=2, max=3) ## min = 0.5 or 2
+  ## Dependent censoring
+  C.train <- runif(n, min=2, max=3) + X.train[ , 1] + X.train[ , 2] + X.train[ , 3] + X.train[ , 4]
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
   
@@ -90,7 +109,9 @@ for(j in 1:nreps) {
   mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) + 
     tau*pgamma(tau, shape = gam_alph, rate = ET.test, lower.tail = FALSE)
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
-  C.test <- runif(n.test, min=2, max=3) ## min = 0.5 or 2
+  #C.test <- runif(n.test, min=2, max=3) ## min = 0.5 or 2
+  ## Dependent censoring
+  C.test <- runif(n, min=2, max=3) + X.test[ , 1] + X.test[ , 2] + X.test[ , 3] + X.test[ , 4]
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
   
@@ -150,7 +171,8 @@ for(j in 1:nreps) {
   ## for some datasets returns this error: Error in integrate(integrand, lower = 0, upper = tau, xi = X[k, ] - mu.x, :
   #maximum number of subdivisions reached
   COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
-                                  H0fn=H0fn, tau=tau)
+                                  time = coxhaz$time, H0.vals=coxhaz$cumhaz,
+                                  tau=tau)
   
   ### 6. Cox-PH model with lasso penalty
   rcox_tmp <- cv.glmnet(x=X.train, y=Surv(Y.train, delta.train), family = "cox",
@@ -162,7 +184,8 @@ for(j in 1:nreps) {
                      yright=max(Rcoxhaz$cumhaz))
   lasso_betahat <- as.numeric(coef(RCOXPH))
   RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat,
-                                   H0fn=RH0fn, tau=tau)
+                                   time=Rcoxhaz$time,
+                                   H0.vals=Rcoxhaz$cumhaz, tau=tau)
   
   ## 7. RMST BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
@@ -203,4 +226,3 @@ Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
 Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
 
 round(Results, 4)
-

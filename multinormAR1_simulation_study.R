@@ -28,8 +28,8 @@ set.seed(123)
 
 
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
@@ -102,7 +102,7 @@ for(j in 1:nreps) {
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
   T.train <- rgamma(n, shape = gam_alpha, rate = DataSim$Y)
-  C.train <- runif(n, min=10, max=50) ## max = 50 or 2000
+  C.train <- runif(n, min=10, max=2000) ## max = 50 or 2000
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.train <- digamma(gam_alpha) - log(DataSim$Y)
@@ -112,7 +112,7 @@ for(j in 1:nreps) {
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
   T.test <- rgamma(n.test, shape = gam_alpha, rate = DataSim.test$Y)
-  C.test <- runif(n, min=10, max=50) ## max = 50 or 2000
+  C.test <- runif(n, min=10, max=2000) ## max = 50 or 2000
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
