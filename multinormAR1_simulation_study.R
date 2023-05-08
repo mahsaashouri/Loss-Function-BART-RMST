@@ -33,7 +33,8 @@ n.test <- 4000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
-coef <- runif(num_covar)
+#coef <- runif(num_covar)
+coef <- c(runif(5), rep(0, num_covar-5))
 Rho <- 0.5
 ## choosing this big tau value cause warning
 #Warning message:
