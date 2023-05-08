@@ -209,7 +209,7 @@ sample_df_summary <- df_summary[sample_idx,]
 
 # create the plot
 plot(1, type='n', xlim=c(min(df_summary$min), max(df_summary$max)), 
-     ylim=c(0.5, nrow(df_summary)+0.5), ylab='Case number', xlab='Prediction interval')
+     ylim=c(0.5, nrow(df_summary)+0.5), ylab='Case number', xlab='Test set credible intervals for RMST')
 
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
