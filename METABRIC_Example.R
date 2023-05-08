@@ -195,8 +195,8 @@ mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
 IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
 ## Confidence interval for each case - plot 
-means <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
-ses <- matrixStats::rowSds(bcart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
+means <- rowMeans(bart_fitted[[1]]$fitted.values.test)
+ses <- matrixStats::rowSds(bart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
 df_summary <- data.frame(row = 1:nrow(bart_fitted[[1]]$fitted.values.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
@@ -207,14 +207,17 @@ sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace
 sample_df_summary <- df_summary[sample_idx,]
 #sample_long <- reshape2::melt(sample_df_summary, id.vars = "row")
 
+# Sort the rows of df_summary by the mean column
+df_summary_sorted <- df_summary[order(df_summary$mean),]
+
 # create the plot
-plot(1, type='n', xlim=c(min(df_summary$min), max(df_summary$max)), 
-     ylim=c(0.5, nrow(df_summary)+0.5), ylab='Case number', xlab='Test set credible intervals for RMST')
+plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)), 
+     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab='Test set credible intervals for RMST')
 
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
-  segments(df_summary$min[i], i, df_summary$max[i], i)
-  points(df_summary$mean[i], i, pch=19, col='blue')
+  segments(df_summary_sorted$min[i], i, df_summary_sorted$max[i], i)
+  points(df_summary_sorted$mean[i], i, pch=19, col='blue')
 }
 
 ## Partial correlation plots
