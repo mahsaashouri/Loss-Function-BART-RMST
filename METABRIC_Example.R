@@ -226,14 +226,14 @@ Col_ParCorr <- c('palb2', 'brca2', 'age_at_diagnosis', 'nottingham_prognostic_in
 pp <- seq(min(METABRIC[,Col_ParCorr[1]]),max(METABRIC[,Col_ParCorr[1]]), length.out = 100)
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
-ff <- matrix(NA, nrow = 100, ncol = nrow(DATA))
+ff <- c()
 for(k in 1:100){
   Xtmp <- DATA
   Xtmp[,Col_ParCorr[1]] <- rep(pp[k], nrow(DATA))
   Y <- METABRIC$overall_survival_months
   delta <- METABRIC$overall_survival
   bart_mod <- RMST_BART(Y, delta, DATA, tau=tau)
-  ff[k,] <- rowMeans(bart_mod$fitted.values)
+  ff[k] <- mean(rowMeans(bart_mod$fitted.values))
 }
 
 
