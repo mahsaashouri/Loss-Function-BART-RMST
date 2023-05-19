@@ -39,9 +39,11 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   ## Draw Gvec weights here.
   delta_alpha <- 1
 
-  Gvec <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
-                    kappa0=kappa0, delta_alpha=delta_alpha)
-
+  Gmat <- matrix(0, nrow=ndraws + burnIn, ncol=length(U_tau))
+  for(k in 1:(ndraws + burnIn)) {
+      Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+                       kappa0=kappa0, delta_alpha=delta_alpha)
+  }
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
   GKMfn <- stepfun(c(0, KM_cens$time), c(1, KM_cens$surv, min(KM_cens$surv)))
@@ -83,12 +85,13 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   old_tree <- list(dvec = FindDvec(1), splt.vars = c(), splt.vals = c())
   NNodes[1] <- sum(old_tree$dvec==1)
   loglikvals[1] <- LogLik(tree=old_tree, X=xmat, U=Y_tau,
-                            Gvec=Gvec, sigma.mu=sigma.mu)
+                            Gvec=Gmat[1,], sigma.mu=sigma.mu)
   muvec <- rep(0, NNodes[1])
 
   for(k in 1:(ndraws + burnIn)) {
      # step 1: Update tree
      ## sample one of three move types
+     Gvec <- Gmat[k,]
 
      move_type <- sample(1:3, size=1)
      proposed_tree <- ProposedTree(move_type, old_tree, xmat)
