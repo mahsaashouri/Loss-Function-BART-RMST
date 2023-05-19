@@ -72,7 +72,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   tpoints <- c(time[time < tau], tau)
   Hpoints <- H0.vals[time < tau]
   nn <- nrow(X)
-  
+
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     nu <- sum((X[k,] - mu.x)*beta_val)
@@ -93,20 +93,20 @@ for(j in 1:nreps) {
   ET.train <- f.test(X.train)
   #mu.train <- digamma(gam_alph) - log(ET.train)
   ## might need to input tau into this calculation?
-  
+
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
   #C.train <- runif(n, min=2, max=3) ## min = 0.5 or 2
   ## Dependent censoring
   C.train <- runif(n, min=2, max=3) + X.train[ , 1] + X.train[ , 2] + X.train[ , 3] + X.train[ , 4]
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  
+
   ## test set
   X.test <- matrix(runif(n.test*num_covar), n.test, num_covar)
   colnames(X.test) <- paste0('X', 1:num_covar)
   ET.test <- f.test(X.test)
   #mu.test <- digamma(gam_alph) - log(ET.test)
-  mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) + 
+  mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) +
     tau*pgamma(tau, shape = gam_alph, rate = ET.test, lower.tail = FALSE)
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
   #C.test <- runif(n.test, min=2, max=3) ## min = 0.5 or 2
@@ -114,7 +114,7 @@ for(j in 1:nreps) {
   C.test <- runif(n, min=2, max=3) + X.test[ , 1] + X.test[ , 2] + X.test[ , 3] + X.test[ , 4]
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
-  
+
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -123,21 +123,21 @@ for(j in 1:nreps) {
   aft_sigsq <- aft_sigma*aft_sigma
   ## exp(aft_linpred) is an approximate fitted value
   ## For RMST, a more precise definition of fitted value is
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
-  
+
   ##### 2. AFT intercept-only model
   AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
   aft_linpred <- rep(AFT_null$coefficients[1], nrow(X.test))
   aft_sigma <- AFT_null$scale
   aft_sigsq <- aft_sigma*aft_sigma
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_null_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
-  
+
   #### 3. AFT_BART model
   AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test)
   ndraw_abart <- nrow(AFT_BART$yhat.test)
@@ -148,20 +148,20 @@ for(j in 1:nreps) {
     aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
     ## exp(aft_linpred) is an approximate fitted value
     ## For RMST, a more precise definition of fitted value is
-    
+
     gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
     lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
-    
+
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted <- colMeans(AFT_fit_reps)
-  
+
   ## 4. Boosting with IPCW weights
   ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
   IPW_boost <- glmboost(x=X.train[delta.train==1,], y=pmin(Y.train[delta.train==1], tau),
                         weights = ipcw_weights[delta.train==1])
   IPW_fitted <- as.numeric(predict(IPW_boost, newdata=X.test))
-  
+
   ## 5. Cox-PH model without penalization of regression coefficients
   COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
   #coxhaz <- basehaz(COXPH.mod)
@@ -173,7 +173,7 @@ for(j in 1:nreps) {
   COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
                                   time = coxhaz$time, H0.vals=coxhaz$cumhaz,
                                   tau=tau)
-  
+
   ### 6. Cox-PH model with lasso penalty
   rcox_tmp <- cv.glmnet(x=X.train, y=Surv(Y.train, delta.train), family = "cox",
                         type.measure = "deviance")
@@ -186,17 +186,22 @@ for(j in 1:nreps) {
   RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat,
                                    time=Rcoxhaz$time,
                                    H0.vals=Rcoxhaz$cumhaz, tau=tau)
-  
+
   ## 7. RMST BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
                           ndraws=ndraws, tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
-  
+  bcart_CI <- t(apply(bcart_mod$fitted.values.test, 1,
+                    function(x) quantile(x, probs=c(0.025, 0.975))))
+
   ## 8. RMST BART
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
                         ndraws=ndraws, tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
-  
+  bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
+                     function(x) quantile(x, probs=c(0.025, 0.975))))
+
+
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
   rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
