@@ -33,8 +33,11 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   }
   ## Draw Gvec weights here.
   delta_alpha <- 1
-  Gvec <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
-                    kappa0=kappa0, delta_alpha=delta_alpha)
+  Gmat <- matrix(0, nrow=ndraws + burnIn, ncol=length(U_tau))
+  for(k in 1:(ndraws + burnIn)) {
+    Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+                         kappa0=kappa0, delta_alpha=delta_alpha)
+  }
 
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
@@ -115,6 +118,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   for(j in 1:(ndraws+burnIn)){
     SplitVarList[[j]] <- matrix(NA, nrow = ntrees, ncol = ncol(xmat))
     colnames(SplitVarList[[j]]) <- colnames(xmat)
+    Gvec <- Gmat[j,]
     for(k in 1:ntrees) {
       # update tree k
       ## sample one of three move types
