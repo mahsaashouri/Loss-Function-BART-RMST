@@ -86,6 +86,8 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 cens_prop <- rep(NA, nreps)
 rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
+
+coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
 for(j in 1:nreps) {
   ## training set
   X.train <- matrix(runif(n*num_covar), n, num_covar)
@@ -127,6 +129,8 @@ for(j in 1:nreps) {
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
+  ## do either bootstrap or derive confidence interval directly
+
 
   ##### 2. AFT intercept-only model
   AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
@@ -137,6 +141,8 @@ for(j in 1:nreps) {
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_null_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
+
+
 
   #### 3. AFT_BART model
   AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test)
@@ -155,6 +161,8 @@ for(j in 1:nreps) {
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted <- colMeans(AFT_fit_reps)
+  AFT_BART_CI <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+
 
   ## 4. Boosting with IPCW weights
   ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
@@ -201,7 +209,7 @@ for(j in 1:nreps) {
   bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
                      function(x) quantile(x, probs=c(0.025, 0.975))))
 
-
+  ## Recording RMSE
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
   rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
@@ -212,6 +220,12 @@ for(j in 1:nreps) {
   rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
   cens_prop[j] <- mean(delta.test) # also record censoring proportion
+
+  ## Recording coverage
+  coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
+  coverage_bcart[j] <- mean((mu.test >= bcart_CI[,1]) & (mu.test <= bcart_CI[,2]))
+  coverage_bart[j] <- mean((mu.test >= bart_CI[,1]) & (mu.test <= bart_CI[,2]))
+  ## report the results of coverage as a table.
 }
 
 
