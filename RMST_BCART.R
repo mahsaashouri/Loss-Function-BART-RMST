@@ -15,7 +15,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 
 RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="identity",
-                       sigma.mu=NULL, alpha=0.95, beta=2, kappa0=1,
+                       ipcw="independent", sigma.mu=NULL, alpha=0.95, beta=2, kappa0=1,
                        sgrid=NULL, tau=NULL, burnIn=100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
@@ -40,10 +40,22 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
   delta_alpha <- 1
 
   Gmat <- matrix(0, nrow=ndraws + burnIn, ncol=length(U_tau))
-  for(k in 1:(ndraws + burnIn)) {
-      Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
-                       kappa0=kappa0, delta_alpha=delta_alpha)
+  if(ipcw=="independent") {
+      for(k in 1:(ndraws + burnIn)) {
+          Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+                               kappa0=kappa0, delta_alpha=delta_alpha)
+       }
+  } else {
+       cens_bart <- AFTrees(x.train=X, y.train=U, status=1-delta,
+                            ndpost=ndraws, nskip=burnIn)
+       nd <- length(U_tau)
+       for(j in 1:nd) {
+           tmp <- SurvivalProb(cens_bart, time.points=U_tau[j])
+           Gmat[,j] <- tmp$Surv.train
+       }
   }
+  #CensBART <- abart(X.train, Y.train, delta.train, x.test=X.test)
+
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
   GKMfn <- stepfun(c(0, KM_cens$time), c(1, KM_cens$surv, min(KM_cens$surv)))
