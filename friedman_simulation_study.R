@@ -4,6 +4,10 @@ library(survival)
 library(BART)
 library(glmnet)
 library(mboost)
+library(devtools)
+
+install_github("nchenderson/AFTrees")
+
 ##  the RMST_BCART function
 setwd("~/Documents/LossFunctionBART/Loss-Function--BART")
 source("A_matrix.R")
@@ -198,13 +202,20 @@ for(j in 1:nreps) {
   ## 7. RMST BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
                           ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  #bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
+  #                        ndraws=ndraws, ipcw="dependent", tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
+
   bcart_CI <- t(apply(bcart_mod$fitted.values.test, 1,
                     function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## 8. RMST BART
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
                         ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  #bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
+  #                      ndraws=ndraws, ipcw="dependent", tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
   bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
                      function(x) quantile(x, probs=c(0.025, 0.975))))
