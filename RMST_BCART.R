@@ -47,14 +47,18 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
        }
   } else {
        cens_bart <- AFTrees(x.train=X, y.train=U, status=1-delta,
-                            ndpost=ndraws, nskip=burnIn)
-       nd <- length(U_tau)
-       for(j in 1:nd) {
-           tmp <- SurvivalProb(cens_bart, time.points=U_tau[j])
-           Gmat[,j] <- tmp$Surv.train
+                            ndpost=ndraws + burnIn, verbose=FALSE)
+       nd <- ndraws + burnIn
+       Mucens_draws <- cens_bart$m.train[,delta==1]
+       for(k in 1:nd) {
+         for(j in 1:length(U_tau)) {
+           log.time.points <- log(U_tau[j])
+           AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,j])/cens_bart$sigma[k]
+           Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
+           Gmat[k,j] <- 1/Cprob
+         }
        }
   }
-  #CensBART <- abart(X.train, Y.train, delta.train, x.test=X.test)
 
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
   KM_cens <- survfit(Surv(U, 1 - delta) ~ 1)
