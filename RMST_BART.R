@@ -12,8 +12,8 @@ ProposedTree <- function(move_type, old_tree, xmat){
 }
 
 RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="identity",
-                      sigma.mu=NULL, ntrees=50, alpha=0.95, beta=2, kappa0=1,
-                      sgrid=NULL, tau=NULL, burnIn=100) {
+                      ipcw="independent", sigma.mu=NULL, ntrees=50, alpha=0.95,
+                      beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
   ## xmat is the matrix that only contains the rows of
   ## X where delta=1
   if(ncol(X) > 1) {
@@ -34,9 +34,24 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   ## Draw Gvec weights here.
   delta_alpha <- 1
   Gmat <- matrix(0, nrow=ndraws + burnIn, ncol=length(U_tau))
-  for(k in 1:(ndraws + burnIn)) {
-    Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
-                         kappa0=kappa0, delta_alpha=delta_alpha)
+  if(ipcw=="independent") {
+      for(k in 1:(ndraws + burnIn)) {
+          Gmat[k,] <- DrawIPCW(U=U, delta=delta, Utau=U_tau, sgrid=sgrid,
+                               kappa0=kappa0, delta_alpha=delta_alpha)
+      }
+  } else {
+      cens_bart <- AFTrees(x.train=X, y.train=U, status=1-delta,
+                          ndpost=ndraws + burnIn, verbose=FALSE)
+      nd <- ndraws + burnIn
+      Mucens_draws <- cens_bart$m.train[,delta==1]
+      for(k in 1:nd) {
+         for(j in 1:length(U_tau)) {
+            log.time.points <- log(U_tau[j])
+            AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,j])/cens_bart$sigma[k]
+            Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
+            Gmat[k,j] <- 1/Cprob
+         }
+      }
   }
 
   ## Get KM estimate of censoring distribution and KM inverse censoring weights
