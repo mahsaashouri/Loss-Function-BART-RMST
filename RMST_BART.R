@@ -12,7 +12,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 }
 
 RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="identity",
-                      ipcw="independent", sigma.mu=NULL, ntrees=50, alpha=0.95,
+                      ipcw="independent", sigma.mu=NULL, ntrees=200, alpha=0.95,
                       beta=2, kappa0=1, sgrid=NULL, tau=NULL, burnIn=100) {
   ## xmat is the matrix that only contains the rows of
   ## X where delta=1
