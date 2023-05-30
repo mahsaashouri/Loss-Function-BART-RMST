@@ -155,11 +155,14 @@ library(ggplot2)
 # Create a data frame with the numbers and names
 VarImpDataF <- data.frame(numbers = c(VarImp)/ndraws,
                  names = c(names(VarImp)))
+library(ggrepel)
 # Create the plot
 ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
   geom_line(size = 1, color = "black") +
   geom_point(size = 3, color = "blue") +
-  geom_text(aes(label = names), hjust = 1.1, vjust = -.5, size = 6, color = "blue") +
+  #geom_text(aes(label = names), hjust = -.5, vjust = -.9, size = 6, color = "blue") +
+  #geom_text_repel(aes(label = names), size = 6, color = "blue") +
+  geom_label_repel(aes(label = names), size = 6, color = "blue") +
   labs(x = "Variable", y = "Count") +
   theme_light() +
   theme(
