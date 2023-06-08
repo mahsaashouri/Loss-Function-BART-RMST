@@ -87,7 +87,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     nu <- sum((X[k,] - mu.x)*beta_val)
-    fitted_vals[k] <- sum( exp(-Hpoints*exp(nu)*diff(tpoints)) )
+    fitted_vals[k] <- sum(exp(-Hpoints*exp(nu))*diff(tpoints))
   }
   return(fitted_vals)
 }
