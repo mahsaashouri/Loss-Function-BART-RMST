@@ -28,8 +28,8 @@ set.seed(123)
 
 
 sigma <- 1.0
-n <- 2000 # 250 or 2000 # number of training observation
-n.test <- 4000 # 2000 or 4000 # number of test observation
+n <- 250 # 250 or 2000 # number of training observation
+n.test <- 2000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
@@ -103,7 +103,7 @@ for(j in 1:nreps) {
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
   T.train <- rgamma(n, shape = gam_alpha, rate = DataSim$Y)
-  C.train <- runif(n, min=10, max=2000) ## max = 50 or 2000
+  C.train <- runif(n, min=10, max=50) ## max = 50 or 2000
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.train <- digamma(gam_alpha) - log(DataSim$Y)
@@ -113,7 +113,7 @@ for(j in 1:nreps) {
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
   T.test <- rgamma(n.test, shape = gam_alpha, rate = DataSim.test$Y)
-  C.test <- runif(n, min=10, max=2000) ## max = 50 or 2000
+  C.test <- runif(n, min=10, max=50) ## max = 50 or 2000
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
   #mu.test <- digamma(gam_alpha) - log(DataSim.test$Y)
@@ -160,6 +160,7 @@ for(j in 1:nreps) {
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted <- colMeans(AFT_fit_reps)
+  AFT_BART_CI <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## 4. Boosting with IPCW weights
   ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
@@ -194,11 +195,15 @@ for(j in 1:nreps) {
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
                           ndraws=ndraws, tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
+  bcart_CI <- t(apply(bcart_mod$fitted.values.test, 1,
+                      function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## 8. RMST BART
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
                         ndraws=ndraws, tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
+  bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
+                     function(x) quantile(x, probs=c(0.025, 0.975))))
 
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
@@ -210,6 +215,12 @@ for(j in 1:nreps) {
   rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
   cens_prop[j] <- mean(delta.test) # also record censoring proportion
+  
+  ## Recording coverage
+  coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
+  coverage_bcart[j] <- mean((mu.test >= bcart_CI[,1]) & (mu.test <= bcart_CI[,2]))
+  coverage_bart[j] <- mean((mu.test >= bart_CI[,1]) & (mu.test <= bart_CI[,2]))
+  
 
  }
 

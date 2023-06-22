@@ -102,9 +102,9 @@ for(j in 1:nreps) {
   ## might need to input tau into this calculation?
 
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
-  C.train <- runif(n, min=0.5, max=3) ## min = 0.5 or 2
+  #C.train <- runif(n, min=.5, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  #C.train <- runif(n, min=2, max=3) + X.train[ , 1] + X.train[ , 2] + X.train[ , 3] + X.train[ , 4]
+  C.train <- runif(n, min=.5, max=3) + X.train[ , 1] + X.train[ , 2] + X.train[ , 3] + X.train[ , 4]
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -116,9 +116,9 @@ for(j in 1:nreps) {
   mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) +
     tau*pgamma(tau, shape = gam_alph, rate = ET.test, lower.tail = FALSE)
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
-  C.test <- runif(n.test, min=0.5, max=3) ## min = 0.5 or 2
+  #C.test <- runif(n.test, min=.5, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  #C.test <- runif(n, min=2, max=3) + X.test[ , 1] + X.test[ , 2] + X.test[ , 3] + X.test[ , 4]
+  C.test <- runif(n, min=.5, max=3) + X.test[ , 1] + X.test[ , 2] + X.test[ , 3] + X.test[ , 4]
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
 
@@ -201,22 +201,22 @@ for(j in 1:nreps) {
                                    H0.vals=Rcoxhaz$cumhaz, tau=tau)
 
   ## 7. RMST BCART
-  bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
-                          ndraws=ndraws, tau=tau)
-  ## If doing dependent censoring use:
   #bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
-  #                        ndraws=ndraws, ipcw="dependent", tau=tau)
+   #                       ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
+                          ndraws=ndraws, ipcw="dependent", tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
 
   bcart_CI <- t(apply(bcart_mod$fitted.values.test, 1,
                     function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## 8. RMST BART
-  bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
-                        ndraws=ndraws, tau=tau)
-  ## If doing dependent censoring use:
   #bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
-  #                      ndraws=ndraws, ipcw="dependent", tau=tau)
+  #                      ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
+                        ndraws=ndraws, ipcw="dependent", tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
   bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
                      function(x) quantile(x, probs=c(0.025, 0.975))))
