@@ -39,7 +39,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 sigma <- 1.0
 n <- 250 # 250 or 2000 # number of training observation
 n.test <- 2000 # 2000 or 4000 # number of test observation
-num_covar <- 10 # 10 or 100 # total number of predictors
+num_covar <- 100 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 ## choosing this big tau value cause warning
@@ -104,7 +104,7 @@ for(j in 1:nreps) {
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
   #C.train <- runif(n, min=.5, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  C.train <- runif(n, min=.5, max=3) + X.train[ , 1] + X.train[ , 2] + X.train[ , 3] + X.train[ , 4]
+  C.train <- runif(n, min=2, max=3) + 5*X.train[ , 1] + 5*X.train[ , 2] + 5*X.train[ , 3] + 5*X.train[ , 4]
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -118,7 +118,7 @@ for(j in 1:nreps) {
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
   #C.test <- runif(n.test, min=.5, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  C.test <- runif(n, min=.5, max=3) + X.test[ , 1] + X.test[ , 2] + X.test[ , 3] + X.test[ , 4]
+  C.test <- runif(n, min=2, max=3) + 5*X.test[ , 1] + 5*X.test[ , 2] + 5*X.test[ , 3] + 5*X.test[ , 4]
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
 

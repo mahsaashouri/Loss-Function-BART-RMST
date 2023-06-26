@@ -34,7 +34,7 @@ num_covar <- 10 # 10 or 100 # total number of predictors
 ndraws <- 500
 sgrid <- seq(0, 10, by=.1)
 #coef <- runif(num_covar)
-coef <- c(runif(5), rep(0, num_covar-5))
+coef <- c(runif(5, 0, 10), rep(0, num_covar-5))
 Rho <- 0.5
 ## choosing this big tau value cause warning
 #Warning message:
@@ -97,6 +97,8 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 cens_prop <- rep(NA, nreps)
 rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart<- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
+
+coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
 for(j in 1:nreps) {
   ## training set
   DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho)
