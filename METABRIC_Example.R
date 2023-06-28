@@ -23,6 +23,8 @@ source("fitted_value.R")
 source("prior_conditional_on_D_V2.R")
 source("tree-configuration.R")
 source("DrawIPCW.R")
+install_github("nchenderson/AFTrees")
+library(AFTrees)
 
 ## reading data
 METABRIC <- read.csv('METABRIC_RNA_Mutation.csv', header = TRUE)[,c(1:41)]
@@ -94,7 +96,7 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 n_iterations <- 1
 train_prop <- 0.7
 sgrid <- seq(0, 4000, by=1)
-tau <- 500
+tau <- 50
 gam_alph <- 20
 sigma <- 1.0
 ndraws <- 500
@@ -121,12 +123,18 @@ for (i in 1:n_iterations) {
   delta.test <- METABRIC[test_idx,]$overall_survival
   
   ## BCART
-  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
+  #bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  bcart_mod <- RMST_BCART(Y, delta, train.set, test.set,
+                          ndraws=ndraws, ipcw="dependent", tau=tau)
   #bcart_fitted[[i]] <- rowMeans(bcart_mod$fitted.values.test)
   bcart_fitted[[i]] <- bcart_mod
   
   ## BART
-  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
+  #bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ntrees = 200,
+                        ndraws=ndraws, ipcw="dependent", tau=tau)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
   bart_fitted[[i]] <- bart_mod
   
