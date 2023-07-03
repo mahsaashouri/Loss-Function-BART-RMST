@@ -220,7 +220,7 @@ for(j in 1:nreps) {
 
   ## 7. RMST BCART
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
-                          ndraws=ndraws, tau=tau)
+                          ndraws=ndraws, tau=tau, kappa = .5)
   ## If doing dependent censoring use:
   #bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
    #                       ndraws=ndraws, ipcw="dependent", tau=tau)
@@ -231,7 +231,7 @@ for(j in 1:nreps) {
 
   ## 8. RMST BART
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
-                        ndraws=ndraws, tau=tau)
+                        ndraws=ndraws, tau=tau, kappa = .5)
   ## If doing dependent censoring use:
   #bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
    #                     ndraws=ndraws, ipcw="dependent", tau=tau)

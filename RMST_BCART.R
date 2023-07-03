@@ -15,7 +15,7 @@ ProposedTree <- function(move_type, old_tree, xmat){
 
 
 RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="identity",
-                       ipcw="independent", sigma.mu=NULL, alpha=0.95, beta=2, kappa0=1,
+                       ipcw="independent", sigma.mu=NULL, alpha=0.95, beta=2, kappa = 1, kappa0=1,
                        sgrid=NULL, tau=NULL, burnIn=100) {
   ## skeleton of function for computing
   ## Bayesian CART for the RMST loss function
@@ -93,7 +93,7 @@ RMST_BCART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="ide
     Y_tau <- log(U_tau) - muhatb
     if(is.null(sigma.mu)) {
       Ymin <- min(U_tau)
-      sigma.mu <- (log(tau) - muhatb - log(Ymin))/4
+      sigma.mu <- (kappa*(log(tau) - muhatb - log(Ymin)))/4
     }
   }
 
