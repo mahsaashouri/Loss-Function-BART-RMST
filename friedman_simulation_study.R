@@ -99,12 +99,14 @@ for(j in 1:nreps) {
   colnames(X.train) <- paste0('X', 1:num_covar)
   ET.train <- f.test(X.train)
   #mu.train <- digamma(gam_alph) - log(ET.train)
+  mu.train <- (ET.train/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.train) +
+    tau*pgamma(tau, shape = gam_alph, rate = ET.train, lower.tail = FALSE)
   ## might need to input tau into this calculation?
 
   T.train <- rgamma(n, shape=gam_alph, rate=ET.train)
-  #C.train <- runif(n, min=.5, max=3) ## min = 0.5 or 2
+  C.train <- runif(n, min=2, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  C.train <- runif(n, min=2, max=3) + 5*X.train[ , 1] + 5*X.train[ , 2] + 5*X.train[ , 3] + 5*X.train[ , 4]
+  #C.train <- runif(n, min=2, max=3) + 5*X.train[ , 1] + 5*X.train[ , 2] + 5*X.train[ , 3] + 5*X.train[ , 4]
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -116,9 +118,9 @@ for(j in 1:nreps) {
   mu.test <- (ET.test/gam_alph)*pgamma(tau, shape = gam_alph+1, rate = ET.test) +
     tau*pgamma(tau, shape = gam_alph, rate = ET.test, lower.tail = FALSE)
   T.test <- rgamma(n.test, shape=gam_alph, rate=ET.test)
-  #C.test <- runif(n.test, min=.5, max=3) ## min = 0.5 or 2
+  C.test <- runif(n.test, min=2, max=3) ## min = 0.5 or 2
   ## Dependent censoring
-  C.test <- runif(n, min=2, max=3) + 5*X.test[ , 1] + 5*X.test[ , 2] + 5*X.test[ , 3] + 5*X.test[ , 4]
+  #C.test <- runif(n, min=2, max=3) + 5*X.test[ , 1] + 5*X.test[ , 2] + 5*X.test[ , 3] + 5*X.test[ , 4]
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
 
@@ -151,22 +153,38 @@ for(j in 1:nreps) {
 
   #### 3. AFT_BART model
   AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test)
-  ndraw_abart <- nrow(AFT_BART$yhat.test)
-  AFT_fit_reps <- matrix(NA, nrow=ndraw_abart, ncol=nrow(X.test))
+  #ndraw_abart <- nrow(AFT_BART$yhat.test)
+  #AFT_fit_reps <- matrix(NA, nrow=ndraw_abart, ncol=nrow(X.test))
+  #for(k in 1:ndraw_abart) {
+  #  aft_bart_mu <- AFT_BART$yhat.test[k,]
+  #  aft_bart_sig <- AFT_BART$sigma[k]
+  #  aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
+    ## exp(aft_linpred) is an approximate fitted value
+    ## For RMST, a more precise definition of fitted value is
+
+  #  gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
+  #  lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
+
+  #  AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
+  #}
+  #AFT_BART_fitted <- colMeans(AFT_fit_reps)
+  #AFT_BART_CI <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+  ndraw_abart <- nrow(AFT_BART$yhat.train)
+  AFT_fit_reps_train <- matrix(NA, nrow=ndraw_abart, ncol=nrow(X.train))
   for(k in 1:ndraw_abart) {
-    aft_bart_mu <- AFT_BART$yhat.test[k,]
+    aft_bart_mu <- AFT_BART$yhat.train[k,]
     aft_bart_sig <- AFT_BART$sigma[k]
     aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
     ## exp(aft_linpred) is an approximate fitted value
     ## For RMST, a more precise definition of fitted value is
-
+    
     gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
     lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
-
-    AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
+    
+    AFT_fit_reps_train[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
-  AFT_BART_fitted <- colMeans(AFT_fit_reps)
-  AFT_BART_CI <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+  AFT_BART_fitted <- colMeans(AFT_fit_reps_train)
+  AFT_BART_CI <- t(apply(AFT_fit_reps_train, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
 
   ## 4. Boosting with IPCW weights
@@ -201,24 +219,24 @@ for(j in 1:nreps) {
                                    H0.vals=Rcoxhaz$cumhaz, tau=tau)
 
   ## 7. RMST BCART
-  #bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
-   #                       ndraws=ndraws, tau=tau)
-  ## If doing dependent censoring use:
   bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
-                          ndraws=ndraws, ipcw="dependent", tau=tau)
+                          ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  #bcart_mod <- RMST_BCART(Y.train, delta.train, X.train, X.test,
+   #                       ndraws=ndraws, ipcw="dependent", tau=tau)
   bcart_fitted <- rowMeans(bcart_mod$fitted.values.test)
 
-  bcart_CI <- t(apply(bcart_mod$fitted.values.test, 1,
+  bcart_CI <- t(apply(bcart_mod$fitted.values, 1,
                     function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## 8. RMST BART
-  #bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
-  #                      ndraws=ndraws, tau=tau)
-  ## If doing dependent censoring use:
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
-                        ndraws=ndraws, ipcw="dependent", tau=tau)
+                        ndraws=ndraws, tau=tau)
+  ## If doing dependent censoring use:
+  #bart_mod <- RMST_BART(Y.train, delta.train, X.train, X.test,
+   #                     ndraws=ndraws, ipcw="dependent", tau=tau)
   bart_fitted <- rowMeans(bart_mod$fitted.values.test)
-  bart_CI <- t(apply(bart_mod$fitted.values.test, 1,
+  bart_CI <- t(apply(bart_mod$fitted.values, 1,
                      function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ## Recording RMSE
@@ -234,9 +252,9 @@ for(j in 1:nreps) {
   cens_prop[j] <- mean(delta.test) # also record censoring proportion
 
   ## Recording coverage
-  coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
-  coverage_bcart[j] <- mean((mu.test >= bcart_CI[,1]) & (mu.test <= bcart_CI[,2]))
-  coverage_bart[j] <- mean((mu.test >= bart_CI[,1]) & (mu.test <= bart_CI[,2]))
+  coverage_aft_bart[j] <- mean((mu.train >= AFT_BART_CI[,1]) & (mu.train <= AFT_BART_CI[,2]))
+  coverage_bcart[j] <- mean((mu.train >= bcart_CI[,1]) & (mu.train <= bcart_CI[,2]))
+  coverage_bart[j] <- mean((mu.train >= bart_CI[,1]) & (mu.train <= bart_CI[,2]))
   ## report the results of coverage as a table.
 }
 
