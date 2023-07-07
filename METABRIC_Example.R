@@ -233,18 +233,31 @@ for (i in 1:nrow(df_summary)) {
 
 ## Partial correlation plots
 
-Col_ParCorr <- c('nf1','nbn','check2','palb2', 'brca2', 'age_at_diagnosis', 'nottingham_prognostic_index') 
-pp <- seq(min(METABRIC[,Col_ParCorr[1]]),max(METABRIC[,Col_ParCorr[1]]), length.out = 10)
+Col_ParCorr <- c('nf1','nbn', 'age_at_diagnosis', 'nottingham_prognostic_index') 
+pp <- seq(min(METABRIC[,Col_ParCorr[4]]),max(METABRIC[,Col_ParCorr[4]]), length.out = 10)
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 ff <- c()
 for(k in 1:10){
   Xtmp <- DATA
-  Xtmp[,Col_ParCorr[1]] <- rep(pp[k], nrow(DATA))
+  Xtmp[,Col_ParCorr[4]] <- rep(pp[k], nrow(DATA))
   Y <- METABRIC$overall_survival_months
   delta <- METABRIC$overall_survival
-  bart_mod <- RMST_BART(Y, delta, DATA, tau=tau, ntrees = 200)
+  bart_mod <- RMST_BART(Y, delta, Xtmp, tau=tau, ntrees = 200)
   ff[k] <- mean(rowMeans(bart_mod$fitted.values))
 }
+
+#ff_1 <- c(44.64780, 44.26682, 44.55446, 44.53387, 44.25460, 44.04177, 43.84110, 44.01009, 44.54170, 44.09558)
+#pp_1 <- c(-2.96860000, -1.95224444 ,-0.93588889,  0.08046667 , 1.09682222 , 2.11317778 , 3.12953333  ,4.14588889 , 5.16224444,  6.17860000)
+
+# ff_2 <-  44.54398 44.25755 44.38472 44.22499 44.41672 44.20168 44.33344 44.20899 44.14735 44.48058
+## pp_2 <- -3.6898000 -2.6830111 -1.6762222 -0.6694333  0.3373556  1.3441444  2.3509333  3.3577222  4.3645111  5.3713000
+
+# ff_3 <- 44.02239 44.25650 44.65303 44.31947 44.27197 44.14585 44.17240 44.08893 44.01477 44.04726
+# pp_3 <-  21.93000 30.19222 38.45444 46.71667 54.97889 63.24111 71.50333 79.76556 88.02778 96.29000
+
+## ff_4 <-  44.34663 44.28516 44.07619 44.16539 44.31767 44.24659 44.46195 44.13971 44.62427 44.35170
+# pp_4 <-   1.020000 1.613333 2.206667 2.800000 3.393333 3.986667 4.580000 5.173333 5.766667 6.360000
+
 
 
