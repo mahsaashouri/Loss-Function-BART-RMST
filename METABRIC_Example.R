@@ -267,7 +267,9 @@ for (category in unique(partial_results$index)) {
   
   plot <- ggplot(subset_data, aes(x = Value, y = MeanPrediction)) +
     geom_line() +
-    xlab(category)
+    xlab(category)+
+    theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
+          axis.text = element_text(size = 20)) 
   
   # Set y-axis label for the leftmost plots
   if (category %in% unique(partial_results$index)[c(1,3)]) {
