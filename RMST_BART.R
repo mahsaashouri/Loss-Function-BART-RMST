@@ -65,6 +65,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
   ## Setup storage for fitted values
   n <- length(U)
   FittedValues <- matrix(0, nrow = n,  ncol = ntrees)
+  muvec.rec <- matrix(0, nrow = 1,  ncol = ntrees)
   if(!is.null(X.test)) {
     FittedValues.test <- matrix(0, nrow = nrow(X.test),  ncol = ndraws)
     FitValue.test.track <- matrix(0, nrow = nrow(X.test), ncol = ntrees)
@@ -129,6 +130,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
 
 
   Fitted.Values <- matrix(NA, nrow=n, ncol=ndraws)
+  muvecRec <- matrix(NA, nrow=1, ncol=ndraws)
   SplitVarList <- list()
   for(j in 1:(ndraws+burnIn)){
     SplitVarList[[j]] <- matrix(NA, nrow = ntrees, ncol = ncol(xmat))
@@ -176,6 +178,7 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
       ## Update "fitted values" for tree k
       FittedValues[,k] <- FittedValue(X, new_tree$splt.vals, new_tree$splt.vars,
                                       muvec, new_tree$dvec)
+      muvec.rec[,k] <- mean(muvec)
 
       ## record number of internal nodes and loglikelihood values
       NNodes[j,k] <- sum(new_tree$dvec==1)
@@ -195,13 +198,14 @@ RMST_BART <- function(U, delta, X, X.test=NULL, ndraws=100, transformation="iden
     }
     if(j > burnIn) {
       Fitted.Values[,j-burnIn] <- rowSums(FittedValues)
+      muvecRec[,j-burnIn] <- rowMeans(muvec.rec)
       if(!is.null(X.test)) {
         FittedValues.test[,j-burnIn] <- rowSums(FitValue.test.track)
       }
     }
   }
   ## Add back in muhatb at the end.
-  ans <- list(fitted.values=Fitted.Values + muhatb,
+  ans <- list(fitted.values=Fitted.Values + muhatb, mu = muvecRec,
               nnodes=tail(NNodes, ndraws),
               logliks=tail(loglikvals, ndraws),
               fitted.values.test=FittedValues.test + muhatb, split.vars=do.call("rbind", SplitVarList[(burnIn+1):ndraws]))

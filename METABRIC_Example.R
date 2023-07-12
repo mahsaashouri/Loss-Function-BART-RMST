@@ -131,9 +131,9 @@ for (i in 1:n_iterations) {
   bcart_fitted[[i]] <- bcart_mod
   
   ## BART
-  #bart_mod <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau)
+  bart_mod_ind <- RMST_BART(Y, delta, train.set, test.set, ndraws=ndraws, tau=tau, ntrees = 200)
   ## If doing dependent censoring use:
-  bart_mod <- RMST_BART(Y, delta, train.set, test.set, ntrees = 200,
+  bart_mod_dep <- RMST_BART(Y, delta, train.set, test.set, ntrees = 200,
                         ndraws=ndraws, ipcw="dependent", tau=tau)
   #bart_fitted[[i]] <- rowMeans(bart_mod$fitted.values.test)
   bart_fitted[[i]] <- bart_mod
@@ -286,6 +286,25 @@ combined_plot <- wrap_plots(plots, ncol = 2)
 
 # Display the combined plot
 combined_plot
+
+
+## Posterior mean comparison
+
+PostMean_ind <- c(bart_mod_ind$mu)
+PostMean_dep <-  c(bart_mod_dep$mu)
+PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
+write.csv(PostMean_data, 'PostMean_data_METABRIC.csv')
+# Reshape the data to long format
+PostMean_data_long <- reshape2::melt(PostMean_data)
+
+# Plot the data
+ggplot(PostMean_data_long, aes(x = variable, y = value, fill = variable)) +
+  geom_boxplot() +
+  labs(x = "Censoring", y = "Posterior Means", title = "") +
+  theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
+        axis.text = element_text(size = 20)) +
+  guides(fill = "none")
+
 
 ## Extra codes
 
