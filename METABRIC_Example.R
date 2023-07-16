@@ -300,8 +300,8 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
   labs(x = "Independent", y = "Dependent", title = "") +
-  theme(axis.title = element_text(size = 14),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 12))   # Adjust the size of the axis labels
+  theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
+        axis.text = element_text(size = 20))   # Adjust the size of the axis labels
 ## Extra codes
 
 #ff_1 <- c(44.64780, 44.26682, 44.55446, 44.53387, 44.25460, 44.04177, 43.84110, 44.01009, 44.54170, 44.09558)
