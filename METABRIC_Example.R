@@ -290,22 +290,18 @@ combined_plot
 
 ## Posterior mean comparison
 
-PostMean_ind <- c(bart_mod_ind$mu)
-PostMean_dep <-  c(bart_mod_dep$mu)
+PostMean_ind <- c(rowMeans(bart_mod_ind$fitted.values.test))
+PostMean_dep <-  c(rowMeans(bart_mod_dep$fitted.values.test))
 PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
-write.csv(PostMean_data, 'PostMean_data_METABRIC.csv')
-# Reshape the data to long format
-PostMean_data_long <- reshape2::melt(PostMean_data)
+#write.csv(PostMean_data, 'PostMean_data_METABRIC.train.csv')
 
 # Plot the data
-ggplot(PostMean_data_long, aes(x = variable, y = value, fill = variable)) +
-  geom_boxplot() +
-  labs(x = "Censoring", y = "Posterior Means", title = "") +
-  theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 20)) +
-  guides(fill = "none")
 
-
+ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
+  geom_point() +
+  labs(x = "Independent", y = "Dependent", title = "") +
+  theme(axis.title = element_text(size = 14),  # Adjust the size of the axis titles
+        axis.text = element_text(size = 12))   # Adjust the size of the axis labels
 ## Extra codes
 
 #ff_1 <- c(44.64780, 44.26682, 44.55446, 44.53387, 44.25460, 44.04177, 43.84110, 44.01009, 44.54170, 44.09558)
