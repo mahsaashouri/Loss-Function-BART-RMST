@@ -2,6 +2,8 @@ library(survival)
 library(BART)
 library(glmnet)
 library(mboost)
+source("DrawIPCW.R")
+#library(devtools)
 #install_local("/Users/mahsa/Downloads/BARTTrial-master")
 library(BARTTrial)
 
@@ -13,9 +15,9 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 100
-n <- 250   # 250 or 2000 # number of training observations
-n.test <- 2000   # 2000 - number of test observations
-num_covar <- 10  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
+n <- 2000   # 250 or 2000 # number of training observations
+n.test <- 4000   # 2000 - number of test observations
+num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
 nreps <- 10 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
