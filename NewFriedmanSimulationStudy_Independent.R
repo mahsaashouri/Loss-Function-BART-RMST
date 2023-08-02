@@ -2,6 +2,7 @@ library(survival)
 library(BART)
 library(glmnet)
 library(mboost)
+#install_local("/Users/mahsa/Downloads/BARTTrial-master")
 library(BARTTrial)
 
 ## Friedman test function
