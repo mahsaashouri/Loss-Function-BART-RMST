@@ -3,6 +3,7 @@ library(BART)
 library(glmnet)
 library(mboost)
 library(BARTTrial)
+library(AFTrees)
 
 ## Friedman test function
 set.seed(1234)
@@ -67,6 +68,8 @@ tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
 cens_prop <- rep(NA, nreps)
+CorCT <- rep(NA, nreps)
+
 rmse_bcart <- rmse_bart <- rmse_bart_dep <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 
@@ -82,6 +85,7 @@ for(j in 1:nreps) {
   T.train <- rgamma(n, shape=shape.train, rate=rate.train)
   mu.train <- ET.train*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
   C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.1, 0.2))
+  ## Can replace C.train with gamma simulate (if it works better)
 
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
@@ -233,6 +237,8 @@ for(j in 1:nreps) {
   rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
   cens_prop[j] <- mean(1 - delta.train) # also record censoring proportion
+  CorCT[j] <- cor(C.train, T.train)
+
 
   ## Recording coverage
   coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
