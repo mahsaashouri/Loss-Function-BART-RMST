@@ -4,6 +4,8 @@ library(glmnet)
 library(mboost)
 library(BARTTrial)
 library(AFTrees)
+source("DrawIPCW.R")
+
 
 ## Friedman test function
 set.seed(1234)
@@ -41,9 +43,9 @@ CoxCensor <- function(X, beta_cens, par) {
 
 ndraws <- 1000
 burnIn <- 100
-n <- 1000   # 250 or 2000 # number of training observations
-n.test <- 2000   # 2000 - number of test observations
-num_covar <- 10  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
+n <- 2000   # 250 or 2000 # number of training observations
+n.test <- 4000   # 2000 or 4000- number of test observations
+num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
 nreps <- 5 # number of simulation replications
 beta_cens <- c(c(0.25, -0.25, -0.5, -1.0, -0.5), rep(0, num_covar-5))
 
@@ -84,7 +86,9 @@ for(j in 1:nreps) {
   rate.train <- 1 + ET.train
   T.train <- rgamma(n, shape=shape.train, rate=rate.train)
   mu.train <- ET.train*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
-  C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.1, 0.2))
+  #C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.001, 0.1)) ## cor ~ 0.1
+  C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.1, 0.2)) ## cor ~ 0.2
+
   ## Can replace C.train with gamma simulate (if it works better)
 
   Y.train <- pmin(T.train, C.train)
@@ -100,7 +104,9 @@ for(j in 1:nreps) {
   mu.test <- ET.test*pgamma(tau, shape = rate.test+1, rate = rate.test) + tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
 
   T.test <- rgamma(n.test, shape=ET.test*(1 + ET.test), scale = 1/(1 + ET.train))
-  C.test <- CoxCensor(X=X.test, beta_cens=beta_cens, par=c(0.1, 0.2))
+  #C.test <- CoxCensor(X=X.test, beta_cens=beta_cens, par=c(0.001, 0.1)) ## cor ~ 0.1
+  C.test <- CoxCensor(X=X.test, beta_cens=beta_cens, par=c(0.1, 0.2)) ## cor ~ 0.2
+
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
 
@@ -192,7 +198,7 @@ for(j in 1:nreps) {
   Gmat <- 1/sqrt(Gmat)
 
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                        x.test=X.test, tau=tau, k = 2.0,
+                        x.test=X.test, tau=tau, k = 2,
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -220,7 +226,7 @@ for(j in 1:nreps) {
 
   ## RMST BCART
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                         x.test=X.test, tau=tau, k = 2.0, ntree=1L,
+                         x.test=X.test, tau=tau, k = 2, ntree=1L,
                          ndpost=ndraws, nskip=burnIn)
   bcart_fitted <- bcart_mod$yhat.test.mean
   BCART_CI <- t(apply(bcart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
