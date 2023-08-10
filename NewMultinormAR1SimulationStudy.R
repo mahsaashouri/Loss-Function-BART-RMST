@@ -87,12 +87,11 @@ for(j in 1:nreps) {
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
   
-  shape.train <- X.train*(1 + X.train)
-  rate.train <- 1 + X.train
+  shape.train <- DataSim$Y*(1 + DataSim$Y)
+  rate.train <- 1 + DataSim$Y
   T.train <- rgamma(n, shape=shape.train, rate=rate.train)
-  mu.train <- X.train*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
-  #C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.001, 0.1)) ## cor ~ 0.1
-  C.train <- CoxCensor(X=X.train, beta_cens=beta_cens, par=c(0.1, 0.2)) ## cor ~ 0.2
+  mu.train <- DataSim$Y*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
+  C.train <-  runif(n, min=10, max=2000) ## max = 50 or 2000
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -101,12 +100,11 @@ for(j in 1:nreps) {
   DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho)
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
-  shape.train <- X.test*(1 + X.test)
-  rate.train <- 1 + X.test
-  T.train <- rgamma(n, shape=shape.train, rate=rate.train)
-  mu.train <- X.test*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
-  #C.train <- CoxCensor(X=X.test, beta_cens=beta_cens, par=c(0.001, 0.1)) ## cor ~ 0.1
-  C.train <- CoxCensor(X=X.test, beta_cens=beta_cens, par=c(0.1, 0.2)) ## cor ~ 0.2
+  shape.test <- DataSim.test$Y*(1 + DataSim.test$Y)
+  rate.test <- 1 + DataSim.test$Y
+  T.test <- rgamma(n, shape=shape.test, rate=rate.test)
+  mu.test <- DataSim.test$Y*pgamma(tau, shape = rate.test+1, rate = rate.test) + tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
+  C.test <-  runif(n, min=10, max=2000) ## max = 50 or 2000
   
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
