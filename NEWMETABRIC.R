@@ -198,18 +198,18 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
 
 ## Average RMST
 
-bart.r <- colMeans(bart_fitted_ind[[1]]$yhat.test)
+bart.r <- bart_fitted_ind[[1]]$yhat.test.mean
 sqrt(mean((bart.r - mu.test)*(bart.r - mu.test)))
-bcart.r <- colMeans(bcart_fitted[[1]]$yhat.test)
+bcart.r <- bcart_fitted[[1]]$yhat.test.mean
 sqrt(mean((bcart.r - mu.test)*(bcart.r - mu.test)))
 AFT.r <- colMeans(AFT_fit_reps)
 sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
 
 
 ## Confidence interval for each case - plot 
-means <- colMeans(bart_fitted_dep[[1]]$yhat.test)
-ses <- matrixStats::colSds(bart_fitted_dep[[1]]$yhat.test, na.rm=TRUE)
-df_summary <- data.frame(row = 1:ncol(bart_fitted_dep[[1]]$yhat.test), mean = means, se = ses)
+means <- bart_fitted_ind[[1]]$yhat.test.mean
+ses <- matrixStats::colSds(bart_fitted_ind[[1]]$yhat.test, na.rm=TRUE)
+df_summary <- data.frame(row = 1:ncol(bart_fitted_ind[[1]]$yhat.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
 df_summary$min <- df_summary$mean - 1.96 * df_summary$se
@@ -297,8 +297,8 @@ combined_plot
 
 ## Posterior mean comparison
 
-PostMean_ind <- c(bart_mod$yhat.train.mean, bart_mod$yhat.test.mean)
-PostMean_dep <-  c(bart_dep_mod$yhat.train.mean, bart_dep_mod$yhat.test.mean)
+PostMean_ind <- c(bart_fitted_ind[[1]]$yhat.train.mean, bart_fitted_ind[[1]]$yhat.test.mean)
+PostMean_dep <-  c(bart_fitted_dep[[1]]$yhat.train.mean, bart_fitted_dep[[1]]$yhat.test.mean)
 PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
 #write.csv(PostMean_data, 'PostMean_data_METABRIC.train.csv')
 
