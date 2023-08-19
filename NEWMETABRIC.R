@@ -266,15 +266,10 @@ plots <- list()
 # Iterate over each category and create a plot
 for (category in unique(partial_results_all[,3])) {
   subset_data <- as.data.frame(subset(partial_results_all, partial_results_all[,3] == category))
-  minx <- as.numeric(min(subset_data$Value))
-  maxx <- as.numeric(max(subset_data$Value))
-  miny <- as.numeric(min(subset_data$MeanPrediction))
-  maxy <- as.numeric(max(subset_data$MeanPrediction))
-  plot <- ggplot(subset_data, aes(x = Value, y = MeanPrediction, group = index)) +
+  plot <- ggplot(subset_data, aes(x = as.numeric(Value), y = as.numeric(MeanPrediction), group = index)) +
     geom_line() +
-    scale_x_discrete(breaks = seq(round(minx), round(maxx), by = 0.001), seq(round(minx), round(maxx), by = 0.001))+
-    scale_y_discrete(breaks = seq(round(miny, 2), round(maxy, 2), by = 0.001), seq(round(miny, 2), round(maxy, 2), by = 0.001))+
     xlab(subset_data$index)+
+    theme_light() +
     theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
           axis.text = element_text(size = 20)) 
   
@@ -282,7 +277,10 @@ for (category in unique(partial_results_all[,3])) {
   if (category %in% unique(partial_results_all[,3])[c(1,3)]) {
     plot <- plot + ylab("Mean Prediction") #+ theme(axis.title.y = element_blank())
   } else {
-    plot <- plot + theme(axis.title.y = element_blank())
+    plot <- plot + theme(axis.title.y = element_blank(),
+                         axis.text.y = element_blank())
+    # Remove x-axis labels for the two plots on the right
+    #plot <- plot + scale_x_continuous(labels = NULL)
   }
   
   plots[[category]] <- plot
@@ -307,6 +305,7 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
   labs(x = "Independent", y = "Dependent", title = "") +
+  theme_light() +
   theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
         axis.text = element_text(size = 20))   # Adjust the size of the axis labels
 ## Extra codes
