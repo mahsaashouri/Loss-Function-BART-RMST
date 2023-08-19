@@ -266,16 +266,15 @@ plots <- list()
 # Iterate over each category and create a plot
 for (category in unique(partial_results_all[,3])) {
   subset_data <- as.data.frame(subset(partial_results_all, partial_results_all[,3] == category))
-  minx <- min(subset_data$Value)
-  maxx<- max(subset_data$Value)
-  miny <- min(subset_data$MeanPrediction)
-  maxy<- max(subset_data$MeanPrediction)
+  minx <- as.numeric(min(subset_data$Value))
+  maxx <- as.numeric(max(subset_data$Value))
+  miny <- as.numeric(min(subset_data$MeanPrediction))
+  maxy <- as.numeric(max(subset_data$MeanPrediction))
   plot <- ggplot(subset_data, aes(x = Value, y = MeanPrediction, group = index)) +
-    #geom_point() +
     geom_line() +
-    xlab(category)+
-    scale_x_discrete(breaks = seq(minx, maxx, by = 0.1), seq(minx, maxx, by = 0.1))+
-    scale_y_discrete(breaks = seq(miny, maxy, by = 0.1), seq(miny, maxy, by = 0.1))+
+    scale_x_discrete(breaks = seq(round(minx), round(maxx), by = 0.001), seq(round(minx), round(maxx), by = 0.001))+
+    scale_y_discrete(breaks = seq(round(miny, 2), round(maxy, 2), by = 0.001), seq(round(miny, 2), round(maxy, 2), by = 0.001))+
+    xlab(subset_data$index)+
     theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
           axis.text = element_text(size = 20)) 
   
@@ -298,8 +297,8 @@ combined_plot
 
 ## Posterior mean comparison
 
-PostMean_ind <- c(rowMeans(bart_mod_ind$fitted.values.test))
-PostMean_dep <-  c(rowMeans(bart_mod_dep$fitted.values.test))
+PostMean_ind <- c(bart_mod$yhat.train.mean, bart_mod$yhat.test.mean)
+PostMean_dep <-  c(bart_dep_mod$yhat.train.mean, bart_dep_mod$yhat.test.mean)
 PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
 #write.csv(PostMean_data, 'PostMean_data_METABRIC.train.csv')
 
