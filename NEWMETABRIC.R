@@ -172,7 +172,7 @@ for (j in 1:n_iterations) {
 
 
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- tail(sort(colSums(bart_fitted_ind[[1]]$varcount)),10)
+VarImp <- tail(sort(colSums(bart_fitted_dep[[1]]$varcount)),10)
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -197,33 +197,19 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
     legend.text=element_text(size=15))
 
 ## Average RMST
-bcart.r <- rowMeans(bcart_mod$fitted.values.test)
-sqrt(mean((bcart.r - mu.test)*(bcart.r - mu.test)))
-bart.r <- rowMeans(bart_mod$fitted.values.test)
+
+bart.r <- colMeans(bart_fitted_ind[[1]]$yhat.test)
 sqrt(mean((bart.r - mu.test)*(bart.r - mu.test)))
+bcart.r <- colMeans(bcart_fitted[[1]]$yhat.test)
+sqrt(mean((bcart.r - mu.test)*(bcart.r - mu.test)))
 AFT.r <- colMeans(AFT_fit_reps)
 sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
 
-## Error 
-delta_alpha <- 1
-Gvec.test <- DrawIPCW(U=Y.test, delta=delta.test, Utau=pmin(Y.test, tau), sgrid=sgrid,
-                      kappa0=1, delta_alpha=delta_alpha)
-## BART
-mean.test.bart <- rowMeans(bart_fitted[[1]]$fitted.values.test)
-
-# calculate IPCW test performance - BART # 1151.15
-IPCW.test.bart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bart)^2)/length(Y.test)
-
-## BACRT
-mean.test.bcart <- rowMeans(bcart_fitted[[1]]$fitted.values.test)
-
-# calculate IPCW test performance - BCART # 948.4491
-IPCW.test.bcart <- sum((delta.test/Gvec.test)*(Y.test-mean.test.bcart)^2)/length(Y.test)
 
 ## Confidence interval for each case - plot 
-means <- rowMeans(bart_fitted[[1]]$fitted.values.test)
-ses <- matrixStats::rowSds(bart_fitted[[1]]$fitted.values.test, na.rm=TRUE)
-df_summary <- data.frame(row = 1:nrow(bart_fitted[[1]]$fitted.values.test), mean = means, se = ses)
+means <- colMeans(bart_fitted_dep[[1]]$yhat.test)
+ses <- matrixStats::colSds(bart_fitted_dep[[1]]$yhat.test, na.rm=TRUE)
+df_summary <- data.frame(row = 1:ncol(bart_fitted_dep[[1]]$yhat.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
 df_summary$min <- df_summary$mean - 1.96 * df_summary$se
@@ -248,28 +234,29 @@ for (i in 1:nrow(df_summary)) {
 
 ## Partial Dependence plots
 
-Col_ParDep <- c('nf1','nbn', 'age_at_diagnosis', 'nottingham_prognostic_index') 
+Col_ParDep <- c('pten','atm', 'brca1', 'nottingham_prognostic_index') 
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
-ff <- matrix(NA, nrow = 10, ncol = 3)
+ff <- matrix(NA, nrow = 100, ncol = 3)
 partial_results <- list()
 for(i in 1:length(Col_ParDep)){
-  for(k in 1:10){
-    pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = 10)
+  for(k in 1:100){
+    pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = 100)
     Xtmp <- DATA
     Xtmp[,Col_ParDep[i]] <- rep(pp[k], nrow(DATA))
     Y <- METABRIC$overall_survival_months
     delta <- METABRIC$overall_survival
-    bart_mod <- RMST_BART(Y, delta, Xtmp, tau=tau, ntrees = 200)
-    ff[k,1] <- mean(rowMeans(bart_mod$fitted.values))
-    ff[k,2] <- pp
+    bart_mod <- RMST_BART(Y, delta, Xtmp, Gweights=Gmat, tau=tau, k = 2,
+                          ndpost=ndraws, nskip=burnIn)
+    ff[k,1] <- mean(colMeans(bart_mod$yhat.train))
+    ff[k,2] <- pp[k]
     ff[k,3] <- Col_ParDep[i]
   } 
   partial_results[[length(partial_results)+1]] <- ff 
 }
 
-partial_results <- do.call("rbind", partial_results)
-
+partial_results_all <- do.call("rbind", partial_results)
+colnames(partial_results_all) <- c('MeanPrediction', 'Value', 'index')
 library(ggplot2)
 library(patchwork)
 
@@ -277,17 +264,23 @@ library(patchwork)
 plots <- list()
 
 # Iterate over each category and create a plot
-for (category in unique(partial_results$index)) {
-  subset_data <- subset(partial_results, index == category)
-  
-  plot <- ggplot(subset_data, aes(x = Value, y = MeanPrediction)) +
+for (category in unique(partial_results_all[,3])) {
+  subset_data <- as.data.frame(subset(partial_results_all, partial_results_all[,3] == category))
+  minx <- min(subset_data$Value)
+  maxx<- max(subset_data$Value)
+  miny <- min(subset_data$MeanPrediction)
+  maxy<- max(subset_data$MeanPrediction)
+  plot <- ggplot(subset_data, aes(x = Value, y = MeanPrediction, group = index)) +
+    #geom_point() +
     geom_line() +
     xlab(category)+
+    scale_x_discrete(breaks = seq(minx, maxx, by = 0.1), seq(minx, maxx, by = 0.1))+
+    scale_y_discrete(breaks = seq(miny, maxy, by = 0.1), seq(miny, maxy, by = 0.1))+
     theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
           axis.text = element_text(size = 20)) 
   
   # Set y-axis label for the leftmost plots
-  if (category %in% unique(partial_results$index)[c(1,3)]) {
+  if (category %in% unique(partial_results_all[,3])[c(1,3)]) {
     plot <- plot + ylab("Mean Prediction") #+ theme(axis.title.y = element_blank())
   } else {
     plot <- plot + theme(axis.title.y = element_blank())
