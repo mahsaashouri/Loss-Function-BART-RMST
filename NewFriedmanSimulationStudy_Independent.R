@@ -16,7 +16,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 ndraws <- 1000
 burnIn <- 100
 n <- 2000   # 250 or 2000 # number of training observations
-n.test <- 4000   # 2000 - number of test observations
+n.test <-4000   # 2000 - number of test observations
 num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
 nreps <- 10 # number of simulation replications
 
@@ -212,3 +212,8 @@ Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
 Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
 
 round(Results, 4)
+
+round(colMeans(BART_CI), 4)
+round(colMeans(BCART_CI), 4)
+round(colMeans(AFT_BART_CI), 4)
+      

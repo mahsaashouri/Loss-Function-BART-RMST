@@ -15,6 +15,7 @@ n.test <- 2000 # 2000 or 4000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 coef <- c(runif(5, 0, .5), rep(0, num_covar-5))
 Rho <- 0.5
+nreps <- 10 # number of simulation replications
 ## choosing this big tau value cause warning
 gam_alpha <- 20
 
@@ -29,29 +30,6 @@ sim.reg <- function(nobs, coef, mu, sd, Rho){
   H = t(replicate(nobs, c(arima.sim(length(coef), model = list(ar = Rho)))))
   Y = exp(H %*% beta)
   return(list(Z = H, Y = c(Y), coeff = coef))
-}
-
-CoxCensor <- function(X, beta_cens, par) {
-  
-  H0inv <- function(uu, par) {
-    ## Cumulative hazard
-    nx <- length(uu)
-    ans <- rep(NA, nx)
-    for(k in 1:nx) {
-      ff <- function(t, u) {
-        ans <- par[1]*t + par[2]*(pnorm(t) - 0.5) - u
-        return(ans)
-      }
-      umax <- uu[k]/par[1]
-      ans[k] <- uniroot(ff, interval=c(0, umax), u=uu[k])$root
-    }
-    return(ans)
-  }
-  yy <- rexp(n, rate=1)
-  ex_beta <- as.numeric( exp(-X%*%beta_cens) )
-  CensTimes <- H0inv(yy*ex_beta, par=par)
-  
-  return(CensTimes)
 }
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
@@ -72,7 +50,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 
 
 
-cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.5 # Use 0.5 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -91,10 +69,11 @@ for(j in 1:nreps) {
   rate.train <- 1 + DataSim$Y
   T.train <- rgamma(n, shape=shape.train, rate=rate.train)
   mu.train <- DataSim$Y*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
-  C.train <-  runif(n, min=10, max=2000) ## max = 50 or 2000
+  #C.train <-  runif(n, min=10, max=2000) ## max = 50 or 2000
+  C.train <- rgamma(n, shape=3.2, rate=cens_rate)
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
-
+  cor(C.train, T.train)
   
   ## test set
   DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho)
@@ -103,9 +82,10 @@ for(j in 1:nreps) {
   shape.test <- DataSim.test$Y*(1 + DataSim.test$Y)
   rate.test <- 1 + DataSim.test$Y
   T.test <- rgamma(n, shape=shape.test, rate=rate.test)
-  mu.test <- DataSim.test$Y*pgamma(tau, shape = rate.test+1, rate = rate.test) + tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
-  C.test <-  runif(n, min=10, max=2000) ## max = 50 or 2000
-  
+  mu.test <- DataSim.test$Y*pgamma(tau, shape = rate.test+1, rate = rate.test) + 
+    tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
+  #C.test <-  runif(n, min=10, max=2000) ## max = 50 or 2000
+  C.test <- rgamma(n, shape=3.2, rate=cens_rate)
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
