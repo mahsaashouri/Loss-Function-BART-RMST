@@ -8,11 +8,12 @@ source("DrawIPCW.R")
 
 set.seed(1234)
 
-
+ndraws <- 1000
+burnIn <- 100
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
-num_covar <- 10 # 10 or 100 # total number of predictors
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
+num_covar <- 100 # 10 or 100 # total number of predictors
 coef <- c(runif(5, 0, .5), rep(0, num_covar-5))
 Rho <- 0.5
 nreps <- 10 # number of simulation replications
@@ -50,42 +51,45 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 
 
 
-cens_rate <- 0.5 # Use 0.5 (high censoring) or 0.1 (low censoring)
+cens_rate <- 1.5 # Use 0.25 (high censoring) or 1.5 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
 cens_prop <- rep(NA, nreps)
 CorCT <- rep(NA, nreps)
 
-rmse_bcart <- rmse_bart <- rmse_bart_dep <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
+cens_prop <- rep(NA, nreps)
+rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
+
+coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
+
 for(j in 1:nreps) {
   ## training set
   DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho)
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
-  
   shape.train <- DataSim$Y*(1 + DataSim$Y)
   rate.train <- 1 + DataSim$Y
   T.train <- rgamma(n, shape=shape.train, rate=rate.train)
-  mu.train <- DataSim$Y*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, rate = rate.train, lower.tail = FALSE)
+  mu.train <- DataSim$Y*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, 
+                                                      rate = rate.train, lower.tail = FALSE)
   #C.train <-  runif(n, min=10, max=2000) ## max = 50 or 2000
-  C.train <- rgamma(n, shape=3.2, rate=cens_rate)
+  C.train <- rgamma(n, shape=2.2, rate=cens_rate)
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
-  cor(C.train, T.train)
-  
+
   ## test set
   DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho)
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
   shape.test <- DataSim.test$Y*(1 + DataSim.test$Y)
   rate.test <- 1 + DataSim.test$Y
-  T.test <- rgamma(n, shape=shape.test, rate=rate.test)
+  T.test <- rgamma(n.test, shape=shape.test, rate=rate.test)
   mu.test <- DataSim.test$Y*pgamma(tau, shape = rate.test+1, rate = rate.test) + 
     tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
   #C.test <-  runif(n, min=10, max=2000) ## max = 50 or 2000
-  C.test <- rgamma(n, shape=3.2, rate=cens_rate)
+  C.test <- rgamma(n.test, shape=2.2, rate=cens_rate)
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -197,11 +201,11 @@ for(j in 1:nreps) {
     }
   }
   GmatDep <- 1/sqrt(GmatDep)
-  bart_dep_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=GmatDep,
+  bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=GmatDep,
                             x.test=X.test, tau=tau, k = 2.0,
                             ndpost=ndraws, nskip=burnIn)
-  bart_dep_fitted <- bart_dep_mod$yhat.test.mean
-  BART_dep_CI <- t(apply(bart_dep_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+  bart_fitted <- bart_mod$yhat.test.mean
+  BART_CI <- t(apply(bart_dep_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
   
   
   ## RMST BCART
@@ -214,7 +218,6 @@ for(j in 1:nreps) {
   ## Recording RMSE
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
-  rmse_bart_dep[j] <- sqrt(mean((bart_dep_fitted - mu.test)*(bart_dep_fitted - mu.test)))
   rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
   rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
   #rmse_sboost[j] <- sqrt(mean((SBOOST_fitted - mu.test)*(SBOOST_fitted - mu.test)))
@@ -230,15 +233,14 @@ for(j in 1:nreps) {
   coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
   coverage_bcart[j] <- mean((mu.test >= BCART_CI[,1]) & (mu.test <= BCART_CI[,2]))
   coverage_bart[j] <- mean((mu.test >= BART_CI[,1]) & (mu.test <= BART_CI[,2]))
-  coverage_dep_bart[j] <- mean((mu.test >= BART_dep_CI[,1]) & (mu.test <= BART_dep_CI[,2]))
   ## report the results of coverage as a table.
 }
 
 
-nmethods <- 9
+nmethods <- 8
 Results <- matrix(NA, nrow=nmethods, ncol=2)
 rownames(Results) <- c("AFT Null", "CoxPH", "Cox glmnet", "AFT linear",
-                       "ipcw", "AFT BART", "BCART", "BART", "Dependent BART")
+                       "ipcw", "AFT BART", "BCART", "BART")
 colnames(Results) <- c("Mean RMSE", "Median RMSE")
 
 Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
@@ -249,5 +251,5 @@ Results[5,1:2] <- c(mean(rmse_ipcw), median(rmse_ipcw))
 Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
 Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
 Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
-Results[9,1:2] <- c(mean(rmse_bart_dep), median(rmse_bart_dep))
+
 round(Results, 4)
