@@ -11,8 +11,8 @@ set.seed(1234)
 ndraws <- 1000
 burnIn <- 100
 sigma <- 1.0
-n <- 2000 # 250 or 2000 # number of training observation
-n.test <- 4000 # 2000 or 4000 # number of test observation
+n <- 250 # 250 or 2000 # number of training observation
+n.test <- 2000 # 2000 or 4000 # number of test observation
 num_covar <- 100 # 10 or 100 # total number of predictors
 coef <- c(runif(5, 0, .5), rep(0, num_covar-5))
 Rho <- 0.5
@@ -51,7 +51,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 
 
 
-cens_rate <- 1.5 # Use 0.25 (high censoring) or 1.5 (low censoring)
+cens_rate <- .25 # Use 0.25 (high censoring) or 1.5 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -205,7 +205,7 @@ for(j in 1:nreps) {
                             x.test=X.test, tau=tau, k = 2.0,
                             ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
-  BART_CI <- t(apply(bart_dep_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+  BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
   
   
   ## RMST BCART
