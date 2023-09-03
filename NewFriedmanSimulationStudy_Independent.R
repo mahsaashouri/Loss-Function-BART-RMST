@@ -15,10 +15,10 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 100
-n <- 2000   # 250 or 2000 # number of training observations
+n <- 2000  # 250 or 2000 # number of training observations
 n.test <- 4000   # 2000 - number of test observations
 num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
-nreps <- 10 # number of simulation replications
+nreps <- 100 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
@@ -36,7 +36,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
