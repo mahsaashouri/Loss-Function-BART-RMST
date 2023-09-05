@@ -11,12 +11,12 @@ set.seed(1234)
 ndraws <- 1000
 burnIn <- 100
 sigma <- 1.0
-n <- 250 # 250 or 2000 # number of training observation
-n.test <- 2000 # 2000 or 4000 # number of test observation
-num_covar <- 100 # 10 or 100 # total number of predictors
+n <- 2000 # 250 or 2000 # number of training observation
+n.test <- 4000 # 2000 or 4000 # number of test observation
+num_covar <- 10 # 10 or 100 # total number of predictors
 coef <- c(runif(5, 0, .5), rep(0, num_covar-5))
 Rho <- 0.5
-nreps <- 10 # number of simulation replications
+nreps <- 100 # number of simulation replications
 ## choosing this big tau value cause warning
 gam_alpha <- 20
 
@@ -51,7 +51,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 
 
 
-cens_rate <- .25 # Use 0.25 (high censoring) or 1.5 (low censoring)
+cens_rate <- 1.5 # Use 0.25 (high censoring) or 1.5 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -186,27 +186,6 @@ for(j in 1:nreps) {
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
-  
-  cens_bart <- AFTrees(x.train=X.train, y.train=Y.train, status=1-delta.train,
-                       ndpost=ndraws + burnIn, verbose=FALSE)
-  Mucens_draws <- cens_bart$m.train
-  GmatDep <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
-  for(k in 1:(ndraws + burnIn)) {
-    for(h in 1:length(U_tau)) {
-      log.time.points <- log(U_tau[h])
-      AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,h])/cens_bart$sigma[k]
-      Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
-      GmatDep[k,j] <- 1/Cprob
-    }
-  }
-  GmatDep <- 1/sqrt(GmatDep)
-  bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=GmatDep,
-                            x.test=X.test, tau=tau, k = 2.0,
-                            ndpost=ndraws, nskip=burnIn)
-  bart_fitted <- bart_mod$yhat.test.mean
-  BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
   
   ## RMST BCART
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,

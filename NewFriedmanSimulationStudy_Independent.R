@@ -15,8 +15,8 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 100
-n <- 2000  # 250 or 2000 # number of training observations
-n.test <- 4000   # 2000 - number of test observations
+n <- 250  # 250 or 2000 # number of training observations
+n.test <- 2000   # 2000 - number of test observations
 num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
 nreps <- 100 # number of simulation replications
 
@@ -36,7 +36,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -163,7 +163,7 @@ for(j in 1:nreps) {
   Gmat <- 1/sqrt(Gmat)
 
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                        x.test=X.test, tau=tau, k = 2.0,
+                        x.test=X.test, tau=tau, k = .5,
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -171,7 +171,7 @@ for(j in 1:nreps) {
 
   ## RMST BCART
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                         x.test=X.test, tau=tau, k = 2.0, ntree=1L,
+                         x.test=X.test, tau=tau, k = .5, ntree=1L,
                          ndpost=ndraws, nskip=burnIn)
   bcart_fitted <- bcart_mod$yhat.test.mean
   BCART_CI <- t(apply(bcart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
