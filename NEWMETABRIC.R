@@ -78,10 +78,10 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 n_iterations <- 1
 train_prop <- 0.7
 tau <- 300
-sgrid <- seq(0, tau, by=.1)
+sgrid <- seq(0, tau, by=100)
 gam_alph <- 20
 sigma <- 1.0
-ndraws <- 1000
+ndraws <- 2000
 burnIn <- 100
 
 bcart_fitted <- bart_fitted_ind <- bart_fitted_dep <- AFT_BART_fitted <- list()
@@ -107,11 +107,9 @@ for (j in 1:n_iterations) {
   delta.test <- METABRIC[test_idx,]$overall_survival
 
   ##  RMST BART
-  U_tau <- pmin(Y[delta==1], tau)
-  sgrid <- seq(0, tau, length.out=100)
-  
   delta_alpha <- 1
   kappa0 <- 1
+  U_tau <- pmin(Y[delta==1], tau)
   Gmat <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
   for(k in 1:(ndraws + burnIn + 1)) {
     Gmat[k,] <- DrawIPCW(U=Y, delta=delta, Utau=U_tau, sgrid=sgrid,
@@ -172,7 +170,7 @@ for (j in 1:n_iterations) {
 
 
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- tail(sort(colSums(bart_fitted_dep[[1]]$varcount)),10)
+VarImp <- tail(sort(colSums(bart_fitted_ind[[1]]$varcount)),10)
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -207,9 +205,9 @@ sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
 
 
 ## Confidence interval for each case - plot 
-means <- bart_fitted_ind[[1]]$yhat.test.mean
-ses <- matrixStats::colSds(bart_fitted_ind[[1]]$yhat.test, na.rm=TRUE)
-df_summary <- data.frame(row = 1:ncol(bart_fitted_ind[[1]]$yhat.test), mean = means, se = ses)
+means <- bart_fitted_dep[[1]]$yhat.test.mean
+ses <- matrixStats::colSds(bart_fitted_dep[[1]]$yhat.test, na.rm=TRUE)
+df_summary <- data.frame(row = 1:ncol(bart_fitted_dep[[1]]$yhat.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
 df_summary$min <- df_summary$mean - 1.96 * df_summary$se
@@ -234,29 +232,43 @@ for (i in 1:nrow(df_summary)) {
 
 ## Partial Dependence plots
 
-Col_ParDep <- c('pten','atm', 'brca1', 'nottingham_prognostic_index') 
+Col_ParDep <- c('atm', 'palb2', 'pten','nottingham_prognostic_index') 
+Y <- METABRIC$overall_survival_months
+delta <- METABRIC$overall_survival
+
+##  RMST BART
+U_tau <- pmin(Y[delta==1], tau)
+Gmat <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
+for(k in 1:(ndraws + burnIn + 1)) {
+  Gmat[k,] <- DrawIPCW(U=Y, delta=delta, Utau=U_tau, sgrid=sgrid,
+                       kappa0=kappa0, delta_alpha=delta_alpha)
+}
+Gmat <- 1/sqrt(Gmat)
+
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 ff <- matrix(NA, nrow = 100, ncol = 3)
 partial_results <- list()
 for(i in 1:length(Col_ParDep)){
+  pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = 100)
   for(k in 1:100){
-    pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = 100)
+    
     Xtmp <- DATA
     Xtmp[,Col_ParDep[i]] <- rep(pp[k], nrow(DATA))
     Y <- METABRIC$overall_survival_months
     delta <- METABRIC$overall_survival
-    bart_mod <- RMST_BART(Y, delta, Xtmp, Gweights=Gmat, tau=tau, k = 2,
+    bart_mod <- RMST_BART(Y, delta, x.train=DATA, Gweights=Gmat, x.test=Xtmp, tau=tau, k = 2,
                           ndpost=ndraws, nskip=burnIn)
-    ff[k,1] <- mean(colMeans(bart_mod$yhat.train))
+    ff[k,1] <- mean(colMeans(bart_mod$yhat.test))
     ff[k,2] <- pp[k]
     ff[k,3] <- Col_ParDep[i]
-  } 
-  partial_results[[length(partial_results)+1]] <- ff 
+  }
+  partial_results[[length(partial_results)+1]] <- ff
 }
 
 partial_results_all <- do.call("rbind", partial_results)
 colnames(partial_results_all) <- c('MeanPrediction', 'Value', 'index')
+
 library(ggplot2)
 library(patchwork)
 
