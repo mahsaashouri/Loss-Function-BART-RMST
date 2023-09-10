@@ -77,7 +77,7 @@ DATA <- model.matrix(overall_survival_months~.-1, data = DATA)
 # Define the number of iterations and the proportion of data to be used for training
 n_iterations <- 1
 train_prop <- 0.7
-tau <- 25
+tau <- 300
 sgrid <- seq(0, tau, by=.1)
 gam_alph <- 20
 sigma <- 1.0
