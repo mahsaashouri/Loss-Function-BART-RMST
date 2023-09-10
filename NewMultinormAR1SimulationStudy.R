@@ -93,7 +93,7 @@ for(j in 1:nreps) {
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
-  
+  tryCatch({
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -212,6 +212,25 @@ for(j in 1:nreps) {
   coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
   coverage_bcart[j] <- mean((mu.test >= BCART_CI[,1]) & (mu.test <= BCART_CI[,2]))
   coverage_bart[j] <- mean((mu.test >= BART_CI[,1]) & (mu.test <= BART_CI[,2]))
+  }, error = function(e) {
+    # Handle the error gracefully (e.g., print a message)
+    cat("Error occurred in iteration", j, ":", conditionMessage(e), "\n")
+    # You can also assign default values or do nothing to skip the error
+    rmse_bcart[j] <- NA  # Assigning a default value (e.g., NA)
+    rmse_bart[j] <- NA
+    rmse_coxph[j] <- NA
+    rmse_rcoxph[j] <- NA
+    # rmse_sboost[j] <- NA
+    rmse_ipcw[j] <- NA
+    rmse_aft[j] <- NA
+    rmse_aft_bart[j] <- NA
+    rmse_aft_null[j] <- NA
+    cens_prop[j] <- NA
+    CorCT[j] <- NA
+    coverage_aft_bart[j] <- NA
+    coverage_bcart[j] <- NA
+    coverage_bart[j] <- NA
+  })
   ## report the results of coverage as a table.
 }
 
@@ -222,13 +241,13 @@ rownames(Results) <- c("AFT Null", "CoxPH", "Cox glmnet", "AFT linear",
                        "ipcw", "AFT BART", "BCART", "BART")
 colnames(Results) <- c("Mean RMSE", "Median RMSE")
 
-Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
-Results[2,1:2] <- c(mean(rmse_coxph), mean(rmse_coxph))
-Results[3,1:2] <- c(mean(rmse_rcoxph), median(rmse_rcoxph))
-Results[4,1:2] <- c(mean(rmse_aft), median(rmse_aft))
-Results[5,1:2] <- c(mean(rmse_ipcw), median(rmse_ipcw))
-Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
-Results[7,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
-Results[8,1:2] <- c(mean(rmse_bart), median(rmse_bart))
+Results[1,1:2] <- c(mean(na.omit(rmse_aft_null)), median(na.omit(rmse_aft_null)))
+Results[2,1:2] <- c(mean(na.omit(rmse_coxph)), mean(na.omit(rmse_coxph)))
+Results[3,1:2] <- c(mean(na.omit(rmse_rcoxph)), median(na.omit(rmse_rcoxph)))
+Results[4,1:2] <- c(mean(na.omit(rmse_aft)), median(na.omit(rmse_aft)))
+Results[5,1:2] <- c(na.omit(mean(rmse_ipcw)), median(na.omit(rmse_ipcw)))
+Results[6,1:2] <- c(mean(na.omit(rmse_aft_bart)), median(na.omit(rmse_aft_bart)))
+Results[7,1:2] <- c(mean(na.omit(rmse_bcart)), median(na.omit(rmse_bcart)))
+Results[8,1:2] <- c(mean(na.omit(rmse_bart)), median(na.omit(rmse_bart)))
 
 round(Results, 4)
