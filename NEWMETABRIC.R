@@ -119,7 +119,7 @@ for (j in 1:n_iterations) {
   
   bart_mod <- RMST_BART(Y, delta, train.set, Gweights=Gmat,
                         x.test=test.set, tau=tau, k = 2,
-                        ndpost=ndraws, nskip=burnIn)
+                        ndpost=ndraws, nskip=burnIn, ntree = 200)
   bart_fitted_ind[[j]] <- bart_mod
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
   
