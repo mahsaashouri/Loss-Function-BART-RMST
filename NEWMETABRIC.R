@@ -205,9 +205,9 @@ sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
 
 
 ## Confidence interval for each case - plot 
-means <- bart_fitted_dep[[1]]$yhat.test.mean
-ses <- matrixStats::colSds(bart_fitted_dep[[1]]$yhat.test, na.rm=TRUE)
-df_summary <- data.frame(row = 1:ncol(bart_fitted_dep[[1]]$yhat.test), mean = means, se = ses)
+means <- bart_fitted_ind[[1]]$yhat.test.mean
+ses <- matrixStats::colSds(bart_fitted_ind[[1]]$yhat.test, na.rm=TRUE)
+df_summary <- data.frame(row = 1:ncol(bart_fitted_ind[[1]]$yhat.test), mean = means, se = ses)
 
 df_summary$max <- df_summary$mean + 1.96 * df_summary$se
 df_summary$min <- df_summary$mean - 1.96 * df_summary$se
@@ -222,7 +222,7 @@ df_summary_sorted <- df_summary[order(df_summary$mean),]
 
 # create the plot
 plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)), 
-     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab='Test set credible intervals for RMST')
+     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab='Test set credible intervals')
 
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
