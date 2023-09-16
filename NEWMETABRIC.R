@@ -25,7 +25,14 @@ colSums(is.na(METABRIC))
 ## combine 4ER+ and 4ER- as 4 in integrative_cluster column
 METABRIC$integrative_cluster[METABRIC$integrative_cluster %in% c("4ER+","4ER-")] <- "4"
 
-## drop tumor_stage = 0 
+METABRIC$tumor_subtype <- METABRIC$tumor_other_histologic_subtype
+METABRIC$tumor_subtype[METABRIC$tumor_other_histologic_subtype != "Ductal/NST" & METABRIC$tumor_other_histologic_subtype != "Lobular"] <- "Mixed/Other"
+METABRIC$tumor_subtype <- factor(METABRIC$tumor_subtype)
+
+METABRIC <- METABRIC %>% select(-tumor_other_histologic_subtype)
+
+
+## drop tumor_stage = 0
 table(METABRIC$tumor_stage)
 METABRIC <- subset(METABRIC, !(tumor_stage == 0 & !is.na(tumor_stage)))
 
@@ -61,7 +68,7 @@ METABRIC$cohort <- as.factor(METABRIC$cohort)
 
 ## flip 1 and 0 valves in overall survival
 table(METABRIC$overall_survival)
-METABRIC$overall_survival <- ifelse(METABRIC$overall_survival == 1, 0, ifelse(METABRIC$overall_survival == 0, 1, 
+METABRIC$overall_survival <- ifelse(METABRIC$overall_survival == 1, 0, ifelse(METABRIC$overall_survival == 0, 1,
                                                                               METABRIC$overall_survival))
 ############################
 ## running different methods
@@ -105,7 +112,7 @@ for (j in 1:n_iterations) {
     tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
   
   delta.test <- METABRIC[test_idx,]$overall_survival
-
+  
   ##  RMST BART
   delta_alpha <- 1
   kappa0 <- 1
@@ -120,6 +127,11 @@ for (j in 1:n_iterations) {
   bart_mod <- RMST_BART(Y, delta, train.set, Gweights=Gmat,
                         x.test=test.set, tau=tau, k = 2,
                         ndpost=ndraws, nskip=burnIn, ntree = 200)
+  bart_mod$yhat.train <- pmax(bart_mod$yhat.train, 0)
+  bart_mod$yhat.test <- pmax(bart_mod$yhat.test, 0)
+  bart_mod$yhat.train.mean <- colMeans(bart_mod$yhat.train)
+  bart_mod$yhat.test.mean <- colMeans(bart_mod$yhat.test)
+  
   bart_fitted_ind[[j]] <- bart_mod
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
   
@@ -133,13 +145,18 @@ for (j in 1:n_iterations) {
       log.time.points <- log(U_tau[h])
       AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,h])/cens_bart$sigma[k]
       Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
-      GmatDep[k,j] <- 1/Cprob
+      GmatDep[k,h] <- 1/Cprob
     }
   }
   GmatDep <- 1/sqrt(GmatDep)
   bart_dep_mod <- RMST_BART(Y, delta, train.set, Gweights=GmatDep,
                             x.test=test.set, tau=tau, k = 2.0,
                             ndpost=ndraws, nskip=burnIn, ntree = 200)
+  bart_dep_mod$yhat.train <- pmax(bart_dep_mod$yhat.train, 0)
+  bart_dep_mod$yhat.test <- pmax(bart_dep_mod$yhat.test, 0)
+  bart_dep_mod$yhat.train.mean <- colMeans(bart_dep_mod$yhat.train)
+  bart_dep_mod$yhat.test.mean <- colMeans(bart_dep_mod$yhat.test)
+  
   bart_fitted_dep[[j]] <- bart_dep_mod
   BART_dep_CI <- t(apply(bart_dep_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
   
@@ -191,7 +208,7 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
     axis.text.x = element_blank(),
     axis.title.y = element_text(size = 15),
     axis.text.y = element_text(size = 15),
-    legend.title=element_text(size=15), 
+    legend.title=element_text(size=15),
     legend.text=element_text(size=15))
 
 ## Average RMST
@@ -204,7 +221,7 @@ AFT.r <- colMeans(AFT_fit_reps)
 sqrt(mean((AFT.r - mu.test)*(AFT.r - mu.test)))
 
 
-## Confidence interval for each case - plot 
+## Confidence interval for each case - plot
 means <- bart_fitted_ind[[1]]$yhat.test.mean
 ses <- matrixStats::colSds(bart_fitted_ind[[1]]$yhat.test, na.rm=TRUE)
 df_summary <- data.frame(row = 1:ncol(bart_fitted_ind[[1]]$yhat.test), mean = means, se = ses)
@@ -221,7 +238,7 @@ sample_df_summary <- df_summary[sample_idx,]
 df_summary_sorted <- df_summary[order(df_summary$mean),]
 
 # create the plot
-plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)), 
+plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)),
      ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab='Test set credible intervals')
 
 # loop through the rows and draw a line for each
@@ -232,7 +249,7 @@ for (i in 1:nrow(df_summary)) {
 
 ## Partial Dependence plots
 
-Col_ParDep <- c('atm', 'palb2', 'pten','nottingham_prognostic_index') 
+Col_ParDep <- c('atm', 'palb2', 'pten','nottingham_prognostic_index')
 Y <- METABRIC$overall_survival_months
 delta <- METABRIC$overall_survival
 
@@ -283,7 +300,7 @@ for (category in unique(partial_results_all[,3])) {
     xlab(subset_data$index)+
     theme_light() +
     theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
-          axis.text = element_text(size = 20)) 
+          axis.text = element_text(size = 20))
   
   # Set y-axis label for the leftmost plots
   if (category %in% unique(partial_results_all[,3])[c(1,3)]) {
@@ -320,31 +337,5 @@ ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   theme_light() +
   theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
         axis.text = element_text(size = 20))   # Adjust the size of the axis labels
-## Extra codes
 
-#ff_1 <- c(44.64780, 44.26682, 44.55446, 44.53387, 44.25460, 44.04177, 43.84110, 44.01009, 44.54170, 44.09558)
-#pp_1 <- c(-2.96860000, -1.95224444 ,-0.93588889,  0.08046667 , 1.09682222 , 2.11317778 , 3.12953333  ,4.14588889 , 5.16224444,  6.17860000)
-#i_1 <- rep('nf1', 10)
-#partial_results_1 <- data.frame(Value = pp_1,
-#                                MeanPrediction = ff_1, index = i_1)
-
-#ff_2 <-  c(44.54398, 44.25755, 44.38472, 44.22499, 44.41672, 44.20168, 44.33344, 44.20899, 44.14735, 44.48058)
-#pp_2 <- c(-3.6898000, -2.6830111, -1.6762222, -0.6694333,  0.3373556,  1.3441444,  2.3509333,  3.3577222,  4.3645111,  5.3713000)
-#i_2 <- rep('nbn', 10)
-#partial_results_2 <- data.frame(Value = pp_2,
-#                                MeanPrediction = ff_2, index = i_2)
-
-#ff_3 <- c(44.02239, 44.25650, 44.65303, 44.31947, 44.27197, 44.14585, 44.17240, 44.08893, 44.01477, 44.04726)
-#pp_3 <-  c(21.93000, 30.19222, 38.45444, 46.71667, 54.97889, 63.24111, 71.50333, 79.76556, 88.02778, 96.29000)
-#i_3 <- rep('age_at_diagnosis', 10)
-#partial_results_3 <- data.frame(Value = pp_3,
-#                                MeanPrediction = ff_3, index = i_3)
-
-#ff_4 <-  c(44.34663, 44.28516, 44.07619, 44.16539, 44.31767, 44.24659, 44.46195, 44.13971, 44.62427, 44.35170)
-#pp_4 <-   c(1.020000, 1.613333, 2.206667, 2.800000, 3.393333, 3.986667, 4.580000, 5.173333, 5.766667, 6.360000)
-#i_4 <- rep('nottingham_prognostic_index', 10)
-#partial_results_4 <- data.frame(Value = pp_4,
-#                               MeanPrediction = ff_4, index = i_4)
-
-#partial_results <- rbind(partial_results_1, partial_results_2, partial_results_3, partial_results_4)
 
