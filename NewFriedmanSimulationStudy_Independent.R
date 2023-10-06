@@ -14,11 +14,11 @@ set.seed(1234)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 ndraws <- 1000
-burnIn <- 100
+burnIn <- 500
 n <- 250  # 250 or 2000 # number of training observations
 n.test <- 2000   # 2000 - number of test observations
-num_covar <- 100  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
-nreps <- 100 # number of simulation replications
+num_covar <- 10  # 10 or 100 # total number of predictors
+nreps <- 200 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
@@ -125,6 +125,15 @@ for(j in 1:nreps) {
                         weights = ipcw_weights[delta.train==1])
   IPW_fitted <- as.numeric(predict(IPW_boost, newdata=X.test))
 
+ # tt <- lm(Y.train ~ X.train, weights=ipcw_weights*delta.train)
+  #summary(tt)$sigma
+
+  train.IPW <- as.numeric(predict(IPW_boost, newdata=X.train[delta.train==1,]))
+  ww <- ipcw_weights[delta.train==1]
+  IPW_sigsq <- sum(ww*((pmin(Y.train[delta.train==1], tau) - train.IPW)^2))/sum(ww)
+  eta_hat <- 0.75*IPW_sigsq
+
+
   ## 5. Cox-PH model without penalization of regression coefficients
   COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
   #coxhaz <- basehaz(COXPH.mod)
@@ -153,17 +162,17 @@ for(j in 1:nreps) {
   U_tau <- pmin(Y.train[delta.train==1], tau)
   sgrid <- seq(0, tau, length.out=100)
 
-  delta_alpha <- 1
   kappa0 <- 1
+  delta_alpha <- 1/kappa0
   Gmat <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
   for(k in 1:(ndraws + burnIn + 1)) {
     Gmat[k,] <- DrawIPCW(U=Y.train, delta=delta.train, Utau=U_tau, sgrid=sgrid,
                          kappa0=kappa0, delta_alpha=delta_alpha)
   }
-  Gmat <- 1/sqrt(Gmat)
+  Gmat <- 1/sqrt(2*Gmat*eta_hat)
 
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                        x.test=X.test, tau=tau, k = .5,
+                        x.test=X.test, tau=tau, k = 2,
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -171,7 +180,7 @@ for(j in 1:nreps) {
 
   ## RMST BCART
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                         x.test=X.test, tau=tau, k = .5, ntree=1L,
+                         x.test=X.test, tau=tau, k = 2, ntree=1L,
                          ndpost=ndraws, nskip=burnIn)
   bcart_fitted <- bcart_mod$yhat.test.mean
   BCART_CI <- t(apply(bcart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -220,4 +229,3 @@ mean(coverage_bart)
 round(colMeans(BART_CI), 4)
 round(colMeans(BCART_CI), 4)
 round(colMeans(AFT_BART_CI), 4)
-      
