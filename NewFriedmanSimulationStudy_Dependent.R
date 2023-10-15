@@ -446,7 +446,11 @@ Results[12,1:2] <- c(mean(rmse_bart_dep), median(rmse_bart_dep))
 Results[13,1:2] <- c(mean(rmse_bart_dep_default), median(rmse_bart_dep_default))
 
 round(Results, 4)
+write.csv(Results, 'RMSE-results.csv')
 
+Coverage <- matrix(NA, nrow = 1, ncol = 8)
+colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 
+                        'BART-dep', 'BART-dep-default')
 mean(coverage_aft_bart)
 mean(coverage_aft_bart_default)
 mean(coverage_bcart)
