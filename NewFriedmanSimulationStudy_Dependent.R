@@ -44,9 +44,9 @@ CoxCensor <- function(X, beta_cens, par) {
 ndraws <- 1000
 burnIn <- 100
 n <- 250   # 250 or 2000 # number of training observations
-n.test <- 2000   # 2000 or 4000- number of test observations
+n.test <- 1000   # 2000 or 4000- number of test observations
 num_covar <- 10  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
-nreps <- 3 # number of simulation replications
+nreps <- 100 # number of simulation replications
 beta_cens <- c(c(0.25, -0.25, -0.5, -1.0, -0.5), rep(0, num_covar-5))
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
@@ -65,7 +65,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -445,8 +445,14 @@ Results[11,1:2] <- c(mean(rmse_bart_default), median(rmse_bart_default))
 Results[12,1:2] <- c(mean(rmse_bart_dep), median(rmse_bart_dep))
 Results[13,1:2] <- c(mean(rmse_bart_dep_default), median(rmse_bart_dep_default))
 
-mean(coverage_aft_bart)
-mean(coverage_bcart)
-mean(coverage_bart)
-mean(coverage_dep_bart)
 round(Results, 4)
+
+mean(coverage_aft_bart)
+mean(coverage_aft_bart_default)
+mean(coverage_bcart)
+mean(coverage_bcart_default)
+mean(coverage_bart)
+mean( coverage_bart_default)
+mean(coverage_dep_bart)
+mean(coverage_dep_bart_default)
+
