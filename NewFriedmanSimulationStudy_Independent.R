@@ -16,8 +16,8 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 250  # 250 or 2000 # number of training observations
-n.test <- 2000   # 2000 - number of test observations
+n <- 250  # 250 or 1000 # number of training observations
+n.test <- 1000   # 1000 - number of test observations
 num_covar <- 100  # 10 or 100 # total number of predictors
 nreps <- 100 # number of simulation replications
 
@@ -37,7 +37,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -83,7 +83,6 @@ for(j in 1:nreps) {
   ## Trying AFT with exponentiated times
   AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ X.train)
   eta_hat <- AFT_try$scale*AFT_try$scale
-  tryCatch({
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -339,30 +338,8 @@ for(j in 1:nreps) {
   coverage_bart[j] <- mean((mu.test >= BART_CI[,1]) & (mu.test <= BART_CI[,2]))
   coverage_aft_bart_default[j] <- mean((mu.test >= AFT_BART_CI_default[,1]) & (mu.test <= AFT_BART_CI_default[,2]))
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
-  coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2])) }, error = function(e) {
-    # Handle the error gracefully (e.g., print a message)
-    cat("Error occurred in iteration", j, ":", conditionMessage(e), "\n")
-    # You can also assign default values or do nothing to skip the error
-    rmse_bart[j] <- NA
-    rmse_bcart[j] <- NA
-    rmse_bart_default[j] <- NA
-    rmse_bcart_default[j] <- NA
-    rmse_coxph[j] <- NA
-    rmse_rcoxph[j] <- NA
-    rmse_ipcw[j] <- NA
-    rmse_aft[j] <- NA
-    rmse_aft_bart[j] <- NA
-    rmse_aft_bart_default[j] <- NA
-    rmse_aft_null[j] <- NA
-    cens_prop[j] <- NA
-    coverage_aft_bart[j] <- NA
-    coverage_bcart[j] <- NA
-    coverage_bart[j] <- NA
-    coverage_aft_bart_default[j] <- NA
-    coverage_bcart_default[j] <- NA
-    coverage_bart_default[j] <- NA
-  })
-  ## report the results of coverage as a table.
+  coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2])) 
+
 }
 
 
@@ -388,10 +365,16 @@ Results[11,1:2] <- c(mean(rmse_bart_default), median(rmse_bart_default))
 
 round(Results, 4)
 
-mean(coverage_aft_bart)
-mean(coverage_bcart)
-mean(coverage_bart)
+write.csv(Results, 'RMSE-results.csv')
 
-round(colMeans(BART_CI), 4)
-round(colMeans(BCART_CI), 4)
-round(colMeans(AFT_BART_CI), 4)
+Coverage <- matrix(NA, nrow = 1, ncol = 6)
+colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default')
+Coverage[,1] <- mean(coverage_aft_bart)
+Coverage[,2] <- mean(coverage_aft_bart_default)
+Coverage[,3] <- mean(coverage_bcart)
+Coverage[,4] <- mean(coverage_bcart_default)
+Coverage[,5] <- mean(coverage_bart)
+Coverage[,6] <- mean( coverage_bart_default)
+
+
+write.csv(Coverage, 'Coverage.csv')

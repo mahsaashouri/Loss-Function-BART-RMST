@@ -460,3 +460,4 @@ Coverage[,6] <- mean( coverage_bart_default)
 Coverage[,7] <- mean(coverage_dep_bart)
 Coverage[,8] <- mean(coverage_dep_bart_default)
 
+write.csv(Coverage, 'Coverage.csv')
