@@ -461,3 +461,11 @@ Coverage[,7] <- mean(coverage_dep_bart)
 Coverage[,8] <- mean(coverage_dep_bart_default)
 
 write.csv(Coverage, 'Coverage.csv')
+
+# cor = 0.1 - k = 100 - r = 0.1 or 0.2
+# Error in AFTrees(x.train = X.train, y.train = Y.train, status = 1 - delta.train,  : 
+#                    NA/NaN/Inf in foreign function call (arg 8)
+
+
+# Error in h(simpleError(msg, call)) : 
+#   error in evaluating the argument 'x' in selecting a method for function 't': missing values and NaN's not allowed if 'na.rm' is FALSE

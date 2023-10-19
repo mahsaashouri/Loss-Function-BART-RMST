@@ -19,7 +19,7 @@ burnIn <- 500
 n <- 250  # 250 or 1000 # number of training observations
 n.test <- 1000   # 1000 - number of test observations
 num_covar <- 100  # 10 or 100 # total number of predictors
-nreps <- 100 # number of simulation replications
+nreps <- 2 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
@@ -37,7 +37,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -83,6 +83,7 @@ for(j in 1:nreps) {
   ## Trying AFT with exponentiated times
   AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ X.train)
   eta_hat <- AFT_try$scale*AFT_try$scale
+  
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -326,7 +327,9 @@ for(j in 1:nreps) {
   rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
   rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
   rmse_ipcw[j] <- sqrt(mean((IPW_fitted - mu.test)*(IPW_fitted - mu.test)))
+  if (!is.na(AFT_fitted)) {
   rmse_aft[j] <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
+  }
   rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
   rmse_aft_bart_default[j] <- sqrt(mean((AFT_BART_fitted_default - mu.test)*(AFT_BART_fitted_default - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
@@ -378,3 +381,6 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 
 write.csv(Coverage, 'Coverage.csv')
+
+# Error in best_select_aft[j] <- which.min(CVfinal) : 
+#   replacement has length zero
