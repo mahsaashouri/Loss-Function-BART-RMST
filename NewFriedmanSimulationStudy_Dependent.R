@@ -46,7 +46,7 @@ burnIn <- 100
 n <- 250   # 250 or 2000 # number of training observations
 n.test <- 1000   # 2000 or 4000- number of test observations
 num_covar <- 10  # 10 or 100 (or maybe 10 and 50?) # total number of predictors
-nreps <- 100 # number of simulation replications
+nreps <- 5 # number of simulation replications
 beta_cens <- c(c(0.25, -0.25, -0.5, -1.0, -0.5), rep(0, num_covar-5))
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
@@ -449,7 +449,7 @@ round(Results, 4)
 write.csv(Results, 'RMSE-results.csv')
 
 Coverage <- matrix(NA, nrow = 1, ncol = 8)
-colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 
+colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default',
                         'BART-dep', 'BART-dep-default')
 Coverage[,1] <- mean(coverage_aft_bart)
 Coverage[,2] <- mean(coverage_aft_bart_default)
@@ -463,9 +463,9 @@ Coverage[,8] <- mean(coverage_dep_bart_default)
 write.csv(Coverage, 'Coverage.csv')
 
 # cor = 0.1 - k = 100 - r = 0.1 or 0.2
-# Error in AFTrees(x.train = X.train, y.train = Y.train, status = 1 - delta.train,  : 
+# Error in AFTrees(x.train = X.train, y.train = Y.train, status = 1 - delta.train,  :
 #                    NA/NaN/Inf in foreign function call (arg 8)
 
 
-# Error in h(simpleError(msg, call)) : 
+# Error in h(simpleError(msg, call)) :
 #   error in evaluating the argument 'x' in selecting a method for function 't': missing values and NaN's not allowed if 'na.rm' is FALSE
