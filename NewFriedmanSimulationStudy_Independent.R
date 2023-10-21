@@ -6,6 +6,7 @@ source("DrawIPCW.R")
 #library(devtools)
 #install_local("/Users/mahsa/Downloads/BARTTrial-master", force = TRUE)
 library(BARTTrial)
+library(penAFT)
 
 ## Friedman test function
 set.seed(1234)
@@ -19,7 +20,7 @@ burnIn <- 500
 n <- 250  # 250 or 1000 # number of training observations
 n.test <- 1000   # 1000 - number of test observations
 num_covar <- 100  # 10 or 100 # total number of predictors
-nreps <- 2 # number of simulation replications
+nreps <- 5 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   ## This function computes E( min(T_i, tau) |x_i) for
@@ -80,10 +81,24 @@ for(j in 1:nreps) {
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0)
 
-  ## Trying AFT with exponentiated times
-  AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ X.train)
-  eta_hat <- AFT_try$scale*AFT_try$scale
-  
+  ## Get value of eta_hat,
+  ##.   if n/num_covar > 5, use an un-penalized AFT model
+  ##.   if n/num_covar <=5, use a penalized AFT model with penAFT package to select coefficients
+  if(n/num_covar > 5) {
+     AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ X.train)
+     eta_hat <- AFT_try$scale*AFT_try$scale
+  } else {
+     sparse_aft <- penAFT.cv(X = X.train, logY = log(Y.train), delta = delta.train,
+                             nlambda = 50, penalty = "EN", alpha = 1, nfolds = 5)
+     coef_sparse_aft <- penAFT.coef(sparse_aft)
+     sparse_select <- which(c(coef_sparse_aft$beta) > 0)
+     if(length(sparse_select) >= 1 & length(sparse_select) < 25) {
+       AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ X.train[,sparse_select])
+     } else {
+       AFT_try <- survreg(Surv(exp(Y.train), delta.train) ~ 1)
+     }
+     eta_hat <- AFT_try$scale*AFT_try$scale
+  }
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
@@ -119,9 +134,10 @@ for(j in 1:nreps) {
   Y.train.obs <- Y.train[delta.train==1]
   ntrain <- nrow(X.train.obs)
   fold_memb <- sample(1:nfolds, size=ntrain, replace=TRUE)
-  CVscore_AFT <- matrix(NA, nrow=nfolds, ncol=length(sq_cand))
+  CVscore_AFT <- matrix(0, nrow=nfolds, ncol=length(sq_cand))
   cens_dist <- survfit(Surv(Y.train, 1-delta.train) ~ 1)
   GKM <- stepfun(c(0, cens_dist$time), c(1, cens_dist$surv, min(cens_dist$surv)))
+  sss <- 0
   for(u in 1:length(sq_cand)) {
     for(k in 1:nfolds) {
       Y.train_tmp <- Y.train.obs[fold_memb!=k]
@@ -134,8 +150,16 @@ for(j in 1:nreps) {
 
       ww <- 1/GKM(Y.test_tmp)
 
-      AFT_BART_tmp <- abart(X.train_tmp, Y.train_tmp, delta.train_tmp, x.test=X.test_tmp,
-                            ndpost=ndraws, nskip=burnIn, sigdf=sdf_cand[u], sigquant=sq_cand[u])
+      try_lin_reg <- try(lm(log(Y.train_tmp)~X.train_tmp))
+      if(class(try_lin_reg)=="try-error") {
+            AFT_BART_tmp <- abart(X.train_tmp, Y.train_tmp, delta.train_tmp, x.test=X.test_tmp,
+                                  ndpost=ndraws, nskip=burnIn, sigdf=sdf_cand[u], sigquant=sq_cand[u])
+      } else {
+           try_lin_reg_sig <- summary(lm(log(Y.train_tmp)~1))$sigma
+           AFT_BART_tmp <- abart(X.train_tmp, Y.train_tmp, delta.train_tmp, x.test=X.test_tmp,
+                                 ndpost=ndraws, nskip=burnIn, sigdf=sdf_cand[u], sigquant=sq_cand[u],
+                                 sigest=try_lin_reg_sig)
+      }
 
       yhat <- AFT_BART_tmp$yhat.test.mean
 
@@ -148,8 +172,16 @@ for(j in 1:nreps) {
   sdf_star <- sdf_cand[which.min(CVfinal)]
 
   ## This is AFT BART with best hyperparameters:
-  AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test,
-                    ndpost=ndraws, nskip=burnIn, sigdf=sdf_star, sigquant=sq_star)
+  try_lin_reg <- try(lm(log(Y.train_tmp)~X.train_tmp))
+  if(class(try_lin_reg)=="try-error") {
+      AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test,
+                        ndpost=ndraws, nskip=burnIn, sigdf=sdf_star, sigquant=sq_star)
+  } else {
+      try_lin_reg_sig <- summary(lm(log(Y.train_tmp)~1))$sigma
+      AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test,
+                        ndpost=ndraws, nskip=burnIn, sigdf=sdf_star, sigquant=sq_star,
+                        sigest=try_lin_reg_sig)
+  }
   ndraw_abart <- nrow(AFT_BART$yhat.test)
   AFT_fit_reps <- matrix(NA, nrow=ndraw_abart, ncol=nrow(X.test))
   for(k in 1:ndraw_abart) {
@@ -341,7 +373,7 @@ for(j in 1:nreps) {
   coverage_bart[j] <- mean((mu.test >= BART_CI[,1]) & (mu.test <= BART_CI[,2]))
   coverage_aft_bart_default[j] <- mean((mu.test >= AFT_BART_CI_default[,1]) & (mu.test <= AFT_BART_CI_default[,2]))
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
-  coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2])) 
+  coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
 
 }
 
@@ -382,5 +414,5 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 write.csv(Coverage, 'Coverage.csv')
 
-# Error in best_select_aft[j] <- which.min(CVfinal) : 
+# Error in best_select_aft[j] <- which.min(CVfinal) :
 #   replacement has length zero
