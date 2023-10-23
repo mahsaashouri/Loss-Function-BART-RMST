@@ -412,5 +412,3 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 write.csv(Coverage, 'Coverage.csv')
 
-# Error in best_select_aft[j] <- which.min(CVfinal) :
-#   replacement has length zero
