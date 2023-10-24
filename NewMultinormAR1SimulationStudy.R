@@ -54,8 +54,8 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 
 
 
-cens_rate <- 0.25 # Use 0.25 (high censoring) or 1.5 (low censoring)
-tau <- 25
+cens_rate <- 1.5 # Use 0.25 (high censoring) or 1.5 (low censoring)
+tau <- 5
 sgrid <- seq(0, tau, by=.1)
 
 cens_prop <- rep(NA, nreps)
@@ -114,6 +114,7 @@ for(j in 1:nreps) {
     }
     eta_hat <- AFT_try$scale*AFT_try$scale
   }
+  
   ### 1. AFT linear model
   AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
