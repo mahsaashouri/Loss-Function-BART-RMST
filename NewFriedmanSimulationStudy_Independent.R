@@ -17,7 +17,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 1000  # 250 or 1000 # number of training observations
+n <- 250  # 250 or 1000 # number of training observations
 n.test <- 1000   # 1000 - number of test observations
 num_covar <- 100  # 10 or 100 # total number of predictors
 nreps <- 100 # number of simulation replications
@@ -294,10 +294,10 @@ for(j in 1:nreps) {
       ww <- 1/GKM(Y.test_tmp)
 
       bartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
-                               x.test=X.test_tmp, tau=tau, k = 2, ndpost=ndraws, nskip=burnIn)
+                               x.test=X.test_tmp, tau=tau, k = 4, ndpost=ndraws, nskip=burnIn)
 
       bcartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
-                                x.test=X.test_tmp, tau=tau, k = 2, ntree=1L, ndpost=ndraws, nskip=burnIn)
+                                x.test=X.test_tmp, tau=tau, k = 4, ntree=1L, ndpost=ndraws, nskip=burnIn)
 
       yhat <- bartmod_tmp$yhat.test.mean
       yhat_bcart <- bcartmod_tmp$yhat.test.mean
@@ -318,7 +318,7 @@ for(j in 1:nreps) {
   #############################
   Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
   bart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                        x.test=X.test, tau=tau, k = 2,
+                        x.test=X.test, tau=tau, k = 4,
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -327,7 +327,7 @@ for(j in 1:nreps) {
   ## RMST-BART with default values:
   Gmat <- sqrt(2*eta_hat*0.5)*Gmat_orig
   bart_mod_default <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                                x.test=X.test, tau=tau, k = 2,
+                                x.test=X.test, tau=tau, k = 4,
                                 ndpost=ndraws, nskip=burnIn)
   bart_fitted_default <- bart_mod_default$yhat.test.mean
   BART_CI_default <- t(apply(bart_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -336,7 +336,7 @@ for(j in 1:nreps) {
   ## RMST BCART
   Gmat <- sqrt(2*eta_hat_star_bcart)*Gmat_orig
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                         x.test=X.test, tau=tau, k = 2, ntree=1L,
+                         x.test=X.test, tau=tau, k = 4, ntree=1L,
                          ndpost=ndraws, nskip=burnIn)
   bcart_fitted <- bcart_mod$yhat.test.mean
   BCART_CI <- t(apply(bcart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
@@ -345,7 +345,7 @@ for(j in 1:nreps) {
   ## RMST-BCART with default values default
   Gmat <- sqrt(2*eta_hat*0.5)*Gmat_orig
   bcart_mod_default <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
-                                 x.test=X.test, tau=tau, k = 2, ntree=1L,
+                                 x.test=X.test, tau=tau, k = 4, ntree=1L,
                                  ndpost=ndraws, nskip=burnIn)
   bcart_fitted_default <- bcart_mod_default$yhat.test.mean
   BCART_CI_default <- t(apply(bcart_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
