@@ -12,17 +12,14 @@ library(penAFT)
 set.seed(1234)
 
 ndraws <- 1000
-burnIn <- 100
-sigma <- 1.0
+burnIn <- 500
 n <- 250 # 250 or 1000 # number of training observation
 n.test <- 1000 # 1000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
-coef <- c(runif(5, 0, .5), rep(0, num_covar-5))
+coef <- c(c(0.75, -0.5, 0.25, 0.25, -0.75), rep(0, num_covar-5))
 Rho <- 0.5
 nreps <- 100 # number of simulation replications
 ## choosing this big tau value cause warning
-gam_alpha <- 20
-
 
 ## function to simulate linear model AR1
 sim.reg <- function(nobs, coef, mu, sd, Rho){
@@ -32,7 +29,8 @@ sim.reg <- function(nobs, coef, mu, sd, Rho){
   #H = mvrnorm(n = nobs, mu, Sigma = AR1Cor(num.var, Rho))
   ## generate data from multivariate normal with AR(1) - using 'arima.sim' function
   H = t(replicate(nobs, c(arima.sim(length(coef), model = list(ar = Rho)))))
-  Y = exp(H %*% beta)
+  #Y = exp(H %*% beta)
+  Y = abs(as.numeric(H%*%beta))
   return(list(Z = H, Y = c(Y), coeff = coef))
 }
 
@@ -43,7 +41,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   tpoints <- c(time[time < tau], tau)
   Hpoints <- H0.vals[time < tau]
   nn <- nrow(X)
-  
+
   fitted_vals <- rep(NA, nn)
   for(k in 1:nn) {
     nu <- sum((X[k,] - mu.x)*beta_val)
@@ -52,9 +50,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-
-
-cens_rate <- 1.5 # Use 0.25 (high censoring) or 1.5 (low censoring)
+cens_rate <- 1.8 # Use 0.8 (high censoring) or 1.8 (low censoring)
 tau <- 5
 sgrid <- seq(0, tau, by=.1)
 
@@ -64,21 +60,24 @@ CorCT <- rep(NA, nreps)
 cens_prop <- rep(NA, nreps)
 rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
-
+rmse_aft_bart_default <- rmse_bart_default <- rmse_bcart_default <- rep(NA, nreps)
 coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
+coverage_aft_bart_default <- coverage_bart_default <- coverage_bcart_default <- rep(NA, nreps)
 
+gam <- 1.0
+eps <- 0.001
 for(j in 1:nreps) {
   ## training set
   DataSim <- sim.reg(n, coef = coef, mu = mu, Rho = Rho)
   X.train <- DataSim$Z
   colnames(X.train) <- paste0('X', 1:num_covar)
-  shape.train <- DataSim$Y*(1 + DataSim$Y)
+  shape.train <- (DataSim$Y^gam)*(1 + DataSim$Y)
   rate.train <- 1 + DataSim$Y
-  T.train <- rgamma(n, shape=shape.train, rate=rate.train)
-  mu.train <- DataSim$Y*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train, 
-                                                      rate = rate.train, lower.tail = FALSE)
-  #C.train <-  runif(n, min=10, max=2000) ## max = 50 or 2000
-  C.train <- rgamma(n, shape=2.2, rate=cens_rate)
+  T.train <- eps + rgamma(n, shape=shape.train, rate=rate.train)
+  mu.train <- eps + (DataSim$Y^gam)*pgamma(tau, shape = rate.train+1, rate = rate.train) + tau*pgamma(tau, shape = rate.train,
+                                                                                                      rate = rate.train, lower.tail = FALSE)
+
+  C.train <- eps + rgamma(n, shape=2.2, rate=cens_rate)
   Y.train <- pmin(T.train, C.train)
   delta.train <- ifelse(T.train <= C.train, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -86,13 +85,13 @@ for(j in 1:nreps) {
   DataSim.test <- sim.reg(n.test, coef = coef, mu = mu, Rho = Rho)
   X.test <- DataSim.test$Z
   colnames(X.test) <- paste0('X', 1:num_covar)
-  shape.test <- DataSim.test$Y*(1 + DataSim.test$Y)
+  shape.test <- (DataSim.test$Y^gam)*(1 + DataSim.test$Y)
   rate.test <- 1 + DataSim.test$Y
-  T.test <- rgamma(n.test, shape=shape.test, rate=rate.test)
-  mu.test <- DataSim.test$Y*pgamma(tau, shape = rate.test+1, rate = rate.test) + 
-    tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
-  #C.test <-  runif(n, min=10, max=2000) ## max = 50 or 2000
-  C.test <- rgamma(n.test, shape=2.2, rate=cens_rate)
+
+  T.test <- eps + rgamma(n.test, shape=shape.test, rate=rate.test)
+  mu.test <- eps + (DataSim.test$Y^gam)*pgamma(tau, shape = rate.test+1, rate = rate.test) + tau*pgamma(tau, shape = rate.test, rate = rate.test, lower.tail = FALSE)
+
+  C.test <- eps + rgamma(n.test, shape=2.2, rate=cens_rate)
   Y.test <- pmin(T.test, C.test)
   delta.test <- ifelse(T.test <= C.test, 1, 0) ## mean delta train 50-60 % or 80-90 %
 
@@ -114,31 +113,31 @@ for(j in 1:nreps) {
     }
     eta_hat <- AFT_try$scale*AFT_try$scale
   }
-  
+
   ### 1. AFT linear model
-  AFT <- survreg(Surv(Y.train, delta.train) ~ X.train)
+  AFT <- survreg(Surv(pmax(Y.train, 0.01), delta.train) ~ X.train)
   XX <- model.matrix(Y.test ~ X.test)
   aft_linpred <- as.numeric(XX%*%AFT$coefficients)
   aft_sigma <- AFT$scale
   aft_sigsq <- aft_sigma*aft_sigma
   ## exp(aft_linpred) is an approximate fitted value
   ## For RMST, a more precise definition of fitted value is
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
   ## do either bootstrap or derive confidence interval directly
-  
+
   ##### 2. AFT intercept-only model
-  AFT_null <- survreg(Surv(Y.train, delta.train) ~ 1)
+  AFT_null <- survreg(Surv(pmax(Y.train,0.01), delta.train) ~ 1)
   aft_linpred <- rep(AFT_null$coefficients[1], nrow(X.test))
   aft_sigma <- AFT_null$scale
   aft_sigsq <- aft_sigma*aft_sigma
-  
+
   gt_prob <- pnorm((log(tau) - aft_linpred)/aft_sigma, lower.tail=FALSE)
   lt_prob <- pnorm((log(tau) - aft_sigsq - aft_linpred)/aft_sigma)
   AFT_null_fitted <- exp(aft_sigsq/2 + aft_linpred)*lt_prob + tau*gt_prob
-  
+
   #### 3. AFT_BART model
   ## For AFT-BART cross validation, vary the sigquant and sigdf parameters
   ## as in the original BART paper
@@ -152,20 +151,22 @@ for(j in 1:nreps) {
   fold_memb <- sample(1:nfolds, size=ntrain, replace=TRUE)
   CVscore_AFT <- matrix(0, nrow=nfolds, ncol=length(sq_cand))
   cens_dist <- survfit(Surv(Y.train, 1-delta.train) ~ 1)
-  GKM <- stepfun(c(0, cens_dist$time), c(1, cens_dist$surv, min(cens_dist$surv)))
+  GKM <- stepfun(c(0, cens_dist$time[cens_dist$surv > 0]),
+                 c(1, cens_dist$surv[cens_dist$surv > 0], min(cens_dist$surv[cens_dist$surv > 0])))
   sss <- 0
   for(u in 1:length(sq_cand)) {
     for(k in 1:nfolds) {
       Y.train_tmp <- Y.train.obs[fold_memb!=k]
       delta.train_tmp <- rep(1, sum(fold_memb!=k))
       X.train_tmp <- X.train.obs[fold_memb!=k,]
-      
+
       Y.test_tmp <- Y.train.obs[fold_memb==k]
       delta.test_tmp <- rep(1, sum(fold_memb==k))
       X.test_tmp <- X.train.obs[fold_memb==k,]
-      
+      Y.test_tmp <- pmin(Y.test_tmp, tau)
+
       ww <- 1/GKM(Y.test_tmp)
-      
+
       try_lin_reg <- try(lm(log(Y.train_tmp)~X.train_tmp))
       if(class(try_lin_reg)=="try-error") {
         AFT_BART_tmp <- abart(X.train_tmp, Y.train_tmp, delta.train_tmp, x.test=X.test_tmp,
@@ -176,17 +177,17 @@ for(j in 1:nreps) {
                               ndpost=ndraws, nskip=burnIn, sigdf=sdf_cand[u], sigquant=sq_cand[u],
                               sigest=try_lin_reg_sig)
       }
-      
+
       yhat <- AFT_BART_tmp$yhat.test.mean
-      
+
       CVscore_AFT[k, u] <- mean(ww*((Y.test_tmp - yhat)*(Y.test_tmp - yhat)))
+      rm(AFT_BART_tmp)
     }
   }
   CVfinal <- colMeans(CVscore_AFT)
-  best_select_aft[j] <- which.min(CVfinal)
   sq_star <- sq_cand[which.min(CVfinal)]
   sdf_star <- sdf_cand[which.min(CVfinal)]
-  
+
   ## This is AFT BART with best hyperparameters:
   try_lin_reg <- try(lm(log(Y.train_tmp)~X.train_tmp))
   if(class(try_lin_reg)=="try-error") {
@@ -206,15 +207,15 @@ for(j in 1:nreps) {
     aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
     ## exp(aft_linpred) is an approximate fitted value
     ## For RMST, a more precise definition of fitted value is:
-    
+
     gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
     lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
-    
+
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted <- colMeans(AFT_fit_reps)
   AFT_BART_CI <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
+
   ###################################################################
   ## Now, do AFT BART with default values of sigdf and sigquant
   AFT_BART <- abart(X.train, Y.train, delta.train, x.test=X.test,
@@ -227,32 +228,34 @@ for(j in 1:nreps) {
     aft_bart_sigsq <- aft_bart_sig*aft_bart_sig
     ## exp(aft_linpred) is an approximate fitted value
     ## For RMST, a more precise definition of fitted value is:
-    
+
     gt_prob <- pnorm((log(tau) - aft_bart_mu)/aft_bart_sig, lower.tail=FALSE)
     lt_prob <- pnorm((log(tau) - aft_bart_sigsq - aft_bart_mu)/aft_bart_sig)
-    
+
     AFT_fit_reps[k,] <- exp(aft_bart_sigsq/2 + aft_bart_mu)*lt_prob + tau*gt_prob
   }
   AFT_BART_fitted_default <- colMeans(AFT_fit_reps)
   AFT_BART_CI_default <- t(apply(AFT_fit_reps, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
+  rm(AFT_BART)
+
   ## 4. Boosting with IPCW weights
   ipcw_weights <- IPCweights(x=Surv(Y.train, delta.train))
   IPW_boost <- glmboost(x=X.train[delta.train==1,], y=pmin(Y.train[delta.train==1], tau),
                         weights = ipcw_weights[delta.train==1])
   IPW_fitted <- as.numeric(predict(IPW_boost, newdata=X.test))
-  
+
   ## 5. Cox-PH model without penalization of regression coefficients
-  COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train)
+  COXPH.mod <- coxph(Surv(Y.train, delta.train) ~ X.train,
+                     control=coxph.control(eps=1e-08))
   #coxhaz <- basehaz(COXPH.mod)
   coxhaz <- survfit(COXPH.mod, x=X.train, y=Surv(Y.train, delta.train))
   H0fn <- approxfun(c(0, coxhaz$time), c(0, coxhaz$cumhaz),
                     yright=max(coxhaz$cumhaz))
-  
+
   COXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=COXPH.mod$coefficients,
                                   time = coxhaz$time, H0.vals=coxhaz$cumhaz,
                                   tau=tau)
-  
+
   ### 6. Cox-PH model with lasso penalty
   rcox_tmp <- cv.glmnet(x=X.train, y=Surv(Y.train, delta.train), family = "cox",
                         type.measure = "deviance")
@@ -265,11 +268,11 @@ for(j in 1:nreps) {
   RCOXPH_fitted <- CoxExpectedSurv(X=X.test, beta_val=lasso_betahat,
                                    time=Rcoxhaz$time,
                                    H0.vals=Rcoxhaz$cumhaz, tau=tau)
-  
+
   ## 8. RMST BART
   U_tau <- pmin(Y.train[delta.train==1], tau)
   sgrid <- seq(0, tau, length.out=100)
-  
+
   kappa0 <- 1
   delta_alpha <- 1/kappa0
   Gmat <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
@@ -278,7 +281,7 @@ for(j in 1:nreps) {
                          kappa0=kappa0, delta_alpha=delta_alpha)
   }
   Gmat_orig <- 1/sqrt(Gmat)
-  
+
   ##########################################################################
   ## Doing Cross-Validation with RMST_BART and RMST_BCART to find best eta
   #########################################################################
@@ -291,43 +294,46 @@ for(j in 1:nreps) {
   fold_memb <- sample(1:nfolds, size=ntrain, replace=TRUE)
   CVscore <- CVscore_BCART <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
   cens_dist <- survfit(Surv(Y.train, 1-delta.train) ~ 1)
-  GKM <- stepfun(c(0, cens_dist$time), c(1, cens_dist$surv, min(cens_dist$surv)))
+  GKM <- stepfun(c(0, cens_dist$time[cens_dist$surv > 0]),
+                 c(1, cens_dist$surv[cens_dist$surv > 0], min(cens_dist$surv[cens_dist$surv > 0])))
   for(u in 1:length(eta_hat_vals)) {
     Gmat <- sqrt(2*eta_hat_vals[u])*Gmat_orig
     for(k in 1:nfolds) {
       Y.train_tmp <- Y.train.obs[fold_memb!=k]
       delta.train_tmp <- rep(1, sum(fold_memb!=k))
       X.train_tmp <- X.train.obs[fold_memb!=k,]
-      
+
       Y.test_tmp <- Y.train.obs[fold_memb==k]
       delta.test_tmp <- rep(1, sum(fold_memb==k))
       X.test_tmp <- X.train.obs[fold_memb==k,]
-      
+      Y.test_tmp <- pmin(Y.test_tmp, tau)
+
       Gmat_train_tmp <- Gmat[,fold_memb!=k]
       Gmat_test_tmp <- Gmat[,fold_memb==k]
-      
+
       ww <- 1/GKM(Y.test_tmp)
-      
+
       bartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
                                x.test=X.test_tmp, tau=tau, k = 2, ndpost=ndraws, nskip=burnIn)
-      
+
       bcartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
                                 x.test=X.test_tmp, tau=tau, k = 2, ntree=1L, ndpost=ndraws, nskip=burnIn)
-      
+
       yhat <- bartmod_tmp$yhat.test.mean
       yhat_bcart <- bcartmod_tmp$yhat.test.mean
-      
+
       CVscore[k, u] <- mean(ww*((Y.test_tmp - yhat)*(Y.test_tmp - yhat)))
       CVscore_BCART[k, u] <- mean(ww*((Y.test_tmp - yhat_bcart)*(Y.test_tmp - yhat_bcart)))
+      rm(bartmod_tmp)
+      rm(bcartmod_tmp)
     }
   }
   CVfinal <- colMeans(CVscore)
   CVfinal_BCART <- colMeans(CVscore_BCART)
-  best_select[j] <- which.min(CVfinal)
   eta_hat_star <- eta_hat_vals[which.min(CVfinal)]
   eta_hat_star_bcart <- eta_hat_vals[which.min(CVfinal_BCART)]
   #######################
-  
+
   ############################
   ## Now using best CV parameters with RMST-BART and RMST-BCART
   #############################
@@ -337,7 +343,8 @@ for(j in 1:nreps) {
                         ndpost=ndraws, nskip=burnIn)
   bart_fitted <- bart_mod$yhat.test.mean
   BART_CI <- t(apply(bart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
+  rm(bart_mod)
+
   #############################
   ## RMST-BART with default values:
   Gmat <- sqrt(2*eta_hat*0.5)*Gmat_orig
@@ -346,8 +353,8 @@ for(j in 1:nreps) {
                                 ndpost=ndraws, nskip=burnIn)
   bart_fitted_default <- bart_mod_default$yhat.test.mean
   BART_CI_default <- t(apply(bart_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
-  
+  rm(bart_mod_default)
+
   ## RMST BCART
   Gmat <- sqrt(2*eta_hat_star_bcart)*Gmat_orig
   bcart_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
@@ -355,7 +362,8 @@ for(j in 1:nreps) {
                          ndpost=ndraws, nskip=burnIn)
   bcart_fitted <- bcart_mod$yhat.test.mean
   BCART_CI <- t(apply(bcart_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
+  rm(bcart_mod)
+
   ##############################
   ## RMST-BCART with default values default
   Gmat <- sqrt(2*eta_hat*0.5)*Gmat_orig
@@ -364,8 +372,8 @@ for(j in 1:nreps) {
                                  ndpost=ndraws, nskip=burnIn)
   bcart_fitted_default <- bcart_mod_default$yhat.test.mean
   BCART_CI_default <- t(apply(bcart_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
-  
-  
+
+
   ##################################
   ## Recording RMSE
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
@@ -380,7 +388,7 @@ for(j in 1:nreps) {
   rmse_aft_bart_default[j] <- sqrt(mean((AFT_BART_fitted_default - mu.test)*(AFT_BART_fitted_default - mu.test)))
   rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
   cens_prop[j] <- mean(1 - delta.train) # also record censoring proportion
-  
+
   ## Recording coverage
   coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
   coverage_bcart[j] <- mean((mu.test >= BCART_CI[,1]) & (mu.test <= BCART_CI[,2]))
@@ -388,7 +396,7 @@ for(j in 1:nreps) {
   coverage_aft_bart_default[j] <- mean((mu.test >= AFT_BART_CI_default[,1]) & (mu.test <= AFT_BART_CI_default[,2]))
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
   coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
-  
+
 }
 
 
@@ -411,10 +419,9 @@ Results[9,1:2] <- c(mean(rmse_bcart_default), median(rmse_bcart_default))
 Results[10,1:2] <- c(mean(rmse_bart), median(rmse_bart))
 Results[11,1:2] <- c(mean(rmse_bart_default), median(rmse_bart_default))
 
-
 round(Results, 4)
 
-write.csv(Results, 'RMSE-results.csv')
+#write.csv(Results, 'RMSE-results.csv')
 
 Coverage <- matrix(NA, nrow = 1, ncol = 6)
 colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default')
@@ -426,4 +433,4 @@ Coverage[,5] <- mean(coverage_bart)
 Coverage[,6] <- mean( coverage_bart_default)
 
 
-write.csv(Coverage, 'Coverage.csv')
+#write.csv(Coverage, 'Coverage.csv')
