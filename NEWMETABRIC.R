@@ -217,7 +217,7 @@ bart_dep_fitted <- bart_dep_mod$yhat.train.mean
 BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:15]
+VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -232,16 +232,16 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
   geom_point(size = 3, color = "blue") +
   #geom_text(aes(label = names), hjust = -.5, vjust = -.9, size = 6, color = "blue") +
   #geom_text_repel(aes(label = names), size = 6, color = "blue") +
-  geom_label_repel(aes(label = names), size = 6, color = "blue") +
+  geom_label_repel(aes(label = names), size = 10, color = "blue") +
   labs(x = "Variable", y = "Mean number of times used") +
   theme_light() +
   theme(
-    axis.title.x = element_text(size = 15),
+    axis.title.x = element_text(size = 20),
     axis.text.x = element_blank(),
-    axis.title.y = element_text(size = 15),
-    axis.text.y = element_text(size = 15),
-    legend.title=element_text(size=15),
-    legend.text=element_text(size=15))
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    legend.title=element_text(size=20),
+    legend.text=element_text(size=20))
 
 
 ## Confidence interval for each patient - plot
@@ -273,14 +273,14 @@ for (i in 1:nrow(df_summary)) {
 ## Partial Dependence plots
 ###########################################
 
-Col_ParDep <- c('age_at_diagnosis', 'BRCA1', 'cohort3', 'tumor_size')
+Col_ParDep <- c('age_at_diagnosis', 'BRCA1', 'NBN', 'tumor_size')
 Y <- METABRIC$overall_survival_months
 delta <- METABRIC$overall_survival
 
 ## Setup Gmatrix and PD grid points before starting the loop:
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
 ngrid <- 40
-GridEnd <- rbind(c(2, 6), c(0, 60), c(-2, 2), c(40, 85))
+GridEnd <- rbind(c(20, 98), c(-3, 5), c(-4, 6), c(0, 183))
 ff <- matrix(NA, nrow = ngrid, ncol = 3)
 partial_results <- list()
 for(i in 1:length(Col_ParDep)){
@@ -306,9 +306,9 @@ partial_results_all <- as.data.frame(do.call("rbind", partial_results))
 names(partial_results_all) <- c('MeanPrediction', 'Value', 'index')
 partial_results_all$xlabels <- rep("", nrow(partial_results_all))
 partial_results_all$xlabels[partial_results_all$index =="age_at_diagnosis"] <- "Age at Diagnosis"
-partial_results_all$xlabels[partial_results_all$index =="nottingham_prognostic_index"] <- "Nottingham Prognostic Index"
+partial_results_all$xlabels[partial_results_all$index =="BRCA1"] <- "BRCA1"
 partial_results_all$xlabels[partial_results_all$index =="tumor_size"] <- "Tumor Size"
-partial_results_all$xlabels[partial_results_all$index =="CHEK2"] <- "CHEK2: mRNA expression level"
+partial_results_all$xlabels[partial_results_all$index =="NBN"] <- "NBN"
 
 
 
