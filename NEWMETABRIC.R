@@ -273,7 +273,7 @@ for (i in 1:nrow(df_summary)) {
 ## Partial Dependence plots
 ###########################################
 
-Col_ParDep <- c('nottingham_prognostic_index', 'tumor_size', 'CHEK2', 'age_at_diagnosis')
+Col_ParDep <- c('age_at_diagnosis', 'BRCA1', 'cohort3', 'tumor_size')
 Y <- METABRIC$overall_survival_months
 delta <- METABRIC$overall_survival
 
