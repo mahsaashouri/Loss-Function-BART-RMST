@@ -217,12 +217,14 @@ bart_dep_fitted <- bart_dep_mod$yhat.train.mean
 BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
 ## plotting the first 10 repeated variables in one iteration - BART
-VarImp <- sort(colSums(bart_mod$varcount))[1:15]
+VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:15]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
 VarImpDataF <- data.frame(numbers = c(VarImp)/ndraws,
                           names = c(names(VarImp)))
+VarImpDataF <- VarImpDataF[order(VarImpDataF$numbers, decreasing = FALSE),]
+
 library(ggrepel)
 # Create the plot
 ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
@@ -277,7 +279,7 @@ delta <- METABRIC$overall_survival
 
 ## Setup Gmatrix and PD grid points before starting the loop:
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
-ngrid <- 25
+ngrid <- 40
 GridEnd <- rbind(c(2, 6), c(0, 60), c(-2, 2), c(40, 85))
 ff <- matrix(NA, nrow = ngrid, ncol = 3)
 partial_results <- list()
