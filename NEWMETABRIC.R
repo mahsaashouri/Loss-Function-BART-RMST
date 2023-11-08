@@ -273,21 +273,21 @@ for (i in 1:nrow(df_summary)) {
 ## Partial Dependence plots
 ###########################################
 
-Col_ParDep <- c('age_at_diagnosis', 'BRCA1', 'NBN', 'tumor_size')
+Col_ParDep <- c('age_at_diagnosis', 'BRCA1', 'tumor_size', 'nottingham_prognostic_index')
 Y <- METABRIC$overall_survival_months
 delta <- METABRIC$overall_survival
 
 ## Setup Gmatrix and PD grid points before starting the loop:
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
 ngrid <- 40
-GridEnd <- rbind(c(20, 98), c(-3, 5), c(-4, 6), c(0, 183))
+GridEnd <-  rbind(c(30, 95), c(-3, 3), c(0, 50), c(1, 6.5))
 ff <- matrix(NA, nrow = ngrid, ncol = 3)
 partial_results <- list()
 for(i in 1:length(Col_ParDep)){
   #pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = ngrid)
   pp <- seq(GridEnd[i,1], GridEnd[i,2], length.out=ngrid)
   for(k in 1:ngrid){
-
+    
     Xtmp <- X.train
     Xtmp[,Col_ParDep[i]] <- rep(pp[k], nrow(DATA))
     ## change name of bart_mod here
@@ -308,7 +308,7 @@ partial_results_all$xlabels <- rep("", nrow(partial_results_all))
 partial_results_all$xlabels[partial_results_all$index =="age_at_diagnosis"] <- "Age at Diagnosis"
 partial_results_all$xlabels[partial_results_all$index =="BRCA1"] <- "BRCA1"
 partial_results_all$xlabels[partial_results_all$index =="tumor_size"] <- "Tumor Size"
-partial_results_all$xlabels[partial_results_all$index =="NBN"] <- "NBN"
+partial_results_all$xlabels[partial_results_all$index =="nottingham_prognostic_index"] <- "Nottingham Prognostic Index"
 
 
 
