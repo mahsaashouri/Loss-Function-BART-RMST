@@ -13,9 +13,9 @@ set.seed(1234)
 
 ndraws <- 1000
 burnIn <- 500
-n <- 1000 # 250 or 1000 # number of training observation
+n <- 250 # 250 or 1000 # number of training observation
 n.test <- 1000 # 1000 # number of test observation
-num_covar <- 10 # 10 or 100 # total number of predictors
+num_covar <- 50 # 10 or 100 # total number of predictors
 coef <- c(c(0.75, -0.5, 0.25, 0.25, -0.75), rep(0, num_covar-5))
 Rho <- 0.5
 nreps <- 100 # number of simulation replications
@@ -50,7 +50,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 1.8 # Use 0.8 (high censoring) or 1.8 (low censoring)
+cens_rate <- 0.8 # Use 0.8 (high censoring) or 1.8 (low censoring)
 tau <- 5
 sgrid <- seq(0, tau, by=.1)
 

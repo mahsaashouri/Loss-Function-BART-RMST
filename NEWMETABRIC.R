@@ -331,8 +331,8 @@ for (category in unique(partial_results_all[,3])) {
   if (category %in% unique(partial_results_all[,3])[c(1,3)]) {
     plot <- plot + ylab("Predicted RMST")
   } else {
-    plot <- plot + theme(axis.title.y = element_blank(),
-                         axis.text.y = element_blank())
+    plot <- plot + theme(axis.title.y = element_blank())#,
+                         #axis.text.y = element_blank())
     # Remove x-axis labels for the two plots on the right
   }
   plots[[category]] <- plot
