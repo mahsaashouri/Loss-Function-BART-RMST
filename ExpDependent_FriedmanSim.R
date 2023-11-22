@@ -5,19 +5,20 @@ library(AFTrees)
 library(glmnet)
 source("DrawIPCW.R")
 
+set.seed(1234)
 f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]+5*x[ , 5]}
 
 ndraws <- 1000
 burnIn <- 500
-n <- 1000   # 1000
+n <- 250   # 1000
 n.test <- 1000
-num_covar <- 10 # Choose to be 10 or 50
+num_covar <- 50 # Choose to be 10 or 50
 nreps <- 100 # number of simulation replications
 
 theta <- 0.01
 ## Choose censoring rate to be either "heavy" or "medium"
-cens_rate <- "heavy"
-#cens_rate <- "medium"
+#cens_rate <- "heavy"
+cens_rate <- "medium"
 
 tau <- 25
 
