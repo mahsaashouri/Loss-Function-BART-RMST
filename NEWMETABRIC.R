@@ -178,6 +178,7 @@ for(u in 1:length(eta_hat_vals)) {
     GmatDep_train_tmp <- GmatDep[,fold_memb!=k]
     GmatDep_test_tmp <- GmatDep[,fold_memb==k]
 
+    ww_dep <- colMeans(1/(GmatDeporig[,fold_memb==k]^2))
     ww <- 1/GKM(Y.test_tmp)
 
     bartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
@@ -191,7 +192,7 @@ for(u in 1:length(eta_hat_vals)) {
     yhat_dep <- bartmod_dep_tmp$yhat.test.mean
 
     CVscore[k, u] <- mean(ww*((Y.test_tmp - yhat)*(Y.test_tmp - yhat)))
-    CVscoreDep[k,u] <- mean(ww*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
+    CVscoreDep[k,u] <- mean(ww_dep*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
   }
 }
 CVfinal <- colMeans(CVscore)
@@ -203,6 +204,8 @@ eta_hat_star_dep <- eta_hat_vals[which.min(CVfinalDep)]
 ############################
 ## Now using best CV parameters with RMST-BART
 #############################
+
+
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
 bart_mod <- RMST_BART(Y, delta, x.train=X.train, Gweights=Gmat, tau=tau, k = 2,
                       ndpost=ndraws, nskip=burnIn, ntree=200)
