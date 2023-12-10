@@ -361,8 +361,7 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ## Also, maybe make x-axis limits and y-axis limits the same.
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
-  labs(x = "Independent Censoring", y = "Dependent Censoring",
-       title = "Posterior Means for Different Censoring Models") +
+  labs(x = "Independent Censoring", y = "Dependent Censoring") +
   theme_light() +
-  theme(axis.title = element_text(size = 22),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 20))   # Adjust the size of the axis labels
+  theme(axis.title = element_text(size = 18),  # Adjust the size of the axis titles
+        axis.text = element_text(size = 18))   # Adjust the size of the axis labels
