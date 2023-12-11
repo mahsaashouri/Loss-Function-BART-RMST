@@ -263,7 +263,7 @@ df_summary_sorted <- df_summary[order(df_summary$mean),]
 
 # create the plot
 plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)),
-     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab="Months ",
+     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab="Estimated interval",
      las=1)
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
