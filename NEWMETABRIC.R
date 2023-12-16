@@ -263,7 +263,7 @@ df_summary_sorted <- df_summary[order(df_summary$mean),]
 
 # create the plot
 plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)),
-     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab="Estimated interval",
+     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab="Time and month",
      las=1)
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
@@ -361,7 +361,7 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ## Also, maybe make x-axis limits and y-axis limits the same.
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
-  labs(x = "Independent Censoring", y = "Dependent Censoring") +
+  labs(x = "Independent posterior mean", y = "Dependent posterior mean") +
   theme_light() +
   theme(axis.title = element_text(size = 18),  # Adjust the size of the axis titles
         axis.text = element_text(size = 18))   # Adjust the size of the axis labels
