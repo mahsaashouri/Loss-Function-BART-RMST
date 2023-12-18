@@ -220,6 +220,7 @@ bart_dep_fitted <- bart_dep_mod$yhat.train.mean
 BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
 ## plotting the first 10 repeated variables in one iteration - BART
+## replace bart_mod with bart_dep_mod to get the dep plot
 VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
@@ -230,6 +231,7 @@ VarImpDataF <- VarImpDataF[order(VarImpDataF$numbers, decreasing = FALSE),]
 
 library(ggrepel)
 # Create the plot
+
 ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
   geom_line(size = 1, color = "black") +
   geom_point(size = 3, color = "blue") +
@@ -248,6 +250,7 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
 
 
 ## Confidence interval for each patient - plot
+## replace bart_mod with bart_dep_mod to get the dep plot
 means <- bart_mod$yhat.train.mean
 df_summary <- data.frame(row = 1:ncol(bart_mod$yhat.train), mean = means)
 
