@@ -257,11 +257,11 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
 
 ## Confidence interval for each patient - plot
 ## replace bart_mod with bart_dep_mod to get the dep plot
-means <- bart_mod$yhat.train.mean
-df_summary <- data.frame(row = 1:ncol(bart_mod$yhat.train), mean = means)
+means <- bart_dep_mod$yhat.train.mean
+df_summary <- data.frame(row = 1:ncol(bart_dep_mod$yhat.train), mean = means)
 
-df_summary$max <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.975))
-df_summary$min <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.025))
+df_summary$max <- apply(bart_dep_mod$yhat.train, 2, function(x) quantile(x, probs=0.975))
+df_summary$min <- apply(bart_dep_mod$yhat.train, 2, function(x) quantile(x, probs=0.025))
 ## plot sample of lines
 #sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
 #sample_df_summary <- df_summary[sample_idx,]
