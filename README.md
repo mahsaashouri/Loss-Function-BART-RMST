@@ -24,4 +24,4 @@ and compare its performance with several well-known survival machine learning me
 mult-site cohort of breast cancer patients that has both clinical 
 and genomic covariates.
 
-* We have implemented an R package which is available for download at \url{github.com/nchenderson/BARTTrial}.
+* We have implemented an R package `BARTTrial` which is available for download [here](github.com/nchenderson/BARTTrial).
