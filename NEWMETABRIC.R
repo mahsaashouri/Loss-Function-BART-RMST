@@ -151,7 +151,7 @@ eta_hat <- AFT_try$scale*AFT_try$scale
 ## Now, do 5-fold cross-validation to get the best
 ## value of eta_hat
 nfolds <- 5
-eta_hat_vals <- c(0.1*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat)
+eta_hat_vals <- c(0.1*eta_hat, 0.25*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat)
 CVscore <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
 X.train.obs <- X.train[delta==1,]
 Y.train.obs <- Y[delta==1]
@@ -198,7 +198,13 @@ for(u in 1:length(eta_hat_vals)) {
 CVfinal <- colMeans(CVscore)
 CVfinalDep <- colMeans(CVscoreDep)
 eta_hat_star <- eta_hat_vals[which.min(CVfinal)]
-eta_hat_star_dep <- eta_hat_vals[which.min(CVfinalDep)]
+## There is quite a bit of variability in eta_hat_star_dep depending on the
+## randomness of the folds in cross-validation.
+## Setting eta_hat_star_dep = eta_hat_vals[1] is a more stable and interpretable
+## choice since eta_hat_star_dep equals this on a number of rounds of cross-validation
+## and provides more regularization than some of the extreme estimates of eta_hat_star_dep
+## that occurs for some of the train-test splits in cross-validation
+eta_hat_star_dep <- eta_hat_vals[1]
 #######################
 
 ############################
@@ -293,7 +299,7 @@ for(i in 1:length(Col_ParDep)){
   #pp <- seq(min(METABRIC[,Col_ParDep[i]]),max(METABRIC[,Col_ParDep[i]]), length.out = ngrid)
   pp <- seq(GridEnd[i,1], GridEnd[i,2], length.out=ngrid)
   for(k in 1:ngrid){
-    
+
     Xtmp <- X.train
     Xtmp[,Col_ParDep[i]] <- rep(pp[k], nrow(DATA))
     ## change name of bart_mod here
