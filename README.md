@@ -23,3 +23,5 @@ We evaluate the performance of our method through a series of simulations
 and compare its performance with several well-known survival machine learning methods. We illustrate the application of our method using a
 mult-site cohort of breast cancer patients that has both clinical 
 and genomic covariates.
+
+* We have implemented an R package which is available for download at \url{github.com/nchenderson/BARTTrial}.
