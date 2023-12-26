@@ -371,6 +371,7 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
   labs(x = "Noinformative censoring posterior means", y = "Informative censoring posterior means") +
+  scale_x_continuous (expand = c(0.061, 0.061)) +
   theme_light() +
-  theme(axis.title = element_text(size = 18),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 18))   # Adjust the size of the axis labels
+  theme(axis.title = element_text(size = 20),  # Adjust the size of the axis titles
+        axis.text = element_text(size = 20))   # Adjust the size of the axis labels
