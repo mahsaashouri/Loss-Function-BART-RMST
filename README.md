@@ -24,4 +24,18 @@ and compare its performance with several well-known survival machine learning me
 mult-site cohort of breast cancer patients that has both clinical 
 and genomic covariates.
 
-* We have implemented an R package `BARTTrial` which is available for download [here](github.com/nchenderson/BARTTrial).
+## Dataset
+
+Breast cancer outcomes assembled by the Molecular Taxonomy of Breast Cancer International Consortium (METABRIC) - available [here - accessed Jan 05, 2024](https://www.kaggle.com/datasets/raghadalharbi/breast-cancer-gene-expression-profiles-metabric?resource=download)
+
+## Reproducing results
+
+* `NewFriedmanSimulationStudy_Independent.R`: results for the Friedman function simulation study for the case of noninformative censoring (*Tables 1*, *2*, and *4*).
+* `NewFriedmanSimulationStudy_Dependent.R`: results for the Friedman function simulation study for the case of informative censoring (*Table 3*).
+* `NewMultinormAR1SimulationStudy.R`: results for the absolute value linear model with correlated predictors simulation study for the case of noninformative censoring (*Table 5*).
+* `NEWMETABRIC.R`: results for the real-world application - METABRIC dataset (*Section 5*).
+
+
+## Software
+
+* We have implemented an R package `rmstbart` which is available for download [here](https://github.com/nchenderson/rmstbart).
