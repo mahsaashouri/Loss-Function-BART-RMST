@@ -1,28 +1,8 @@
-# Generalized Bayesian Additive Regression Trees for Restricted Mean Survival Time Prediction
+# Generalized Bayesian Additive Regression Trees for Restricted Mean Survival Time Inference
 
-Prediction methods for time-to-event outcomes often utilize 
-survival models that
-rely on strong assumptions about noninformative censoring 
-or on how individual-level covariates
-and survival functions are related. 
-When the main interest is in predicting an individual-level expected
-time to failure, reliance on such assumptions can lead
-to poor predictive performance if these assumptions
-are not satisfied.
-By using a loss function that depends on the inverse probability of censoring weights (IPCW) instead of using a full probability model for all survival outcomes, we propose a generalized Bayes framework that uses an additive regression tree model
-that explicitly targets predicting the restricted mean survival time. 
-In our generalized Bayes formulation, the posterior distribution of interest
-is obtained through model-averaging of IPCW-conditional
-loss function-based Gibbs posteriors where the model weights
-are based on a Gamma process model for the censoring distributions. 
-Because informative censoring is captured by the IPCW-dependent
-loss function, our approach only requires one to specify a
-model for the censoring distribution, thereby obviating 
-the need for complex joint modeling to handle informative censoring.
-We evaluate the performance of our method through a series of simulations 
-and compare its performance with several well-known survival machine learning methods. We illustrate the application of our method using a
-mult-site cohort of breast cancer patients that has both clinical 
-and genomic covariates.
+Prediction methods for time-to-event outcomes often utilize survival models that rely on strong assumptions about noninformative censoring or on how individual-level covariates and survival functions are related. When the main interest is in predicting individual-level restricted mean survival times (RMST), reliance on such assumptions can lead to poor predictive performance if these assumptions are not satisfied. We propose a generalized Bayes framework that avoids full probability modeling of all survival outcomes by using an RMST-targeted loss function that depends on a collection of inverse probability of censoring weights (IPCW). In our generalized Bayes formulation, we utilize a flexible additive tree regression model for the RMST function, and the posterior distribution of interest is obtained through model-averaging IPCW-conditional loss function-based pseudo-Bayesian posteriors. Because informative censoring can be captured by the IPCW-dependent loss function, our approach only requires one to specify a model for the censoring distribution, thereby obviating the need for complex joint modeling to handle informative censoring. We evaluate the performance of our method through a series of simulations that compare it with several well-known survival machine learning methods, and we illustrate the application of our method using a multi-site cohort of breast cancer patients with clinical and genomic covariates.
+
+* Paper is available [here](https://arxiv.org/abs/2402.17920#:~:text=Generalized%20Bayesian%20Additive%20Regression%20Trees%20for%20Restricted%20Mean%20Survival%20Time%20Inference,-Mahsa%20Ashouri%2C%20Nicholas&text=Prediction%20methods%20for%20time%2Dto,and%20survival%20functions%20are%20related.)
 
 ## Dataset
 
