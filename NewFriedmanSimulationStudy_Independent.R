@@ -4,8 +4,8 @@ library(glmnet)
 library(mboost)
 source("DrawIPCW.R")
 #library(devtools)
-#install_local("/Users/mahsa/Downloads/BARTTrial-master", force = TRUE)
-library(BARTTrial)
+#install_local("/Users/mahsa/Downloads/rmstbart-master", force = TRUE)
+library(rmstbart)
 library(penAFT)
 
 ## Friedman test function
