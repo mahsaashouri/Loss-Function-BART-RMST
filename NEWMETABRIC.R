@@ -75,7 +75,7 @@ names(METABRIC)[which(names(METABRIC)=="pam50_._claudin.low_subtype")] <- "molec
 names(METABRIC)[which(names(METABRIC)=="tumor_subtype")] <- "histol_subtype"
 names(METABRIC)[which(names(METABRIC)=="pr_status")] <- "PR_"
 names(METABRIC)[which(names(METABRIC)=="brca1")] <- "BRCA1"
-names(METABRIC)[which(names(METABRIC)=="brca2")] <- "BRCA1"
+names(METABRIC)[which(names(METABRIC)=="brca2")] <- "BRCA2"
 names(METABRIC)[which(names(METABRIC)=="palb2")] <- "PALB2"
 names(METABRIC)[which(names(METABRIC)=="pten")] <- "PTEN"
 names(METABRIC)[which(names(METABRIC)=="tp53")] <- "TP53"
