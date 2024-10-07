@@ -47,6 +47,8 @@ rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, n
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 rmse_bcart_default <- rmse_bart_default <- rmse_aft_bart_default <- rep(NA, nreps)
 
+mean_aft_bart <- mean_bcart <- mean_bart <- mean_aft_bart_default <- mean_bcart_default <- mean_bart_default <- rep(NA, nreps)
+
 coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
 coverage_bcart_default <- coverage_bart_default <- coverage_aft_bart_default <- rep(NA, nreps)
 
@@ -372,6 +374,14 @@ for(j in 1:nreps) {
   coverage_aft_bart_default[j] <- mean((mu.test >= AFT_BART_CI_default[,1]) & (mu.test <= AFT_BART_CI_default[,2]))
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
   coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
+  
+  ## Recording mean of fitted values
+  mean_aft_bart[j] <- mean(AFT_BART_fitted)
+  mean_bcart[j] <- mean(bcart_fitted)
+  mean_bart[j] <- mean(bart_fitted)
+  mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default)
+  mean_bcart_default[j] <- mean(bcart_fitted_default)
+  mean_bart_default[j] <- mean(bart_fitted_default)
 
 }
 
