@@ -17,7 +17,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 250  # 250 or 1000 # number of training observations
+n <- 250  # 250 or 1000 # number of training observations (500 & 5000)
 n.test <- 1000   # 1000 - number of test observations
 num_covar <- 100  # 10 or 100 # total number of predictors
 nreps <- 100 # number of simulation replications
@@ -376,12 +376,12 @@ for(j in 1:nreps) {
   coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
   
   ## Recording mean of fitted values
-  mean_aft_bart[j] <- mean(AFT_BART_fitted)
-  mean_bcart[j] <- mean(bcart_fitted)
-  mean_bart[j] <- mean(bart_fitted)
-  mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default)
-  mean_bcart_default[j] <- mean(bcart_fitted_default)
-  mean_bart_default[j] <- mean(bart_fitted_default)
+  mean_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
+  mean_bcart[j] <- mean(bcart_fitted - mu.test)
+  mean_bart[j] <- mean(bart_fitted - mu.test)
+  mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
+  mean_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
+  mean_bart_default[j] <- mean(bart_fitted_default - mu.test)
 
 }
 
