@@ -3,8 +3,7 @@ library(BART)
 library(glmnet)
 library(mboost)
 source("DrawIPCW.R")
-#library(devtools)
-#install_local("/Users/mahsa/Downloads/rmstbart-master", force = TRUE)
+#devtools::install_github("https://github.com/nchenderson/rmstbart", force = TRUE)
 library(rmstbart)
 library(penAFT)
 
@@ -48,6 +47,7 @@ rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 rmse_bcart_default <- rmse_bart_default <- rmse_aft_bart_default <- rep(NA, nreps)
 
 mean_aft_bart <- mean_bcart <- mean_bart <- mean_aft_bart_default <- mean_bcart_default <- mean_bart_default <- rep(NA, nreps)
+mean_coxph <- mean_rcoxph <- mean_ipcw <- mean_aft <- mean_aft_null <- rep(NA, nreps)
 
 coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
 coverage_bcart_default <- coverage_bart_default <- coverage_aft_bart_default <- rep(NA, nreps)
@@ -382,6 +382,11 @@ for(j in 1:nreps) {
   mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
   mean_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
   mean_bart_default[j] <- mean(bart_fitted_default - mu.test)
+  mean_coxph[j] <- mean(COXPH_fitted - mu.test)
+  mean_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
+  mean_ipcw[j] <- mean(IPW_fitted - mu.test)
+  mean_aft[j] <- mean(AFT_fitted - mu.test)
+  mean_aft_null[j] <- mean(AFT_null_fitted - mu.test)
 
 }
 
@@ -421,4 +426,21 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 
 write.csv(Coverage, 'Coverage.csv')
+
+
+Bias <- matrix(NA, nrow = 1, ncol = 11)
+colnames(Bias) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null')
+Bias[,1] <- mean(mean_aft_bart)
+Bias[,2] <- mean(mean_aft_bart_default)
+Bias[,3] <- mean(mean_bcart)
+Bias[,4] <- mean(mean_bcart_default)
+Bias[,5] <- mean(mean_bart)
+Bias[,6] <- mean(mean_bart_default)
+Bias[,7] <- mean(mean_coxph)
+Bias[,8] <- mean(mean_rcoxph)
+Bias[,9] <- mean(mean_ipcw)
+Bias[,10] <- mean(mean_aft)
+Bias[,11] <- mean(mean_aft_null)
+
+write.csv(Coverage, 'Bias.csv')
 
