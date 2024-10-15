@@ -37,7 +37,7 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
   return(fitted_vals)
 }
 
-cens_rate <- 0.2 # Use 0.2 (high censoring) or 0.1 (low censoring)
+cens_rate <- 0.1 # Use 0.2 (high censoring) or 0.1 (low censoring)
 tau <- 25
 sgrid <- seq(0, tau, by=.1)
 
@@ -401,7 +401,7 @@ colnames(Results) <- c("Mean RMSE", "Median RMSE")
 Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
 Results[2,1:2] <- c(mean(rmse_coxph), mean(rmse_coxph))
 Results[3,1:2] <- c(mean(rmse_rcoxph), median(rmse_rcoxph))
-Results[4,1:2] <- c(mean(rmse_aft), median(rmse_aft))
+Results[4,1:2] <- c(mean(rmse_aft, na.rm = T), median(rmse_aft, na.rm = T))
 Results[5,1:2] <- c(mean(rmse_ipcw), median(rmse_ipcw))
 Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
 Results[7,1:2] <- c(mean(rmse_aft_bart_default), median(rmse_aft_bart_default))
@@ -413,7 +413,7 @@ Results[11,1:2] <- c(mean(rmse_bart_default), median(rmse_bart_default))
 
 round(Results, 4)
 
-write.csv(Results, 'RMSE-results.csv')
+#write.csv(Results, 'RMSE-results.csv')
 
 Coverage <- matrix(NA, nrow = 1, ncol = 6)
 colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default')
@@ -425,7 +425,7 @@ Coverage[,5] <- mean(coverage_bart)
 Coverage[,6] <- mean( coverage_bart_default)
 
 
-write.csv(Coverage, 'Coverage.csv')
+#write.csv(Coverage, 'Coverage.csv')
 
 
 Bias <- matrix(NA, nrow = 1, ncol = 11)
@@ -439,8 +439,8 @@ Bias[,6] <- mean(mean_bart_default)
 Bias[,7] <- mean(mean_coxph)
 Bias[,8] <- mean(mean_rcoxph)
 Bias[,9] <- mean(mean_ipcw)
-Bias[,10] <- mean(mean_aft)
+Bias[,10] <- mean(mean_aft, na.rm = T)
 Bias[,11] <- mean(mean_aft_null)
 
-write.csv(Coverage, 'Bias.csv')
+#write.csv(Coverage, 'Bias.csv')
 
