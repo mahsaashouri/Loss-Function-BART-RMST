@@ -10,9 +10,9 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 250   # 1000
+n <- 5000   # 1000
 n.test <- 1000
-num_covar <- 50 # Choose to be 10 or 50
+num_covar <- 10 # Choose to be 10 or 50
 nreps <- 100 # number of simulation replications
 
 theta <- 0.01
@@ -41,6 +41,9 @@ CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
 rmse_bcart <- rmse_bart <- rmse_bart_dep <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 rmse_bcart_default <- rmse_bart_default <- rmse_bart_dep_default <- rmse_aft_bart_default <- rep(NA, nreps)
+
+bias_bart_dep <- bias_aft_bart <- bias_bcart <- bias_bart <- bias_aft_bart_default <- bias_bcart_default <- bias_bart_default <- rep(NA, nreps)
+bias_coxph <- bias_rcoxph <- bias_ipcw <- bias_bart_dep_default <- bias_aft <- bias_aft_null <- rep(NA, nreps)
 
 coverage_bcart <- coverage_bart <- coverage_dep_bart <- coverage_aft_bart <- rep(NA, nreps)
 coverage_bcart_default <- coverage_bart_default <- coverage_dep_bart_default <- coverage_aft_bart_default <- rep(NA, nreps)
@@ -352,6 +355,22 @@ for(j in 1:nreps) {
     rmse_aft_bart_default[j] <- sqrt(mean((AFT_BART_fitted_default - mu.test)*(AFT_BART_fitted_default - mu.test)))
     rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
     
+    
+    ## Recording mean of fitted values
+    bias_bart_dep <- mean(bart_dep_fitted - mu.test)
+    bias_bart_dep_default <- mean(bart_dep_fitted_default - mu.test)
+    bias_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
+    bias_bcart[j] <- mean(bcart_fitted - mu.test)
+    bias_bart[j] <- mean(bart_fitted - mu.test)
+    bias_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
+    bias_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
+    bias_bart_default[j] <- mean(bart_fitted_default - mu.test)
+    bias_coxph[j] <- mean(COXPH_fitted - mu.test)
+    bias_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
+    bias_ipcw[j] <- mean(IPW_fitted - mu.test)
+    bias_aft[j] <- mean(AFT_fitted - mu.test)
+    bias_aft_null[j] <- mean(AFT_null_fitted - mu.test)
+    
     cens_prop[j] <- mean(delta.train)
     CorCT[j] <- cor(C.train, T.train)
   }, error=function(e){})
@@ -382,3 +401,18 @@ round(Results, 4)
 
 ## n=250-k=50-censoring'Medium': two rounds NA 
 
+Bias <- matrix(NA, nrow = 1, ncol = 11)
+colnames(Bias) <- c('BART-DEP', 'BART-DEP-default','AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null')
+Bias[,1] <- mean(bias_bart_dep)
+Bias[,2] <- mean(bias_bart_dep_default)
+Bias[,3] <- mean(bias_aft_bart)
+Bias[,4] <- mean(bias_aft_bart_default)
+Bias[,5] <- mean(bias_bcart)
+Bias[,6] <- mean(bias_bcart_default)
+Bias[,7] <- mean(bias_bart)
+Bias[,8] <- mean(bias_bart_default)
+Bias[,9] <- mean(bias_coxph)
+Bias[,10] <- mean(bias_rcoxph)
+Bias[,11] <- mean(bias_ipcw)
+Bias[,12] <- mean(bias_aft, na.rm = T)
+Bias[,13] <- mean(bias_aft_null)
