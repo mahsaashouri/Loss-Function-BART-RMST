@@ -13,8 +13,8 @@ set.seed(1234)
 
 ndraws <- 1000
 burnIn <- 500
-n <- 1000 # 250 or 1000 # number of training observation
-n.test <- 1000 # 1000 # number of test observation
+n <- 500 # 250 or 1000 # number of training observation
+n.test <- 5000 # 1000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 coef <- c(c(0.75, -0.5, 0.25, 0.25, -0.75), rep(0, num_covar-5))
 Rho <- 0.5
@@ -63,6 +63,9 @@ rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
 rmse_aft_bart_default <- rmse_bart_default <- rmse_bcart_default <- rep(NA, nreps)
 coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
 coverage_aft_bart_default <- coverage_bart_default <- coverage_bcart_default <- rep(NA, nreps)
+
+mean_aft_bart <- mean_bcart <- mean_bart <- mean_aft_bart_default <- mean_bcart_default <- mean_bart_default <- rep(NA, nreps)
+mean_coxph <- mean_rcoxph <- mean_ipcw <- mean_aft <- mean_aft_null <- rep(NA, nreps)
 
 gam <- 1.0
 eps <- 0.001
@@ -396,6 +399,19 @@ for(j in 1:nreps) {
   coverage_aft_bart_default[j] <- mean((mu.test >= AFT_BART_CI_default[,1]) & (mu.test <= AFT_BART_CI_default[,2]))
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
   coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
+  
+  ## Recording mean of fitted values
+  mean_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
+  mean_bcart[j] <- mean(bcart_fitted - mu.test)
+  mean_bart[j] <- mean(bart_fitted - mu.test)
+  mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
+  mean_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
+  mean_bart_default[j] <- mean(bart_fitted_default - mu.test)
+  mean_coxph[j] <- mean(COXPH_fitted - mu.test)
+  mean_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
+  mean_ipcw[j] <- mean(IPW_fitted - mu.test)
+  mean_aft[j] <- mean(AFT_fitted - mu.test)
+  mean_aft_null[j] <- mean(AFT_null_fitted - mu.test)
 
 }
 
@@ -435,4 +451,17 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 #write.csv(Coverage, 'Coverage.csv')
 
-## n=250 done
+Bias <- matrix(NA, nrow = 1, ncol = 11)
+colnames(Bias) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null')
+Bias[,1] <- mean(mean_aft_bart)
+Bias[,2] <- mean(mean_aft_bart_default)
+Bias[,3] <- mean(mean_bcart)
+Bias[,4] <- mean(mean_bcart_default)
+Bias[,5] <- mean(mean_bart)
+Bias[,6] <- mean(mean_bart_default)
+Bias[,7] <- mean(mean_coxph)
+Bias[,8] <- mean(mean_rcoxph)
+Bias[,9] <- mean(mean_ipcw)
+Bias[,10] <- mean(mean_aft, na.rm = T)
+Bias[,11] <- mean(mean_aft_null)
+
