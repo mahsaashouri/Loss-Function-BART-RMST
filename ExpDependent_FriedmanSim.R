@@ -45,8 +45,6 @@ rmse_bcart_default <- rmse_bart_default <- rmse_bart_dep_default <- rmse_aft_bar
 bias_bart_dep <- bias_aft_bart <- bias_bcart <- bias_bart <- bias_aft_bart_default <- bias_bcart_default <- bias_bart_default <- rep(NA, nreps)
 bias_coxph <- bias_rcoxph <- bias_ipcw <- bias_bart_dep_default <- bias_aft <- bias_aft_null <- rep(NA, nreps)
 
-coverage_bcart <- coverage_bart <- coverage_dep_bart <- coverage_aft_bart <- rep(NA, nreps)
-coverage_bcart_default <- coverage_bart_default <- coverage_dep_bart_default <- coverage_aft_bart_default <- rep(NA, nreps)
 cens_prop <- rep(NA, nreps)
 CorCT <- rep(NA, nreps)
 
@@ -357,8 +355,8 @@ for(j in 1:nreps) {
     
     
     ## Recording mean of fitted values
-    bias_bart_dep <- mean(bart_dep_fitted - mu.test)
-    bias_bart_dep_default <- mean(bart_dep_fitted_default - mu.test)
+    bias_bart_dep[j] <- mean(bart_dep_fitted - mu.test)
+    bias_bart_dep_default[j] <- mean(bart_dep_fitted_default - mu.test)
     bias_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
     bias_bcart[j] <- mean(bcart_fitted - mu.test)
     bias_bart[j] <- mean(bart_fitted - mu.test)

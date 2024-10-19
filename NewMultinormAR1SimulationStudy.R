@@ -13,7 +13,7 @@ set.seed(1234)
 
 ndraws <- 1000
 burnIn <- 500
-n <- 500 # 250 or 1000 # number of training observation
+n <- 5000 # 250 or 1000 # number of training observation
 n.test <- 5000 # 1000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 coef <- c(c(0.75, -0.5, 0.25, 0.25, -0.75), rep(0, num_covar-5))
