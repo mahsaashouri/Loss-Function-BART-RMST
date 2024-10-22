@@ -227,7 +227,7 @@ BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs
 
 ## plotting the first 10 repeated variables in one iteration - BART
 ## replace bart_mod with bart_dep_mod to get the dep plot
-VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
+VarImp <- sort(colSums(bart_dep_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -236,7 +236,7 @@ VarImpDataF <- data.frame(numbers = c(VarImp)/ndraws,
 VarImpDataF <- VarImpDataF[order(VarImpDataF$numbers, decreasing = FALSE),]
 
 library(ggrepel)
-# Create the plot
+# Create the line plot
 
 ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
   geom_line(size = 1, color = "black") +
@@ -253,6 +253,24 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
     axis.text.y = element_text(size = 20),
     legend.title=element_text(size=20),
     legend.text=element_text(size=20))
+
+# Create bar charts
+
+ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
+  geom_bar(stat = "identity", fill = 'gray80', width = 0.7) +
+  geom_text(aes(label = names), hjust = 1.1, size = 6, color = "white", fontface = "bold") +  
+  labs(y = "Variable", x = "Mean number of times used") +
+  #coord_flip() + 
+  theme_minimal() +
+  theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_blank(),
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20)
+  )
+
 
 
 ## Confidence interval for each patient - plot
