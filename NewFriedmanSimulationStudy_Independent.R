@@ -265,22 +265,38 @@ for(j in 1:nreps) {
                          kappa0=kappa0, delta_alpha=delta_alpha)
   }
   Gmat_orig <- 1/sqrt(Gmat)
+  Gmeans <- colMeans(1/Gmat)
+  
+  cens_bart <- AFTrees(x.train=X.train, y.train=Y.train, status=1-delta.train,
+                       ndpost=ndraws + burnIn, verbose=FALSE, k=2)
+  Mucens_draws <- cens_bart$m.train[,delta.train==1]
+  GmatDep <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
+  for(k in 1:(ndraws + burnIn)) {
+    for(h in 1:length(U_tau)) {
+      log.time.points <- log(U_tau[h])
+      AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,h])/cens_bart$sigma[k]
+      Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
+      GmatDep[k,h] <- 1/Cprob
+    }
+  }
+  GmatDeporig <- 1/sqrt(GmatDep)
   
   ##########################################################################
   ## Doing Cross-Validation with RMST_BART and RMST_BCART to find best eta
   #########################################################################
   nfolds <- 5
-  eta_hat_vals <- c(0.1*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat)
+  eta_hat_vals <- c(0.1*eta_hat, 0.25*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat, 1.5*eta_hat)
   CVscore <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
   X.train.obs <- X.train[delta.train==1,]
   Y.train.obs <- Y.train[delta.train==1]
   ntrain <- nrow(X.train.obs)
   fold_memb <- sample(1:nfolds, size=ntrain, replace=TRUE)
-  CVscore <- CVscore_BCART <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
+  CVscore <- CVscoreDep <- CVscore_BCART <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
   cens_dist <- survfit(Surv(Y.train, 1-delta.train) ~ 1)
   GKM <- stepfun(c(0, cens_dist$time), c(1, cens_dist$surv, min(cens_dist$surv)))
   for(u in 1:length(eta_hat_vals)) {
     Gmat <- sqrt(2*eta_hat_vals[u])*Gmat_orig
+    GmatDep <- sqrt(2*eta_hat_vals[u])*GmatDeporig
     for(k in 1:nfolds) {
       Y.train_tmp <- Y.train.obs[fold_memb!=k]
       delta.train_tmp <- rep(1, sum(fold_memb!=k))
@@ -293,25 +309,37 @@ for(j in 1:nreps) {
       Gmat_train_tmp <- Gmat[,fold_memb!=k]
       Gmat_test_tmp <- Gmat[,fold_memb==k]
       
+      GmatDep_train_tmp <- GmatDep[,fold_memb!=k]
+      GmatDep_test_tmp <- GmatDep[,fold_memb==k]
+      
+      ww_dep <- colMeans(1/(GmatDeporig[,fold_memb==k]^2))
       ww <- 1/GKM(Y.test_tmp)
       
       bartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
-                               x.test=X.test_tmp, tau=tau, k = 4, ndpost=ndraws, nskip=burnIn)
+                               x.test=X.test_tmp, tau=tau, k = 2, ndpost=ndraws, nskip=burnIn)
       
+      bartmod_dep_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=GmatDep_train_tmp,
+                                   x.test=X.test_tmp, tau=tau, k = 2,
+                                   ndpost=ndraws, nskip=burnIn)
       bcartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
                                 x.test=X.test_tmp, tau=tau, k = 4, ntree=1L, ndpost=ndraws, nskip=burnIn)
       
       yhat <- bartmod_tmp$yhat.test.mean
+      yhat_dep <- bartmod_dep_tmp$yhat.test.mean
       yhat_bcart <- bcartmod_tmp$yhat.test.mean
       
       CVscore[k, u] <- mean(ww*((Y.test_tmp - yhat)*(Y.test_tmp - yhat)))
+      CVscoreDep[k,u] <- mean(ww_dep*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
       CVscore_BCART[k, u] <- mean(ww*((Y.test_tmp - yhat_bcart)*(Y.test_tmp - yhat_bcart)))
+      #CVscoreDep[k,u] <- mean(ww*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
+      
     }
   }
   CVfinal <- colMeans(CVscore)
+  CVfinalDep <- colMeans(CVscoreDep)
   CVfinal_BCART <- colMeans(CVscore_BCART)
-  best_select[j] <- which.min(CVfinal)
   eta_hat_star <- eta_hat_vals[which.min(CVfinal)]
+  eta_hat_star_dep <- eta_hat_vals[which.min(CVfinalDep)]
   eta_hat_star_bcart <- eta_hat_vals[which.min(CVfinal_BCART)]
   #######################
   

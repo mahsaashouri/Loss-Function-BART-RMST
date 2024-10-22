@@ -227,7 +227,7 @@ BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs
 
 ## plotting the first 10 repeated variables in one iteration - BART
 ## replace bart_mod with bart_dep_mod to get the dep plot
-VarImp <- sort(colSums(bart_dep_mod$varcount), decreasing=TRUE)[1:10]
+VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
