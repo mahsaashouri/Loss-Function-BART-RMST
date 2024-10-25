@@ -7,13 +7,14 @@ source("DrawIPCW.R")
 #install_local("/Users/mahsa/Downloads/rmstbart-master", force = TRUE)
 library(rmstbart)
 library(penAFT)
+library(AFTrees)
 
 
 set.seed(1234)
 
 ndraws <- 1000
 burnIn <- 500
-n <- 5000 # 250 or 1000 # number of training observation
+n <- 100 # 250 or 1000 # number of training observation
 n.test <- 5000 # 1000 # number of test observation
 num_covar <- 10 # 10 or 100 # total number of predictors
 coef <- c(c(0.75, -0.5, 0.25, 0.25, -0.75), rep(0, num_covar-5))
@@ -473,17 +474,17 @@ for(j in 1:nreps) {
 }
 
 
-nmethods <- 11
+nmethods <- 13
 Results <- matrix(NA, nrow=nmethods, ncol=2)
 rownames(Results) <- c("AFT Null", "CoxPH", "Cox glmnet", "AFT linear",
                        "ipcw", "AFT BART", "AFT BART Default",
-                       "BCART", "BCART Default", "BART", "BART Default")
+                       "BCART", "BCART Default", "BART", "BART Default", "BART DEP", "BART DEP Default")
 colnames(Results) <- c("Mean RMSE", "Median RMSE")
 
 Results[1,1:2] <- c(mean(rmse_aft_null), median(rmse_aft_null))
 Results[2,1:2] <- c(mean(rmse_coxph), mean(rmse_coxph))
 Results[3,1:2] <- c(mean(rmse_rcoxph), median(rmse_rcoxph))
-Results[4,1:2] <- c(mean(rmse_aft), median(rmse_aft))
+Results[4,1:2] <- c(mean(rmse_aft, na.rm = T), median(rmse_aft, na.rm = T))
 Results[5,1:2] <- c(mean(rmse_ipcw), median(rmse_ipcw))
 Results[6,1:2] <- c(mean(rmse_aft_bart), median(rmse_aft_bart))
 Results[7,1:2] <- c(mean(rmse_aft_bart_default), median(rmse_aft_bart_default))
@@ -491,25 +492,29 @@ Results[8,1:2] <- c(mean(rmse_bcart), median(rmse_bcart))
 Results[9,1:2] <- c(mean(rmse_bcart_default), median(rmse_bcart_default))
 Results[10,1:2] <- c(mean(rmse_bart), median(rmse_bart))
 Results[11,1:2] <- c(mean(rmse_bart_default), median(rmse_bart_default))
+Results[12,1:2] <- c(mean(rmse_bart_dep), median(rmse_bart_dep))
+Results[13,1:2] <- c(mean(rmse_bart_dep_default), median(rmse_bart_dep_default))
 
 round(Results, 4)
 
 #write.csv(Results, 'RMSE-results.csv')
 
-Coverage <- matrix(NA, nrow = 1, ncol = 6)
-colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default')
+Coverage <- matrix(NA, nrow = 1, ncol = 8)
+colnames(Coverage) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'BART-DEP', 'BART-DEP-default')
 Coverage[,1] <- mean(coverage_aft_bart)
 Coverage[,2] <- mean(coverage_aft_bart_default)
 Coverage[,3] <- mean(coverage_bcart)
 Coverage[,4] <- mean(coverage_bcart_default)
 Coverage[,5] <- mean(coverage_bart)
 Coverage[,6] <- mean( coverage_bart_default)
+Coverage[,7] <- mean(coverage_bart_dep)
+Coverage[,8] <- mean( coverage_bart_dep_default)
 
 
 #write.csv(Coverage, 'Coverage.csv')
 
-Bias <- matrix(NA, nrow = 1, ncol = 11)
-colnames(Bias) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null')
+Bias <- matrix(NA, nrow = 1, ncol = 13)
+colnames(Bias) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null', 'BART-DEP', 'BART-DEP-default')
 Bias[,1] <- mean(bias_aft_bart)
 Bias[,2] <- mean(bias_aft_bart_default)
 Bias[,3] <- mean(bias_bcart)
@@ -521,4 +526,7 @@ Bias[,8] <- mean(bias_rcoxph)
 Bias[,9] <- mean(bias_ipcw)
 Bias[,10] <- mean(bias_aft, na.rm = T)
 Bias[,11] <- mean(bias_aft_null)
+Bias[,12] <- mean(bias_bart_dep)
+Bias[,13] <- mean(bias_bart_dep_default)
+
 
