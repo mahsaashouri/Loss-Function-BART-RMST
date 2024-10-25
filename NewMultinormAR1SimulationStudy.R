@@ -58,14 +58,15 @@ cens_prop <- rep(NA, nreps)
 CorCT <- rep(NA, nreps)
 
 cens_prop <- rep(NA, nreps)
-rmse_bcart <- rmse_bart <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
+rmse_bcart <- rmse_bart <- rmse_bart_dep <- rmse_coxph <- rmse_rcoxph <- rmse_sboost <- rep(NA, nreps)
 rmse_aft <- rmse_aft_bart <- rmse_aft_null <- rmse_ipcw <- rep(NA, nreps)
-rmse_aft_bart_default <- rmse_bart_default <- rmse_bcart_default <- rep(NA, nreps)
-coverage_bcart <- coverage_bart <- coverage_aft_bart <- rep(NA, nreps)
+rmse_aft_bart_default <- rmse_bart_default <- rmse_bart_dep_default <- rmse_bcart_default <- rep(NA, nreps)
+
+coverage_bcart <- coverage_bart <- coverage_aft_bart <- coverage_bart_dep_default <- coverage_aft_bart_default <- rep(NA, nreps)
 coverage_aft_bart_default <- coverage_bart_default <- coverage_bcart_default <- rep(NA, nreps)
 
-mean_aft_bart <- mean_bcart <- mean_bart <- mean_aft_bart_default <- mean_bcart_default <- mean_bart_default <- rep(NA, nreps)
-mean_coxph <- mean_rcoxph <- mean_ipcw <- mean_aft <- mean_aft_null <- rep(NA, nreps)
+bias_aft_bart <- bias_bcart <- bias_bart <- bias_aft_bart_default <- bias_bcart_default <- bias_bart_default <- rep(NA, nreps)
+bias_coxph <- bias_rcoxph <- bias_ipcw <- bias_aft <- bias_aft_null <- bias_bart_dep <- bias_bart_dep_default<- rep(NA, nreps)
 
 gam <- 1.0
 eps <- 0.001
@@ -284,56 +285,81 @@ for(j in 1:nreps) {
                          kappa0=kappa0, delta_alpha=delta_alpha)
   }
   Gmat_orig <- 1/sqrt(Gmat)
+  Gmeans <- colMeans(1/Gmat)
+  
+  cens_bart <- AFTrees(x.train=X.train, y.train=Y.train, status=1-delta.train,
+                       ndpost=ndraws + burnIn, verbose=FALSE, k=2)
+  Mucens_draws <- cens_bart$m.train[,delta.train==1]
+  GmatDep <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
+  for(k in 1:(ndraws + burnIn)) {
+    for(h in 1:length(U_tau)) {
+      log.time.points <- log(U_tau[h])
+      AA <- (log.time.points - cens_bart$locations[k,] - Mucens_draws[k,h])/cens_bart$sigma[k]
+      Cprob <- sum(pnorm(AA, lower.tail=FALSE)*cens_bart$mix.prop[k,])
+      GmatDep[k,h] <- 1/Cprob
+    }
+  }
+  GmatDeporig <- 1/sqrt(GmatDep)
 
   ##########################################################################
   ## Doing Cross-Validation with RMST_BART and RMST_BCART to find best eta
   #########################################################################
   nfolds <- 5
-  eta_hat_vals <- c(0.1*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat)
+  eta_hat_vals <- c(0.1*eta_hat, 0.25*eta_hat, 0.5*eta_hat, 0.75*eta_hat, eta_hat, 1.5*eta_hat)
   CVscore <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
   X.train.obs <- X.train[delta.train==1,]
   Y.train.obs <- Y.train[delta.train==1]
   ntrain <- nrow(X.train.obs)
   fold_memb <- sample(1:nfolds, size=ntrain, replace=TRUE)
-  CVscore <- CVscore_BCART <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
+  CVscore <- CVscoreDep <- CVscore_BCART <- matrix(NA, nrow=nfolds, ncol=length(eta_hat_vals))
   cens_dist <- survfit(Surv(Y.train, 1-delta.train) ~ 1)
-  GKM <- stepfun(c(0, cens_dist$time[cens_dist$surv > 0]),
-                 c(1, cens_dist$surv[cens_dist$surv > 0], min(cens_dist$surv[cens_dist$surv > 0])))
+  GKM <- stepfun(c(0, cens_dist$time), c(1, cens_dist$surv, min(cens_dist$surv)))
   for(u in 1:length(eta_hat_vals)) {
     Gmat <- sqrt(2*eta_hat_vals[u])*Gmat_orig
+    GmatDep <- sqrt(2*eta_hat_vals[u])*GmatDeporig
     for(k in 1:nfolds) {
       Y.train_tmp <- Y.train.obs[fold_memb!=k]
       delta.train_tmp <- rep(1, sum(fold_memb!=k))
       X.train_tmp <- X.train.obs[fold_memb!=k,]
-
+      
       Y.test_tmp <- Y.train.obs[fold_memb==k]
       delta.test_tmp <- rep(1, sum(fold_memb==k))
       X.test_tmp <- X.train.obs[fold_memb==k,]
-      Y.test_tmp <- pmin(Y.test_tmp, tau)
-
+      
       Gmat_train_tmp <- Gmat[,fold_memb!=k]
       Gmat_test_tmp <- Gmat[,fold_memb==k]
-
+      
+      GmatDep_train_tmp <- GmatDep[,fold_memb!=k]
+      GmatDep_test_tmp <- GmatDep[,fold_memb==k]
+      
+      ww_dep <- colMeans(1/(GmatDeporig[,fold_memb==k]^2))
       ww <- 1/GKM(Y.test_tmp)
-
+      
       bartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
                                x.test=X.test_tmp, tau=tau, k = 2, ndpost=ndraws, nskip=burnIn)
-
+      
+      bartmod_dep_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=GmatDep_train_tmp,
+                                   x.test=X.test_tmp, tau=tau, k = 2,
+                                   ndpost=ndraws, nskip=burnIn)
       bcartmod_tmp <- RMST_BART(Y.train_tmp, delta.train_tmp, X.train_tmp, Gweights=Gmat_train_tmp,
-                                x.test=X.test_tmp, tau=tau, k = 2, ntree=1L, ndpost=ndraws, nskip=burnIn)
-
+                                x.test=X.test_tmp, tau=tau, k = 4, ntree=1L, ndpost=ndraws, nskip=burnIn)
+      
       yhat <- bartmod_tmp$yhat.test.mean
+      yhat_dep <- bartmod_dep_tmp$yhat.test.mean
       yhat_bcart <- bcartmod_tmp$yhat.test.mean
-
+      
       CVscore[k, u] <- mean(ww*((Y.test_tmp - yhat)*(Y.test_tmp - yhat)))
+      CVscoreDep[k,u] <- mean(ww_dep*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
       CVscore_BCART[k, u] <- mean(ww*((Y.test_tmp - yhat_bcart)*(Y.test_tmp - yhat_bcart)))
-      rm(bartmod_tmp)
-      rm(bcartmod_tmp)
+      #CVscoreDep[k,u] <- mean(ww*((Y.test_tmp - yhat_dep)*(Y.test_tmp - yhat_dep)))
+      
     }
   }
   CVfinal <- colMeans(CVscore)
+  CVfinalDep <- colMeans(CVscoreDep)
   CVfinal_BCART <- colMeans(CVscore_BCART)
   eta_hat_star <- eta_hat_vals[which.min(CVfinal)]
+  eta_hat_star_dep <- eta_hat_vals[which.min(CVfinalDep)]
   eta_hat_star_bcart <- eta_hat_vals[which.min(CVfinal_BCART)]
   #######################
 
@@ -376,9 +402,36 @@ for(j in 1:nreps) {
   bcart_fitted_default <- bcart_mod_default$yhat.test.mean
   BCART_CI_default <- t(apply(bcart_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
+  #############################
+  ## RMST-DEP-BART with best value of eta
+  GmatDep <- sqrt(2*eta_hat_star_dep)*GmatDeporig
+  bart_dep_mod <- RMST_BART(Y.train, delta.train, X.train, Gweights=GmatDep,
+                            x.test=X.test, tau=tau, k = 2.0,
+                            ndpost=ndraws, nskip=burnIn)
+  bart_dep_fitted <- bart_dep_mod$yhat.test.mean
+  BART_dep_CI <- t(apply(bart_dep_mod$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
+  
+  
+  ## RMST-BART default
+  Gmat <- sqrt(2*eta_hat*0.5)*Gmat_orig
+  bart_mod_default <- RMST_BART(Y.train, delta.train, X.train, Gweights=Gmat,
+                                x.test=X.test, tau=tau, k = 2,
+                                ndpost=ndraws, nskip=burnIn)
+  bart_fitted_default <- bart_mod_default$yhat.test.mean
+  
+  
+  ## RMST-Dep-BART default
+  GmatDep <- sqrt(2*eta_hat*0.5)*GmatDeporig
+  bart_dep_mod_default <- RMST_BART(Y.train, delta.train, X.train, Gweights=GmatDep,
+                                    x.test=X.test, tau=tau, k = 2.0,
+                                    ndpost=ndraws, nskip=burnIn)
+  bart_dep_fitted_default <- bart_dep_mod_default$yhat.test.mean
+  BART_dep_CI_default <- t(apply(bart_dep_mod_default$yhat.test, 1, function(x) quantile(x, probs=c(0.025, 0.975))))
 
   ##################################
   ## Recording RMSE
+  rmse_bart_dep[j] <- sqrt(mean((bart_dep_fitted - mu.test)*(bart_dep_fitted - mu.test)))
+  rmse_bart_dep_default[j] <- sqrt(mean((bart_dep_fitted_default - mu.test)*(bart_dep_fitted_default - mu.test)))
   rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
   rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
   rmse_bart_default[j] <- sqrt(mean((bart_fitted_default - mu.test)*(bart_fitted_default - mu.test)))
@@ -393,6 +446,8 @@ for(j in 1:nreps) {
   cens_prop[j] <- mean(1 - delta.train) # also record censoring proportion
 
   ## Recording coverage
+  coverage_bart_dep[j] <- mean((mu.test >= BART_dep_CI[,1]) & (mu.test <= BART_dep_CI[,2]))
+  coverage_bart_dep_default[j] <- mean((mu.test >= BART_dep_CI_default[,1]) & (mu.test <= BART_dep_CI_default[,2]))
   coverage_aft_bart[j] <- mean((mu.test >= AFT_BART_CI[,1]) & (mu.test <= AFT_BART_CI[,2]))
   coverage_bcart[j] <- mean((mu.test >= BCART_CI[,1]) & (mu.test <= BCART_CI[,2]))
   coverage_bart[j] <- mean((mu.test >= BART_CI[,1]) & (mu.test <= BART_CI[,2]))
@@ -400,18 +455,20 @@ for(j in 1:nreps) {
   coverage_bcart_default[j] <- mean((mu.test >= BCART_CI_default[,1]) & (mu.test <= BCART_CI_default[,2]))
   coverage_bart_default[j] <- mean((mu.test >= BART_CI_default[,1]) & (mu.test <= BART_CI_default[,2]))
   
-  ## Recording mean of fitted values
-  mean_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
-  mean_bcart[j] <- mean(bcart_fitted - mu.test)
-  mean_bart[j] <- mean(bart_fitted - mu.test)
-  mean_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
-  mean_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
-  mean_bart_default[j] <- mean(bart_fitted_default - mu.test)
-  mean_coxph[j] <- mean(COXPH_fitted - mu.test)
-  mean_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
-  mean_ipcw[j] <- mean(IPW_fitted - mu.test)
-  mean_aft[j] <- mean(AFT_fitted - mu.test)
-  mean_aft_null[j] <- mean(AFT_null_fitted - mu.test)
+  ## Recording bias 
+  bias_bart_dep[j] <- mean(bart_dep_fitted - mu.test)
+  bias_bart_dep_default[j] <- mean(bart_dep_fitted_default - mu.test)
+  bias_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
+  bias_bcart[j] <- mean(bcart_fitted - mu.test)
+  bias_bart[j] <- mean(bart_fitted - mu.test)
+  bias_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
+  bias_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
+  bias_bart_default[j] <- mean(bart_fitted_default - mu.test)
+  bias_coxph[j] <- mean(COXPH_fitted - mu.test)
+  bias_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
+  bias_ipcw[j] <- mean(IPW_fitted - mu.test)
+  bias_aft[j] <- mean(AFT_fitted - mu.test)
+  bias_aft_null[j] <- mean(AFT_null_fitted - mu.test)
 
 }
 
@@ -453,15 +510,15 @@ Coverage[,6] <- mean( coverage_bart_default)
 
 Bias <- matrix(NA, nrow = 1, ncol = 11)
 colnames(Bias) <- c('AFT-BART', 'AFT-BART-default', 'BCART', 'BCART-default', 'BART', 'BART-default', 'coxph', 'rcoxph', 'ipcw', 'aft', 'aft-null')
-Bias[,1] <- mean(mean_aft_bart)
-Bias[,2] <- mean(mean_aft_bart_default)
-Bias[,3] <- mean(mean_bcart)
-Bias[,4] <- mean(mean_bcart_default)
-Bias[,5] <- mean(mean_bart)
-Bias[,6] <- mean(mean_bart_default)
-Bias[,7] <- mean(mean_coxph)
-Bias[,8] <- mean(mean_rcoxph)
-Bias[,9] <- mean(mean_ipcw)
-Bias[,10] <- mean(mean_aft, na.rm = T)
-Bias[,11] <- mean(mean_aft_null)
+Bias[,1] <- mean(bias_aft_bart)
+Bias[,2] <- mean(bias_aft_bart_default)
+Bias[,3] <- mean(bias_bcart)
+Bias[,4] <- mean(bias_bcart_default)
+Bias[,5] <- mean(bias_bart)
+Bias[,6] <- mean(bias_bart_default)
+Bias[,7] <- mean(bias_coxph)
+Bias[,8] <- mean(bias_rcoxph)
+Bias[,9] <- mean(bias_ipcw)
+Bias[,10] <- mean(bias_aft, na.rm = T)
+Bias[,11] <- mean(bias_aft_null)
 
