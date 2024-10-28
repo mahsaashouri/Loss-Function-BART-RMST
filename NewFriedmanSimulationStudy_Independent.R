@@ -6,6 +6,7 @@ source("DrawIPCW.R")
 #devtools::install_github("https://github.com/nchenderson/rmstbart", force = TRUE)
 library(rmstbart)
 library(penAFT)
+library(AFTrees)
 
 ## Friedman test function
 set.seed(1234)
