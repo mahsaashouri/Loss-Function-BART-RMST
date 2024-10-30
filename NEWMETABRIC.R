@@ -227,7 +227,7 @@ BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs
 
 ## plotting the first 10 repeated variables in one iteration - BART
 ## replace bart_mod with bart_dep_mod to get the dep plot
-VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
+VarImp <- sort(colSums(bart_dep_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -256,12 +256,21 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
 
 # Create bar charts
 
+# Indep - non-informative
+VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtypeluma", "Integrative Cluster 7", "Nottingham Prognostic Index", 
+                       "Tumor Stage", "Cohort 2", "Chemotherapy", " Age at Diagnosis", "Cohort 3")
+
+# Dep - informative
+
+VarImpDataF$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHEK 2", "Tumor Size", "TP5 3", " Cohort 3", "NBN", "BRCA 1", "Age at Diagnosis")
+
 ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
   geom_bar(stat = "identity", fill = 'gray80', width = 0.7) +
   geom_text(aes(label = names), hjust = 1.1, size = 6, color = "white", fontface = "bold") +  
   labs(y = "Variable", x = "Mean number of times used") +
   #coord_flip() + 
   theme_minimal() +
+  #coord_cartesian(xlim = c(0,20.005)) +
   theme(
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
@@ -275,11 +284,11 @@ ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
 
 ## Confidence interval for each patient - plot
 ## replace bart_mod with bart_dep_mod to get the dep plot
-means <- bart_dep_mod$yhat.train.mean
-df_summary <- data.frame(row = 1:ncol(bart_dep_mod$yhat.train), mean = means)
+means <- bart_mod$yhat.train.mean
+df_summary <- data.frame(row = 1:ncol(bart_mod$yhat.train), mean = means)
 
-df_summary$max <- apply(bart_dep_mod$yhat.train, 2, function(x) quantile(x, probs=0.975))
-df_summary$min <- apply(bart_dep_mod$yhat.train, 2, function(x) quantile(x, probs=0.025))
+df_summary$max <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.975))
+df_summary$min <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.025))
 ## plot sample of lines
 #sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
 #sample_df_summary <- df_summary[sample_idx,]
@@ -294,7 +303,7 @@ plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max))
      las=1)
 # loop through the rows and draw a line for each
 for (i in 1:nrow(df_summary)) {
-  segments(df_summary_sorted$min[i], i, df_summary_sorted$max[i], i)
+  segments(df_summary_sorted$min[i], i, df_summary_sorted$max[i], i, col = "gray")
   points(df_summary_sorted$mean[i], i, pch=19, col='blue')
 }
 
