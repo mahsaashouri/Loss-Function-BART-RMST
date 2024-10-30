@@ -386,7 +386,40 @@ combined_plot <- wrap_plots(plots, ncol = 2)
 # Make sure the y-axis limits are visible in each panel.
 combined_plot
 
+#########################################################
+### 3D plot for tumor_size and nottingham_prognostic_index
+#########################################################
+Col_ParDep <- c('tumor_size', 'nottingham_prognostic_index')
+Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
+ngrid <- 10
+GridEnd <-  rbind(c(0, 50), c(1, 6.5))
+
+partial_results <- list()
+
+npi_pp <- seq(GridEnd[1,1], GridEnd[1,2], length.out=ngrid)
+PP <- expand.grid(seq(GridEnd[1,1], GridEnd[1,2], length.out=ngrid), seq(GridEnd[2,1], GridEnd[2,2], length.out=ngrid) )
+lgrid <- nrow(PP)
+ff <- matrix(NA, nrow = lgrid, ncol = 3)
+for(k in 1:lgrid){
+  
+  Xtmp <- X.train
+  ## npi is column index of NPI
+  ## tumor is column index of tumor size
+  Xtmp[,Col_ParDep[2]] <- rep(PP[k,1], nrow(DATA))
+  Xtmp[,Col_ParDep[1]] <- rep(PP[k,2], nrow(DATA))
+  ## change name of bart_mod here
+  bart_mod_tmps <- RMST_BART(Y, delta, x.train=X.train, Gweights=Gmat,
+                             x.test=Xtmp, tau=tau, k = 2,
+                             ndpost=ndraws, nskip=burnIn)
+  ff[k,1] <- mean(bart_mod_tmps$yhat.test.mean)
+  ff[k,2] <- PP[k,1]
+  ff[k,3] <- PP[k,2]
+  print(c(i, k))
+}
+
+##############################
 ## Posterior mean comparison
+##############################
 PostMean_ind <- bart_mod$yhat.train.mean
 PostMean_dep <-  bart_dep_mod$yhat.train.mean
 PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
