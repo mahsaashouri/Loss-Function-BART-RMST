@@ -417,6 +417,28 @@ for(k in 1:lgrid){
   print(c(i, k))
 }
 
+
+library(plotly)
+
+# Separate columns into variables
+x <- ff[, 2]  
+y <- ff[, 3]  
+z <- ff[, 1]  
+
+# Generate a grid for the surface plot
+x_vals <- sort(unique(x))
+y_vals <- sort(unique(y))
+z_matrix <- matrix(z, nrow = length(x_vals), ncol = length(y_vals), byrow = TRUE)
+
+plot_ly(x = ~x_vals, y = ~y_vals, z = ~z_matrix, colorscale = 'Greys') %>%
+  add_surface() %>%
+  layout(scene = list(
+    xaxis = list(title = "Tumor Size"),
+    yaxis = list(title = "Nottingham Prognostic Index"),
+    zaxis = list(title = "Predicted RMST")
+  ))
+
+
 ##############################
 ## Posterior mean comparison
 ##############################
