@@ -391,7 +391,7 @@ combined_plot
 #########################################################
 Col_ParDep <- c('tumor_size', 'nottingham_prognostic_index')
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
-ngrid <- 10
+ngrid <- 40
 GridEnd <-  rbind(c(0, 50), c(1, 6.5))
 
 partial_results <- list()
@@ -418,7 +418,7 @@ for(k in 1:lgrid){
 }
 
 
-library(plotly)
+
 
 # Separate columns into variables
 x <- ff[, 2]  
@@ -428,17 +428,30 @@ z <- ff[, 1]
 # Generate a grid for the surface plot
 x_vals <- sort(unique(x))
 y_vals <- sort(unique(y))
-z_matrix <- matrix(z, nrow = length(x_vals), ncol = length(y_vals), byrow = TRUE)
+RMST <- matrix(z, nrow = length(x_vals), ncol = length(y_vals), byrow = TRUE)
 
-plot_ly(x = ~x_vals, y = ~y_vals, z = ~z_matrix, colorscale = 'Greys') %>%
-  add_surface() %>%
-  layout(scene = list(
-    xaxis = list(title = "Tumor Size"),
-    yaxis = list(title = "Nottingham Prognostic Index"),
-    zaxis = list(title = "Predicted RMST")
-  ))
+library(graphics)
+persp(x_vals, y_vals, RMST, theta = 135, phi = 30, expand = 0.7, axes = TRUE, ticktype = "detailed",
+      zlab = "Predicted RMST", 
+      xlab = "Tumor Size", 
+      ylab = "Nottingham Prognostic Index", 
+      col = "gray95", 
+      shade = 0.4, 
+      cex.main = 1.5,  
+      cex.lab = 1.8, 
+      cex.axis = 1.5)    
 
+## Using plotly package
+#library(plotly)
+#p <- plot_ly(x = ~x_vals, y = ~y_vals, z = ~RMST, colors = "Greys") %>%
+#  add_surface() %>%
+#  layout(scene = list(
+#    xaxis = list(title = "Tumor Size"),
+#    yaxis = list(title = "Nottingham Prognostic Index"),
+#    zaxis = list(title = "Predicted RMST")
+#  ))
 
+#htmlwidgets::saveWidget(p, "3Dplot.html")
 ##############################
 ## Posterior mean comparison
 ##############################
