@@ -425,6 +425,12 @@ x <- ff[, 2]
 y <- ff[, 3]  
 z <- ff[, 1]  
 
+## While reading from CSV results
+
+#x <- as.numeric(as.vector(unlist(ff[, 2]))) 
+#y <- as.numeric(as.vector(unlist(ff[, 3]))) 
+#z <- as.numeric(as.vector(unlist(ff[, 1])))  
+
 # Generate a grid for the surface plot
 x_vals <- sort(unique(x))
 y_vals <- sort(unique(y))
@@ -440,6 +446,17 @@ persp(x_vals, y_vals, RMST, theta = 135, phi = 30, expand = 0.7, axes = TRUE, ti
       cex.main = 1.5,  
       cex.lab = 1.8, 
       cex.axis = 1.5)    
+
+## Another angel
+persp(x_vals, y_vals, RMST, theta = 291, phi = -3, expand = 0.7, axes = TRUE, ticktype = "detailed",
+      zlab = "Predicted RMST", 
+      xlab = "Tumor Size", 
+      ylab = "Nottingham Prognostic Index", 
+      col = "gray95", 
+      shade = 0.4, 
+      cex.main = 1.5,  
+      cex.lab = 1.8, 
+      cex.axis = 1.5)   
 
 ## Using plotly package
 #library(plotly)
