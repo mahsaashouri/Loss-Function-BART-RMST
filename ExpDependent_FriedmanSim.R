@@ -10,7 +10,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 5000   # 1000
+n <- 500   # 1000
 n.test <- 5000
 num_covar <- 10 # Choose to be 10 or 50
 nreps <- 100 # number of simulation replications
@@ -48,7 +48,8 @@ bias_coxph <- bias_rcoxph <- bias_ipcw <- bias_bart_dep_default <- bias_aft <- b
 cens_prop <- rep(NA, nreps)
 CorCT <- rep(NA, nreps)
 
-for(j in 1:nreps) {
+count <- 1
+while(count <= nreps) {
   tryCatch({
     X.train <- matrix(runif(n*num_covar), n, num_covar)
     colnames(X.train) <- paste0('X', 1:num_covar)
@@ -339,38 +340,39 @@ for(j in 1:nreps) {
     }
     AFT_BART_fitted_default <- colMeans(AFT_fit_reps)
     
-    rmse_bart_dep[j] <- sqrt(mean((bart_dep_fitted - mu.test)*(bart_dep_fitted - mu.test)))
-    rmse_bart[j] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
+    rmse_bart_dep[count] <- sqrt(mean((bart_dep_fitted - mu.test)*(bart_dep_fitted - mu.test)))
+    rmse_bart[count] <- sqrt(mean((bart_fitted - mu.test)*(bart_fitted - mu.test)))
     #rmse_bcart[j] <- sqrt(mean((bcart_fitted - mu.test)*(bcart_fitted - mu.test)))
-    rmse_bart_default[j] <- sqrt(mean((bart_fitted_default - mu.test)*(bart_fitted_default - mu.test)))
-    rmse_bart_dep_default[j] <- sqrt(mean((bart_dep_fitted_default - mu.test)*(bart_dep_fitted_default - mu.test)))
+    rmse_bart_default[count] <- sqrt(mean((bart_fitted_default - mu.test)*(bart_fitted_default - mu.test)))
+    rmse_bart_dep_default[count] <- sqrt(mean((bart_dep_fitted_default - mu.test)*(bart_dep_fitted_default - mu.test)))
     #rmse_bcart_default[j] <- sqrt(mean((bcart_fitted_default - mu.test)*(bcart_fitted_default - mu.test)))
-    rmse_coxph[j] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
-    rmse_rcoxph[j] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
-    rmse_ipcw[j] <- sqrt(mean((IPW_fitted - mu.test)*(IPW_fitted - mu.test)))
-    rmse_aft[j] <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
-    rmse_aft_bart[j] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
-    rmse_aft_bart_default[j] <- sqrt(mean((AFT_BART_fitted_default - mu.test)*(AFT_BART_fitted_default - mu.test)))
-    rmse_aft_null[j] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
+    rmse_coxph[count] <- sqrt(mean((COXPH_fitted - mu.test)*(COXPH_fitted - mu.test)))
+    rmse_rcoxph[count] <- sqrt(mean((RCOXPH_fitted - mu.test)*(RCOXPH_fitted - mu.test)))
+    rmse_ipcw[count] <- sqrt(mean((IPW_fitted - mu.test)*(IPW_fitted - mu.test)))
+    rmse_aft[count] <- sqrt(mean((AFT_fitted - mu.test)*(AFT_fitted - mu.test)))
+    rmse_aft_bart[count] <- sqrt(mean((AFT_BART_fitted - mu.test)*(AFT_BART_fitted - mu.test)))
+    rmse_aft_bart_default[count] <- sqrt(mean((AFT_BART_fitted_default - mu.test)*(AFT_BART_fitted_default - mu.test)))
+    rmse_aft_null[count] <- sqrt(mean((AFT_null_fitted - mu.test)*(AFT_null_fitted - mu.test)))
     
     
     ## Recording mean of fitted values
-    bias_bart_dep[j] <- mean(bart_dep_fitted - mu.test)
-    bias_bart_dep_default[j] <- mean(bart_dep_fitted_default - mu.test)
-    bias_aft_bart[j] <- mean(AFT_BART_fitted - mu.test)
-    bias_bcart[j] <- mean(bcart_fitted - mu.test)
-    bias_bart[j] <- mean(bart_fitted - mu.test)
-    bias_aft_bart_default[j] <- mean(AFT_BART_fitted_default - mu.test)
-    bias_bcart_default[j] <- mean(bcart_fitted_default - mu.test)
-    bias_bart_default[j] <- mean(bart_fitted_default - mu.test)
-    bias_coxph[j] <- mean(COXPH_fitted - mu.test)
-    bias_rcoxph[j] <- mean(RCOXPH_fitted - mu.test)
-    bias_ipcw[j] <- mean(IPW_fitted - mu.test)
-    bias_aft[j] <- mean(AFT_fitted - mu.test)
-    bias_aft_null[j] <- mean(AFT_null_fitted - mu.test)
+    bias_bart_dep[count] <- mean(bart_dep_fitted - mu.test)
+    bias_bart_dep_default[count] <- mean(bart_dep_fitted_default - mu.test)
+    bias_aft_bart[count] <- mean(AFT_BART_fitted - mu.test)
+    bias_bcart[count] <- mean(bcart_fitted - mu.test)
+    bias_bart[count] <- mean(bart_fitted - mu.test)
+    bias_aft_bart_default[count] <- mean(AFT_BART_fitted_default - mu.test)
+    bias_bcart_default[count] <- mean(bcart_fitted_default - mu.test)
+    bias_bart_default[count] <- mean(bart_fitted_default - mu.test)
+    bias_coxph[count] <- mean(COXPH_fitted - mu.test)
+    bias_rcoxph[count] <- mean(RCOXPH_fitted - mu.test)
+    bias_ipcw[count] <- mean(IPW_fitted - mu.test)
+    bias_aft[count] <- mean(AFT_fitted - mu.test)
+    bias_aft_null[count] <- mean(AFT_null_fitted - mu.test)
     
-    cens_prop[j] <- mean(delta.train)
-    CorCT[j] <- cor(C.train, T.train)
+    cens_prop[count] <- mean(delta.train)
+    CorCT[count] <- cor(C.train, T.train)
+    count <- count + 1
   }, error=function(e){})
 }
 nmethods <- 13
