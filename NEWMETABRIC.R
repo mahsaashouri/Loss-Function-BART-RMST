@@ -227,7 +227,7 @@ BART_dep_CI <- t(apply(bart_dep_mod$yhat.train, 1, function(x) quantile(x, probs
 
 ## plotting the first 10 repeated variables in one iteration - BART
 ## replace bart_mod with bart_dep_mod to get the dep plot
-VarImp <- sort(colSums(bart_dep_mod$varcount), decreasing=TRUE)[1:10]
+VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
 
 library(ggplot2)
 # Create a data frame with the numbers and names
@@ -256,29 +256,63 @@ ggplot(VarImpDataF, aes(x = seq_along(numbers), y = numbers)) +
 
 # Create bar charts
 
+VarImp <- sort(colSums(bart_mod$varcount), decreasing=TRUE)[1:10]
+VarImpdep <- sort(colSums(bart_dep_mod$varcount), decreasing=TRUE)[1:10]
+
+library(ggplot2)
+# Create a data frame with the numbers and names
+VarImpDataF <- data.frame(numbers = c(VarImp)/ndraws,
+                          names = c(names(VarImp)))
+VarImpDataF <- VarImpDataF[order(VarImpDataF$numbers, decreasing = FALSE),]
+
+VarImpDataFdep <- data.frame(numbers = c(VarImpdep)/ndraws,
+                          names = c(names(VarImpdep)))
+VarImpDataFdep <- VarImpDataFdep[order(VarImpDataFdep$numbers, decreasing = FALSE),]
+
 # Indep - non-informative
 VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtypeluma", "Integrative Cluster 7", "Nottingham Prognostic Index", 
                        "Tumor Stage", "Cohort 2", "Chemotherapy", " Age at Diagnosis", "Cohort 3")
 
 # Dep - informative
 
-VarImpDataF$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHEK 2", "Tumor Size", "TP5 3", " Cohort 3", "NBN", "BRCA 1", "Age at Diagnosis")
+VarImpDataFdep$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHEK 2", "Tumor Size", "TP5 3", " Cohort 3", "NBN", "BRCA 1", "Age at Diagnosis")
 
-ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
-  geom_bar(stat = "identity", fill = 'gray80', width = 0.7) +
-  geom_text(aes(label = names), hjust = 1.1, size = 6, color = "white", fontface = "bold") +  
-  labs(y = "Variable", x = "Mean number of times used") +
-  #coord_flip() + 
+# stacked bar chart
+
+VarImpDataFdep$dataset <- "Informative"
+VarImpDataF$dataset <- "Noninformative"
+VarImpDataCombined <- rbind(VarImpDataFdep, VarImpDataF)
+
+ggplot(VarImpDataCombined, aes(x = names, y = numbers, fill = dataset)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  labs(y = "Mean number of times used", x = "Variable") +
   theme_minimal() +
-  #coord_cartesian(xlim = c(0,20.005)) +
   theme(
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
-    axis.text.x = element_text(size = 20),
-    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 15),
     legend.title = element_text(size = 20),
     legend.text = element_text(size = 20)
-  )
+  ) +
+  scale_fill_manual(values = c("Informative" = "skyblue", "Noninformative" = "orange"))  # Customize colors if desired
+
+
+
+# individual bar chart
+#ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
+#  geom_bar(stat = "identity", fill = 'gray80', width = 0.7) +
+#  geom_text(aes(label = names), hjust = 1.1, size = 6, color = "white", fontface = "bold") +  
+#  labs(y = "Variable", x = "Mean number of times used") +
+#  theme_minimal() +
+#  theme(
+#    axis.title.x = element_text(size = 20),
+#    axis.title.y = element_text(size = 20),
+#    axis.text.x = element_text(size = 20),
+#    axis.text.y = element_blank(),
+#    legend.title = element_text(size = 20),
+#    legend.text = element_text(size = 20)
+#  )
 
 
 
