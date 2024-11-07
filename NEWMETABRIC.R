@@ -279,23 +279,30 @@ VarImpDataFdep$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHE
 
 # stacked bar chart
 
-VarImpDataFdep$dataset <- "Informative"
-VarImpDataF$dataset <- "Noninformative"
+VarImpDataFdep$Censoring <- "Informative"
+VarImpDataF$Censoring <- "Noninformative"
 VarImpDataCombined <- rbind(VarImpDataFdep, VarImpDataF)
 
-ggplot(VarImpDataCombined, aes(x = names, y = numbers, fill = dataset)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
-  labs(y = "Mean number of times used", x = "Variable") +
+data <- VarImpDataCombined %>%
+  group_by(Censoring) %>%
+  arrange(desc(numbers), .by_group = TRUE) %>%
+  mutate(index = row_number()) %>%
+  ungroup()
+
+ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
+  geom_bar(stat = "identity", position = "dodge", color = "gray60") +
+  geom_text(aes(label = names), position = position_dodge(width = 0.85), color = "gray30", size = 6, fontface = "bold", vjust = 0.5, hjust = 1.1) +
+  labs(x = "Mean Number of Times Used", y = "Variable") +
+  scale_fill_manual(values = c("Informative" = "azure2", "Noninformative" = "gray80")) +
+  coord_cartesian(xlim = c(0, 20.01)) +
   theme_minimal() +
-  theme(
-    axis.title.x = element_text(size = 20),
-    axis.title.y = element_text(size = 20),
-    axis.text.x = element_text(size = 15, angle = 45, hjust = 1),
-    axis.text.y = element_text(size = 15),
-    legend.title = element_text(size = 20),
-    legend.text = element_text(size = 20)
-  ) +
-  scale_fill_manual(values = c("Informative" = "skyblue", "Noninformative" = "orange"))  # Customize colors if desired
+  theme(legend.position = "bottom", 
+        axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 20)) 
 
 
 
