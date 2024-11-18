@@ -12,7 +12,7 @@ ndraws <- 1000
 burnIn <- 500
 n <- 500   # 1000
 n.test <- 5000
-num_covar <- 10 # Choose to be 10 or 50
+num_covar <- 50 # Choose to be 10 or 50
 nreps <- 100 # number of simulation replications
 
 theta <- 0.01
