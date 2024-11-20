@@ -11,7 +11,7 @@ Breast cancer outcomes assembled by the Molecular Taxonomy of Breast Cancer Inte
 ## Reproducing results
 
 * `NewFriedmanSimulationStudy_Independent.R`: results for the Friedman function simulation study for the case of noninformative censoring (*Tables 1*, *2*, and *4*).
-* `NewFriedmanSimulationStudy_Dependent.R`: results for the Friedman function simulation study for the case of informative censoring (*Table 3*).
+* `ExpDependent_FriedmanSim.R`: results for the Friedman function simulation study for the case of informative censoring (*Table 3*).
 * `NewMultinormAR1SimulationStudy.R`: results for the absolute value linear model with correlated predictors simulation study for the case of noninformative censoring (*Table 5*).
 * `NEWMETABRIC.R`: results for the real-world application - METABRIC dataset (*Section 5*).
 
