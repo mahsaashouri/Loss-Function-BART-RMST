@@ -529,8 +529,7 @@ ggplot(data) +
         legend.key.size = unit(1, "cm"),
         legend.background = element_blank(),
         legend.key = element_blank(),
-        legend.position = "bottom")+
-  scale_y_reverse()
+        legend.position = "bottom")
 
 ##############################
 ## Posterior mean comparison
