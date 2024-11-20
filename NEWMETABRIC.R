@@ -519,6 +519,7 @@ ggplot(data) +
   coord_cartesian(expand = FALSE) +
   labs(x = "Tumor Size", y = "Nottingham Prognostic Index")+
   scale_fill_gradient2(low = "white", high = "gray5", midpoint = 120, name = "Predicted RMST") + 
+  #scale_fill_distiller(palette = "Spectral") +
   theme_minimal() +
   theme(panel.background = element_rect(fill = "white"),
         panel.grid.major = element_line(linetype = 3, colour = "grey60"),
