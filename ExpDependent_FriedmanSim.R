@@ -10,7 +10,7 @@ f.test <- function(x) {10*sin(pi*x[ , 1]*x[ , 2]) + 20*(x[ , 3]-.5)^2+10*x[ , 4]
 
 ndraws <- 1000
 burnIn <- 500
-n <- 500   # 1000
+n <- 5000   # 1000
 n.test <- 5000
 num_covar <- 50 # Choose to be 10 or 50
 nreps <- 100 # number of simulation replications
