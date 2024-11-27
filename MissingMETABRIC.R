@@ -67,6 +67,9 @@ names(METABRIC)[which(names(METABRIC)=="chek2")] <- "CHEK2"
 names(METABRIC)[which(names(METABRIC)=="nbn")] <- "NBN"
 names(METABRIC)[which(names(METABRIC)=="nf1")] <- "NF1"
 
+## only one value of outcome is zero - I droped that
+METABRIC <- METABRIC[METABRIC$overall_survival_months != 0, ]
+
 imputed.metabric <- mice(METABRIC, seed=1378)
 completed.metabric <- mice::complete(imputed.metabric, action="long")
 table(completed.metabric$.imp)
@@ -114,7 +117,7 @@ for(i in 1:length(METABRICList)){
   Gmat_orig <- 1/sqrt(Gmat)
   
   ## Added small value (1e-100) to the outcome - one of the outcomes is zero 
-  cens_bart <- AFTrees(x.train=X.train, y.train=Y+1e-100, status=1-delta,
+  cens_bart <- AFTrees(x.train=X.train, y.train=Y, status=1-delta,
                        ndpost=ndraws + burnIn, verbose=FALSE)
   Mucens_draws <- cens_bart$m.train
   GmatDep <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
@@ -208,11 +211,20 @@ for(i in 1:length(METABRICList)){
                             ndpost=ndraws, nskip=burnIn, ntree = 200)
 }
 
+## pointwise average 
+vectors <- list(bart_mod[[1]]$yhat.train.mean, 
+                bart_mod[[2]]$yhat.train.mean, 
+                bart_mod[[3]]$yhat.train.mean, 
+                bart_mod[[4]]$yhat.train.mean, 
+                bart_mod[[5]]$yhat.train.mean)
+PostMean_ind_missing <- Reduce("+", vectors) / length(vectors)
 
-
-
-
-
+vectors_dep <- list(bart_dep_mod[[1]]$yhat.train.mean, 
+                bart_dep_mod[[2]]$yhat.train.mean, 
+                bart_dep_mod[[3]]$yhat.train.mean, 
+                bart_dep_mod[[4]]$yhat.train.mean, 
+                bart_dep_mod[[5]]$yhat.train.mean)
+PostMean_dep_missing <- Reduce("+", vectors) / length(vectors_dep)
 
 ##############################
 ## Posterior mean comparison
