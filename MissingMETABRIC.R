@@ -113,7 +113,8 @@ for(i in 1:length(METABRICList)){
   }
   Gmat_orig <- 1/sqrt(Gmat)
   
-  cens_bart <- AFTrees(x.train=X.train, y.train=Y+0.00001, status=1-delta,
+  ## Added small value (1e-100) to the outcome - one of the outcomes is zero 
+  cens_bart <- AFTrees(x.train=X.train, y.train=Y+1e-100, status=1-delta,
                        ndpost=ndraws + burnIn, verbose=FALSE)
   Mucens_draws <- cens_bart$m.train
   GmatDep <- matrix(1, nrow=ndraws + burnIn + 1, ncol=length(U_tau))
