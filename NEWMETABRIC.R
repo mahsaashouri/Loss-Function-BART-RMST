@@ -92,7 +92,6 @@ names(METABRIC)[which(names(METABRIC)=="nf1")] <- "NF1"
 
 ## split dataset into training and test set
 set.seed(123)
-## 400 rows as test set (~20%)
 DATA <- METABRIC[ , !(names(METABRIC) %in% c('overall_survival'))]
 X.train <- model.matrix(overall_survival_months~.-1, data = DATA)
 
