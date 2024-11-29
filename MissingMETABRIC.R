@@ -225,6 +225,7 @@ vectors <- list(bart_mod[[1]]$yhat.train.mean,
                 bart_mod[[4]]$yhat.train.mean, 
                 bart_mod[[5]]$yhat.train.mean)
 PostMean_ind_missing <- Reduce("+", vectors) / length(vectors)
+save(PostMean_ind_missing, file = "PostMean_ind_missing.RData")
 
 all_dropped_indices <- as.vector(unlist(dropped_indices)) ## from NEWMETABRIC file
 
@@ -244,6 +245,9 @@ vectors_dep <- list(bart_dep_mod[[1]]$yhat.train.mean,
                 bart_dep_mod[[4]]$yhat.train.mean, 
                 bart_dep_mod[[5]]$yhat.train.mean)
 PostMean_dep_missing <- Reduce("+", vectors) / length(vectors_dep)
+#save(PostMean_dep_missing, file = "PostMean_dep_missing.RData")
+
+
 # Drop the corresponding elements from PostMean_dep_missing
 PostMean_dep_missing_cleaned <-PostMean_dep_missing[-all_dropped_indices_modified]
 
