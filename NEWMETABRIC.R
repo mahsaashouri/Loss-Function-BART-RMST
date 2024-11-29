@@ -31,9 +31,12 @@ METABRIC$tumor_subtype <- factor(METABRIC$tumor_subtype)
 
 METABRIC <- METABRIC %>% select(-tumor_other_histologic_subtype)
 
-
+## track the indices of dropped rows
+dropped_indices <- list()
 ## drop tumor_stage = 0
 table(METABRIC$tumor_stage)
+## save the indices
+dropped_indices$tumor_stage_0 <- which(METABRIC$tumor_stage == 0 & !is.na(METABRIC$tumor_stage))
 METABRIC <- subset(METABRIC, !(tumor_stage == 0 & !is.na(tumor_stage)))
 
 ## replace tumor_stage = NA with cannot be evaluated
@@ -43,6 +46,8 @@ METABRIC$tumor_stage <- as.factor(METABRIC$tumor_stage)
 
 ## drop rows with missing tumor size
 table(METABRIC$tumor_size)
+## save the indices
+dropped_indices$tumor_size_missing <- which(is.na(METABRIC$tumor_size))
 METABRIC <- subset(METABRIC, !is.na(tumor_size))
 
 ## replace neoplasm = NA with 0
@@ -57,10 +62,14 @@ METABRIC$mutation_count[is.na(METABRIC$mutation_count)] <- 0
 
 ## drop rows empty in type_of_surgery
 table(METABRIC$type_of_breast_surgery) ## 16 rows empty
+## save the indices
+dropped_indices$type_of_surgery_empty <- which(METABRIC$type_of_breast_surgery == '')
 METABRIC <- subset(METABRIC, !(type_of_breast_surgery == ''))
 
 ## drop rows empty in er_status_measured_by_ihc
 table(METABRIC$er_status_measured_by_ihc) ## 25 rows empty
+## save the indices
+dropped_indices$er_status_measured_by_ihc_empty <- which(METABRIC$er_status_measured_by_ihc == '')
 METABRIC <- subset(METABRIC, !(er_status_measured_by_ihc == ''))
 
 ## make cohort as a factor column

@@ -67,8 +67,11 @@ names(METABRIC)[which(names(METABRIC)=="chek2")] <- "CHEK2"
 names(METABRIC)[which(names(METABRIC)=="nbn")] <- "NBN"
 names(METABRIC)[which(names(METABRIC)=="nf1")] <- "NF1"
 
-## only one value of outcome is zero - I droped that
+## only one value of outcome is zero - I dropped that
+which(METABRIC$overall_survival_months == 0)
 METABRIC <- METABRIC[METABRIC$overall_survival_months != 0, ]
+
+
 
 imputed.metabric <- mice(METABRIC, seed=1378)
 completed.metabric <- mice::complete(imputed.metabric, action="long")
@@ -211,7 +214,11 @@ for(i in 1:length(METABRICList)){
                             ndpost=ndraws, nskip=burnIn, ntree = 200)
 }
 
-## pointwise average 
+
+##############################
+## Posterior mean comparison
+##############################
+## pointwise average - missing values imputation
 vectors <- list(bart_mod[[1]]$yhat.train.mean, 
                 bart_mod[[2]]$yhat.train.mean, 
                 bart_mod[[3]]$yhat.train.mean, 
@@ -219,28 +226,60 @@ vectors <- list(bart_mod[[1]]$yhat.train.mean,
                 bart_mod[[5]]$yhat.train.mean)
 PostMean_ind_missing <- Reduce("+", vectors) / length(vectors)
 
+all_dropped_indices <- as.vector(unlist(dropped_indices)) ## from NEWMETABRIC file
+
+## since I already remove the row 171 (overall_survival = 0) here before running the missing evaluation
+all_dropped_indices_modified <- all_dropped_indices[all_dropped_indices != 170]
+# Decrements values greater than 170 by 1
+all_dropped_indices_modified <- ifelse(all_dropped_indices_modified > 170, 
+                                       all_dropped_indices_modified - 1, 
+                                       all_dropped_indices_modified)
+
+# Drop the corresponding elements from PostMean_ind_missing
+PostMean_ind_missing_cleaned <- PostMean_ind_missing[-all_dropped_indices_modified]
+
 vectors_dep <- list(bart_dep_mod[[1]]$yhat.train.mean, 
                 bart_dep_mod[[2]]$yhat.train.mean, 
                 bart_dep_mod[[3]]$yhat.train.mean, 
                 bart_dep_mod[[4]]$yhat.train.mean, 
                 bart_dep_mod[[5]]$yhat.train.mean)
 PostMean_dep_missing <- Reduce("+", vectors) / length(vectors_dep)
+# Drop the corresponding elements from PostMean_dep_missing
+PostMean_dep_missing_cleaned <-PostMean_dep_missing[-all_dropped_indices_modified]
 
-##############################
-## Posterior mean comparison
-##############################
-PostMean_ind <- bart_mod$yhat.train.mean
-PostMean_dep <-  bart_dep_mod$yhat.train.mean
-PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean_dep)
-#write.csv(PostMean_data, 'PostMean_data_METABRIC.train.csv')
+## computation by dropping missing rows
+PostMean_ind <- bart_mod_n$yhat.train.mean ## from NEWMETABRIC file
+PostMean_dep <-  bart_dep_mod_n$yhat.train.mean ## from NEWMETABRIC file
 
-# Plot the data
-## Might be useful to also include y=x line here.
-## Also, maybe make x-axis limits and y-axis limits the same.
-ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
-  geom_point() +
-  labs(x = "Noninformative censoring posterior means", y = "Informative censoring posterior means") +
-  scale_x_continuous (expand = c(0.061, 0.061)) +
-  theme_light() +
-  theme(axis.title = element_text(size = 20),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 20))   # Adjust the size of the axis labels
+
+library(ggplot2)
+
+# Combine the data into a single data frame for easier plotting
+data <- data.frame(
+  x = c(PostMean_ind_missing_cleaned, PostMean_dep_missing_cleaned),
+  y = c(PostMean_ind, PostMean_dep),
+  type = rep(c("Noninformative Censoring", "Informative Censoring"), 
+             c(length(PostMean_ind_missing_cleaned), length(PostMean_dep_missing_cleaned)))
+)
+
+data$type <- factor(data$type, levels = c("Noninformative Censoring", "Informative Censoring"))
+# Create the plot
+ggplot(data) +
+  geom_point(aes(x = x, y = y), alpha = 0.7) +                
+  geom_abline(slope = 1, intercept = 0,  
+              linetype = "dashed", color = "red", size = 1) +
+  facet_wrap(~type, scales = "free") +    
+  labs(
+    x = "Missing Values Imputed",
+    y = "Missing Values Dropped"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20),          
+    axis.title = element_text(size = 25),    
+    axis.text = element_text(size = 20),     
+    strip.text = element_text(size = 21),    
+    legend.text = element_text(size = 20),   
+    plot.title = element_text(size = 22)     
+  )                       
+
