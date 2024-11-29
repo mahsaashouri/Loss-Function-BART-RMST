@@ -67,7 +67,7 @@ dropped_indices$type_of_surgery_empty <- which(METABRIC$type_of_breast_surgery =
 METABRIC <- subset(METABRIC, !(type_of_breast_surgery == ''))
 
 ## drop rows empty in er_status_measured_by_ihc
-table(METABRIC$er_status_measured_by_ihc) ## 25 rows empty
+table(METABRIC$er_status_measured_by_ihc) ## 26 rows empty
 ## save the indices
 dropped_indices$er_status_measured_by_ihc_empty <- which(METABRIC$er_status_measured_by_ihc == '')
 METABRIC <- subset(METABRIC, !(er_status_measured_by_ihc == ''))
