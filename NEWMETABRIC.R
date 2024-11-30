@@ -559,5 +559,5 @@ ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   scale_x_continuous (expand = c(0.061, 0.061)) +
   coord_cartesian(xlim = c(0, 290), ylim = c(0, 290)) +
   theme_light() +
-  theme(axis.title = element_text(size = 25), 
-        axis.text = element_text(size = 25))   
+  theme(axis.title = element_text(size = 24), 
+        axis.text = element_text(size = 24))   
