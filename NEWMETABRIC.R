@@ -278,7 +278,7 @@ VarImpDataFdep <- data.frame(numbers = c(VarImpdep)/ndraws,
 VarImpDataFdep <- VarImpDataFdep[order(VarImpDataFdep$numbers, decreasing = FALSE),]
 
 # Indep - non-informative
-VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtypeluma", "Integrative Cluster 7", "Nottingham Prognostic Index", 
+VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtype Luminal A", "Integrative Cluster 7", "Nottingham Prognostic Index", 
                        "Tumor Stage", "Cohort 2", "Chemotherapy", " Age at Diagnosis", "Cohort 3")
 
 # Dep - informative
@@ -296,7 +296,7 @@ data <- VarImpDataCombined %>%
   arrange(desc(numbers), .by_group = TRUE) %>%
   mutate(index = row_number()) %>%
   ungroup()
-
+data$Censoring <- factor(data$Censoring, levels = c("Noninformative", "Informative"))
 ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
   geom_bar(stat = "identity", position = "dodge", color = "gray60") +
   geom_text(aes(label = names), position = position_dodge(width = 0.85), color = "gray30", size = 6, fontface = "bold", vjust = 0.5, hjust = 1.1) +
@@ -553,8 +553,11 @@ PostMean_data <- data.frame('Independent' = PostMean_ind, 'Dependent' = PostMean
 ## Also, maybe make x-axis limits and y-axis limits the same.
 ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
   geom_point() +
+  geom_abline(slope = 1, intercept = 0,  
+              linetype = "dashed", color = "red", size = 1) +
   labs(x = "Noninformative censoring posterior means", y = "Informative censoring posterior means") +
   scale_x_continuous (expand = c(0.061, 0.061)) +
+  coord_cartesian(xlim = c(0, 290), ylim = c(0, 290)) +
   theme_light() +
-  theme(axis.title = element_text(size = 20),  # Adjust the size of the axis titles
-        axis.text = element_text(size = 20))   # Adjust the size of the axis labels
+  theme(axis.title = element_text(size = 25), 
+        axis.text = element_text(size = 25))   
