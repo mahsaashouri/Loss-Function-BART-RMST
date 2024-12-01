@@ -227,7 +227,7 @@ vectors <- list(bart_mod[[1]]$yhat.train.mean,
 PostMean_ind_missing <- Reduce("+", vectors) / length(vectors)
 save(PostMean_ind_missing, file = "PostMean_ind_missing.RData")
 
-all_dropped_indices <- as.vector(unlist(dropped_indices)) ## from NEWMETABRIC file
+all_dropped_indices <- as.vector(unlist(dropped_indices)) ## result from NEWMETABRIC file
 
 ## since I already remove the row 171 (overall_survival = 0) here before running the missing evaluation
 all_dropped_indices_modified <- all_dropped_indices[all_dropped_indices != 170]
@@ -252,8 +252,8 @@ PostMean_dep_missing <- Reduce("+", vectors) / length(vectors_dep)
 PostMean_dep_missing_cleaned <-PostMean_dep_missing[-all_dropped_indices_modified]
 
 ## computation by dropping missing rows
-PostMean_ind <- bart_mod_n$yhat.train.mean ## from NEWMETABRIC file
-PostMean_dep <-  bart_dep_mod_n$yhat.train.mean ## from NEWMETABRIC file
+PostMean_ind <- bart_mod_n$yhat.train.mean ## result from NEWMETABRIC file
+PostMean_dep <-  bart_dep_mod_n$yhat.train.mean ## result from NEWMETABRIC file
 
 
 library(ggplot2)
