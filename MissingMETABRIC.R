@@ -73,12 +73,12 @@ METABRIC <- METABRIC[METABRIC$overall_survival_months != 0, ]
 
 
 
-imputed.metabric <- mice(METABRIC, seed=1378)
+imputed.metabric <- mice(METABRIC, m = 10, seed=1378)
 completed.metabric <- mice::complete(imputed.metabric, action="long")
 table(completed.metabric$.imp)
 
 METABRICList <- list()
-for(k in 1:5) {
+for(k in 1:10) {
   METABRICList[[k]] <- subset(completed.metabric, .imp==k)
   METABRICList[[k]] <- METABRICList[[k]] %>% select(-.imp, -.id)
 }
