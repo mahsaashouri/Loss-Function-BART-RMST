@@ -334,10 +334,10 @@ ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
 ## Confidence interval for each patient - plot
 ## replace bart_mod with bart_dep_mod to get the dep plot
 means <- bart_mod$yhat.train.mean
-df_summary <- data.frame(row = 1:ncol(bart_mod$yhat.train), mean = means)
+df_summary <- data.frame(row = 1:ncol(bart_mod $yhat.train), mean = means)
 
-df_summary$max <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.975))
-df_summary$min <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.025))
+df_summary$max <- apply(bart_mod $yhat.train, 2, function(x) quantile(x, probs=0.975))
+df_summary$min <- apply(bart_mod $yhat.train, 2, function(x) quantile(x, probs=0.025))
 ## plot sample of lines
 #sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
 #sample_df_summary <- df_summary[sample_idx,]
@@ -346,16 +346,19 @@ df_summary$min <- apply(bart_mod$yhat.train, 2, function(x) quantile(x, probs=0.
 # Sort the rows of df_summary by the mean column
 df_summary_sorted <- df_summary[order(df_summary$mean),]
 
-# create the plot
-plot(1, type='n', xlim=c(min(df_summary_sorted$min), max(df_summary_sorted$max)),
-     ylim=c(0.5, nrow(df_summary_sorted)+0.5), ylab='Case number', xlab="Months",
-     las=1)
-# loop through the rows and draw a line for each
-for (i in 1:nrow(df_summary)) {
-  segments(df_summary_sorted$min[i], i, df_summary_sorted$max[i], i, col = "gray")
-  points(df_summary_sorted$mean[i], i, pch=19, col='blue')
-}
 
+ggplot(df_summary_sorted, aes(y = 1:nrow(df_summary_sorted))) + 
+  geom_segment(aes(x = min, xend = max, y = 1:nrow(df_summary_sorted), yend = 1:nrow(df_summary_sorted)), color = "gray") + 
+  geom_point(aes(x = mean, y = 1:nrow(df_summary_sorted)), color = "blue", size = 2) +
+  scale_y_continuous(name = "Case number", breaks = c(0, 500, 1000, 1500)) + 
+  scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
+  #labs(y = NULL) +
+  theme_classic() + 
+  theme(axis.text = element_text(size = 18),  
+        axis.title = element_text(size = 20),
+       # axis.text.y = element_blank(),
+        panel.grid = element_blank(),         
+        plot.margin = margin(5, 5, 5, 5))    
 
 ##########################################
 ## Partial Dependence plots

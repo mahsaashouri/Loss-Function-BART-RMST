@@ -19,7 +19,7 @@ ndraws <- 1000
 burnIn <- 500
 n <- 500  # 250 or 1000 # number of training observations (500 & 5000)
 n.test <- 5000   # 1000 - number of test observations
-num_covar <- 10  # 10 or 100 # total number of predictors
+num_covar <- 100  # 10 or 100 # total number of predictors
 nreps <- 100 # number of simulation replications
 
 CoxExpectedSurv <- function(X, beta_val, time, H0.vals, tau) {
