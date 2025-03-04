@@ -459,8 +459,8 @@ for(k in 1:lgrid){
   Xtmp <- X.train
   ## npi is column index of NPI
   ## tumor is column index of tumor size
-  Xtmp[,Col_ParDep[2]] <- rep(PP[k,1], nrow(DATA))
-  Xtmp[,Col_ParDep[1]] <- rep(PP[k,2], nrow(DATA))
+  Xtmp[,Col_ParDep[2]] <- rep(PP[k,2], nrow(DATA))
+  Xtmp[,Col_ParDep[1]] <- rep(PP[k,1], nrow(DATA))
   ## change name of bart_mod here
   bart_mod_tmps <- RMST_BART(Y, delta, x.train=X.train, Gweights=Gmat,
                              x.test=Xtmp, tau=tau, k = 2,
