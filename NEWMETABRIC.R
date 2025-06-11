@@ -376,7 +376,10 @@ ggplot(df_summary_sorted, aes(y = 1:nrow(df_summary_sorted))) +
   geom_segment(aes(x = min, xend = max, y = 1:nrow(df_summary_sorted), yend = 1:nrow(df_summary_sorted)), color = "gray") + 
   geom_point(aes(x = mean, y = 1:nrow(df_summary_sorted)), color = "blue", size = 2) +
   #scale_y_continuous(name = "Case number", breaks = c(0, 500, 1000, 1500)) + 
-  scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
+  # dep case
+  #scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
+  ## to make sure they have same x-axis - indep case
+  scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), 120)) + 
   labs(y = "Case Number") +
   theme_classic() + 
   theme(axis.text = element_text(size = 18),  
