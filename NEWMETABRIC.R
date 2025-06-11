@@ -106,8 +106,10 @@ X.train <- model.matrix(overall_survival_months~.-1, data = DATA)
 
 
 # Define the number of iterations and the proportion of data to be used for training
-tau <- 300
-sgrid <- seq(0, tau, by=100)
+#tau <- 300
+#sgrid <- seq(0, tau, by=100)
+tau <- 60
+sgrid <- seq(0, tau, by=10)
 ndraws <- 2000
 burnIn <- 500
 
@@ -278,12 +280,23 @@ VarImpDataFdep <- data.frame(numbers = c(VarImpdep)/ndraws,
 VarImpDataFdep <- VarImpDataFdep[order(VarImpDataFdep$numbers, decreasing = FALSE),]
 
 # Indep - non-informative
-VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtype Luminal A", "Integrative Cluster 7", "Nottingham Prognostic Index", 
-                       "Tumor Stage", "Cohort 2", "Chemotherapy", " Age at Diagnosis", "Cohort 3")
+## tau = 300
+#VarImpDataF$names <- c("Tumor Size", "PR Positive", "Molecular Subtype Luminal A", "Integrative Cluster 7", "Nottingham Prognostic Index", 
+#                       "Tumor Stage", "Cohort 2", "Chemotherapy", " Age at Diagnosis", "Cohort 3")
 
 # Dep - informative
 
-VarImpDataFdep$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHEK 2", "Tumor Size", "TP5 3", " Cohort 3", "NBN", "BRCA 1", "Age at Diagnosis")
+#VarImpDataFdep$names <- c("Cohort 2", "ATM", "Molecular Subtype Luminal A", "CHEK 2", "Tumor Size", "TP5 3", " Cohort 3", "NBN", "BRCA 1", "Age at Diagnosis")
+
+# Indep - non-informative
+## tau = 60
+VarImpDataF$names <- c("CHEK2", "Neoplasm Histologic Grade 3", "ATM", "Molecular SubtypeNormal", "Er Status Measured by Ihc Positve", 
+                       "Inferred Menopausal State Pre", "Molecular Subtype Her 2", "PR Positive", " NF1", "Molecular Subtype Lum A")
+
+# Dep - informative
+
+VarImpDataFdep$names <- c("PALB 2", "PR Positive", "Hormone Therapy", "CHEK 2", "Histol Subtype Mixed/Other", "ATM", " Er Status Measured by Ihc Positve", 
+                          "Neoplasm Histologic Grade 3", "Nottingham Prognostic Index", "Chemotherapy")
 
 # stacked bar chart
 
@@ -302,7 +315,7 @@ ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
   geom_text(aes(label = names), position = position_dodge(width = 0.85), color = "gray30", size = 6, fontface = "bold", vjust = 0.5, hjust = 1.1) +
   labs(x = "Mean Number of Times Used", y = "Variable") +
   scale_fill_manual(values = c("Informative" = "azure2", "Noninformative" = "gray80")) +
-  coord_cartesian(xlim = c(0, 20.01)) +
+  coord_cartesian(xlim = c(0, 5.2)) +
   theme_minimal() +
   theme(legend.position = "bottom", 
         axis.text.y = element_blank(),
@@ -333,11 +346,11 @@ ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
 
 ## Confidence interval for each patient - plot
 ## replace bart_mod with bart_dep_mod to get the dep plot
-means <- bart_mod$yhat.train.mean
-df_summary <- data.frame(row = 1:ncol(bart_mod $yhat.train), mean = means)
+means <- bart_dep_mod$yhat.train.mean
+df_summary <- data.frame(row = 1:ncol(bart_dep_mod $yhat.train), mean = means)
 
-df_summary$max <- apply(bart_mod $yhat.train, 2, function(x) quantile(x, probs=0.975))
-df_summary$min <- apply(bart_mod $yhat.train, 2, function(x) quantile(x, probs=0.025))
+df_summary$max <- apply(bart_dep_mod $yhat.train, 2, function(x) quantile(x, probs=0.975))
+df_summary$min <- apply(bart_dep_mod $yhat.train, 2, function(x) quantile(x, probs=0.025))
 ## plot sample of lines
 #sample_idx <- sample(1:nrow(df_summary), round(0.01 * nrow(df_summary)), replace = FALSE)
 #sample_df_summary <- df_summary[sample_idx,]
@@ -352,7 +365,7 @@ ggplot(df_summary_sorted, aes(y = 1:nrow(df_summary_sorted))) +
   geom_point(aes(x = mean, y = 1:nrow(df_summary_sorted)), color = "blue", size = 2) +
   #scale_y_continuous(name = "Case number", breaks = c(0, 500, 1000, 1500)) + 
   scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
-  #labs(y = NULL) +
+  labs(y = "Case Number") +
   theme_classic() + 
   theme(axis.text = element_text(size = 18),  
         axis.title = element_text(size = 20),
