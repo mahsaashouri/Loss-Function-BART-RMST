@@ -477,7 +477,7 @@ combined_plot
 #########################################################
 Col_ParDep <- c('tumor_size', 'nottingham_prognostic_index')
 Gmat <- sqrt(2*eta_hat_star)*Gmat_orig
-ngrid <- 40
+ngrid <- 30
 GridEnd <-  rbind(c(0, 50), c(1, 6.5))
 
 partial_results <- list()
@@ -500,10 +500,10 @@ for(k in 1:lgrid){
   ff[k,1] <- mean(bart_mod_tmps$yhat.test.mean)
   ff[k,2] <- PP[k,1]
   ff[k,3] <- PP[k,2]
-  print(c(i, k))
+  #print(c(i, k))
 }
 
-
+#write.csv(ff, "3D-Predicted-RMST.csv")
 
 
 # Separate columns into variables
@@ -557,25 +557,36 @@ persp(x_vals, y_vals, RMST, theta = 291, phi = -3, expand = 0.7, axes = TRUE, ti
 #htmlwidgets::saveWidget(p, "3Dplot.html")
 
 ## 2D-heatmap
-data <- read_csv('3D-Predicted-RMST.csv')
+data <- read_csv('3D-Predicted-RMST.csv')[,-1]
+colnames(data) <- c( "Tumor Size", "Nottingham Prognostic Index", "Predicted RMST")
 ggplot(data) +
-  metR::geom_contour_fill(aes(z = `Tumor Size`, x = `Nottingham Prognostic Index`, y = `Predicted RMST`), 
-                          na.fill = TRUE, bins = 10) +
+  metR::geom_contour_fill(aes(
+    z = `Tumor Size`, 
+    x = `Nottingham Prognostic Index`, 
+    y = `Predicted RMST`
+  ), na.fill = TRUE, bins = 10) +
   coord_cartesian(expand = FALSE) +
-  labs(x = "Tumor Size", y = "Nottingham Prognostic Index")+
-  scale_fill_gradient2(low = "white", high = "gray5", midpoint = 120, name = "Predicted RMST") + 
-  #scale_fill_distiller(palette = "Spectral") +
+  labs(x = "Tumor Size", y = "Nottingham Prognostic Index") +
+  scale_fill_gradient2(
+    low = "white", high = "gray5", midpoint = 80, name = "Predicted RMST"
+  ) +
   theme_minimal() +
-  theme(panel.background = element_rect(fill = "white"),
-        panel.grid.major = element_line(linetype = 3, colour = "grey60"),
-        axis.text = element_text(colour = 1, size = 20),
-        axis.title = element_text(colour = 1, size = 25),
-        legend.text = element_text(colour = 1, size = 20),
-        legend.title = element_text(colour = 1, size = 25),
-        legend.key.size = unit(1, "cm"),
-        legend.background = element_blank(),
-        legend.key = element_blank(),
-        legend.position = "bottom")
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(linetype = 3, colour = "grey60"),
+    axis.text = element_text(colour = 1, size = 20),
+    axis.title = element_text(colour = 1, size = 25),
+    legend.text = element_text(colour = 1, size = 18),  # slightly smaller if overlapping
+    legend.title = element_text(colour = 1, size = 22),
+    legend.key.size = unit(1.2, "cm"),
+    legend.spacing.x = unit(0.8, "cm"),  # more space between legend labels
+    legend.margin = margin(10, 10, 10, 10),  # internal spacing
+    legend.background = element_blank(),
+    legend.key = element_blank(),
+    legend.position = "bottom",
+    plot.margin = margin(15, 30, 15, 15)  # top, right, bottom, left
+  )
+
 
 ##############################
 ## Posterior mean comparison
