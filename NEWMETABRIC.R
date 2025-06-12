@@ -108,10 +108,10 @@ X.train <- model.matrix(overall_survival_months~.-1, data = DATA)
 # Define the number of iterations and the proportion of data to be used for training
 #tau <- 300
 #sgrid <- seq(0, tau, by=100)
-#tau <- 60
-#sgrid <- seq(0, tau, by=10)
-tau <- 120
-sgrid <- seq(0, tau, by=20)
+tau <- 60
+sgrid <- seq(0, tau, by=10)
+#tau <- 120
+#sgrid <- seq(0, tau, by=20)
 ndraws <- 2000
 burnIn <- 500
 
@@ -327,7 +327,10 @@ ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
   geom_text(aes(label = names), position = position_dodge(width = 0.85), color = "gray30", size = 6, fontface = "bold", vjust = 0.5, hjust = 1.1) +
   labs(x = "Mean Number of Times Used", y = "Variable") +
   scale_fill_manual(values = c("Informative" = "azure2", "Noninformative" = "gray80")) +
+  # tau = 120
   coord_cartesian(xlim = c(0, 9.2)) +
+  # tau = 60
+  #coord_cartesian(xlim = c(0, 5.4)) +
   theme_minimal() +
   theme(legend.position = "bottom", 
         axis.text.y = element_blank(),
@@ -336,23 +339,6 @@ ggplot(data, aes(y = rev(factor(index)), x = numbers, fill = Censoring)) +
         axis.text.x = element_text(size = 20),
         legend.title = element_text(size = 20),
         legend.text = element_text(size = 20)) 
-
-
-
-# individual bar chart
-#ggplot(VarImpDataF, aes(y = reorder(names, numbers), x = numbers)) +
-#  geom_bar(stat = "identity", fill = 'gray80', width = 0.7) +
-#  geom_text(aes(label = names), hjust = 1.1, size = 6, color = "white", fontface = "bold") +  
-#  labs(y = "Variable", x = "Mean number of times used") +
-#  theme_minimal() +
-#  theme(
-#    axis.title.x = element_text(size = 20),
-#    axis.title.y = element_text(size = 20),
-#    axis.text.x = element_text(size = 20),
-#    axis.text.y = element_blank(),
-#    legend.title = element_text(size = 20),
-#    legend.text = element_text(size = 20)
-#  )
 
 
 
@@ -377,9 +363,12 @@ ggplot(df_summary_sorted, aes(y = 1:nrow(df_summary_sorted))) +
   geom_point(aes(x = mean, y = 1:nrow(df_summary_sorted)), color = "blue", size = 2) +
   #scale_y_continuous(name = "Case number", breaks = c(0, 500, 1000, 1500)) + 
   # dep case
-  #scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
+  scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), max(df_summary_sorted$max))) + 
   ## to make sure they have same x-axis - indep case
-  scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), 120)) + 
+  # tau = 120
+  #scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), 120)) + 
+  # tau = 60
+  #scale_x_continuous(name = "Months", limits = c(min(df_summary_sorted$min), 60)) + 
   labs(y = "Case Number") +
   theme_classic() + 
   theme(axis.text = element_text(size = 18),  
@@ -435,6 +424,7 @@ partial_results_all$xlabels[partial_results_all$index =="nottingham_prognostic_i
 
 library(ggplot2)
 library(patchwork)
+library(scales)
 
 # Create a list to store the individual plots
 plots <- list()
@@ -564,11 +554,14 @@ ggplot(data) +
     z = `Tumor Size`, 
     x = `Nottingham Prognostic Index`, 
     y = `Predicted RMST`
-  ), na.fill = TRUE, bins = 10) +
+  ), na.fill = TRUE, bins = 5) +
   coord_cartesian(expand = FALSE) +
   labs(x = "Tumor Size", y = "Nottingham Prognostic Index") +
   scale_fill_gradient2(
-    low = "white", high = "gray5", midpoint = 80, name = "Predicted RMST"
+    # tau = 120
+     low = "white", high = "gray5", midpoint = 80, name = "Predicted RMST"
+    # tau = 60
+    #  low = "white", high = "gray5", midpoint = 50.6, name = "Predicted RMST"
   ) +
   theme_minimal() +
   theme(
@@ -605,7 +598,10 @@ ggplot(PostMean_data, aes(x = Independent, y = Dependent)) +
               linetype = "dashed", color = "red", size = 1) +
   labs(x = "Noninformative censoring posterior means", y = "Informative censoring posterior means") +
   scale_x_continuous (expand = c(0.061, 0.061)) +
-  coord_cartesian(xlim = c(0, 120), ylim = c(0, 120)) +
+  # tau = 120
+   coord_cartesian(xlim = c(0, 120), ylim = c(0, 120)) +
+  # tau = 60
+  #coord_cartesian(xlim = c(48, 55), ylim = c(48, 55)) +
   theme_light() +
   theme(axis.title = element_text(size = 24), 
         axis.text = element_text(size = 24))   
