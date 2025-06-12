@@ -108,10 +108,10 @@ X.train <- model.matrix(overall_survival_months~.-1, data = DATA)
 # Define the number of iterations and the proportion of data to be used for training
 #tau <- 300
 #sgrid <- seq(0, tau, by=100)
-tau <- 60
-sgrid <- seq(0, tau, by=10)
-#tau <- 120
-#sgrid <- seq(0, tau, by=20)
+#tau <- 60
+#sgrid <- seq(0, tau, by=10)
+tau <- 120
+sgrid <- seq(0, tau, by=20)
 ndraws <- 2000
 burnIn <- 500
 
@@ -561,7 +561,7 @@ ggplot(data) +
     # tau = 120
      low = "white", high = "gray5", midpoint = 80, name = "Predicted RMST"
     # tau = 60
-    #  low = "white", high = "gray5", midpoint = 50.6, name = "Predicted RMST"
+    #  low = "white", high = "gray5", midpoint = 50.8, name = "Predicted RMST"
   ) +
   theme_minimal() +
   theme(
