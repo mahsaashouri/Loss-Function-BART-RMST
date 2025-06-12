@@ -282,7 +282,7 @@ ggplot(data) +
   geom_point(aes(x = x, y = y), alpha = 0.7) +                
   geom_abline(slope = 1, intercept = 0,  
               linetype = "dashed", color = "red", size = 1) +
-  coord_cartesian(xlim = c(0,300), ylim = c(0,300)) +
+  coord_cartesian(xlim = c(0,120), ylim = c(0,120)) +
   facet_wrap(~type, scales = "fixed") +    
   labs(
     x = "Missing Values Imputed",
