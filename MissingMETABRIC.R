@@ -98,8 +98,10 @@ for(i in 1:length(METABRICList)){
   
   
   # Define the number of iterations and the proportion of data to be used for training
-  tau <- 120
-  sgrid <- seq(0, tau, by=20)
+  #tau <- 120
+  #sgrid <- seq(0, tau, by=20)
+  tau <- 60
+  sgrid <- seq(0, tau, by=10)
   ndraws <- 2000
   burnIn <- 500
   Y <- METABRICM$overall_survival_months
