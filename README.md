@@ -2,7 +2,7 @@
 
 Prediction methods for time-to-event outcomes often utilize survival models that rely on strong assumptions about noninformative censoring or on how individual-level covariates and survival functions are related. When the main interest is in predicting individual-level restricted mean survival times (RMST), reliance on such assumptions can lead to poor predictive performance if these assumptions are not satisfied. We propose a generalized Bayes framework that avoids full probability modeling of all survival outcomes by using an RMST-targeted loss function that depends on a collection of inverse probability of censoring weights (IPCW). In our generalized Bayes formulation, we utilize a flexible additive tree regression model for the RMST function, and the posterior distribution of interest is obtained through model-averaging IPCW-conditional loss function-based pseudo-Bayesian posteriors. Because informative censoring can be captured by the IPCW-dependent loss function, our approach only requires one to specify a model for the censoring distribution, thereby obviating the need for complex joint modeling to handle informative censoring. We evaluate the performance of our method through a series of simulations that compare it with several well-known survival machine learning methods, and we illustrate the application of our method using a multi-site cohort of breast cancer patients with clinical and genomic covariates.
 
-* Paper is available [here](https://arxiv.org/abs/2402.17920)
+* Preprint is available [here](https://arxiv.org/abs/2402.17920)
 
 ## Dataset
 
