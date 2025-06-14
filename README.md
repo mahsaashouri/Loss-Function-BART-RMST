@@ -18,4 +18,4 @@ Breast cancer outcomes assembled by the Molecular Taxonomy of Breast Cancer Inte
 
 ## Software
 
-* We have implemented an R package `rmstbart` which is available for download [here](https://github.com/nchenderson/rmstbart).
+* We have implemented an R package `rmstbart` which is available for download [here](https://github.com/nchenderson/rmstbartold).
