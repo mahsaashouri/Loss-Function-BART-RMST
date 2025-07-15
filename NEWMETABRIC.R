@@ -307,7 +307,7 @@ VarImpDataF$names <- c("Neoplasm Histologic Grade 3", "Tumor Size", "PTEN", "Coh
 
 # Dep - informative
 
-VarImpDataFdep$names <- c("Cohort 2", "Integrative Cluster 5", "CHEK 2", "Tumor Size", "Tumor Stage 1", "Molecular SubtypeLum A", "Chemotherapy", 
+VarImpDataFdep$names <- c("Cohort 2", "Integrative Cluster 5", "CHEK 2", "Tumor Size", "Tumor Stage 1", "Molecular Subtype Lum A", "Chemotherapy", 
                           "PR Positive", "ER Status Measured by IHC", "Nottingham Prognostic Index")
 
 
