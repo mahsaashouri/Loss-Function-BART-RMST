@@ -5,7 +5,8 @@ library(glmnet)
 library(mboost)
 library(tidyverse)
 library(AFTrees)
-library(BARTTrial)
+#devtools::install_github("https://github.com/nchenderson/rmstbartold", force = TRUE)
+library(rmstbartold)
 source("DrawIPCW.R")
 
 ## reading data
@@ -292,22 +293,22 @@ VarImpDataFdep <- VarImpDataFdep[order(VarImpDataFdep$numbers, decreasing = FALS
 
 # Indep - non-informative
 ## tau = 60
-#VarImpDataF$names <- c("CHEK2", "Neoplasm Histologic Grade 3", "ATM", "Molecular SubtypeNormal", "Er Status Measured by Ihc Positve", 
+#VarImpDataF$names <- c("CHEK2", "Neoplasm Histologic Grade 3", "ATM", "Molecular SubtypeNormal", "ER Status Measured by IHC", 
 #                       "Inferred Menopausal State Pre", "Molecular Subtype Her 2", "PR Positive", " NF1", "Molecular Subtype Lum A")
 
 # Dep - informative
 
-#VarImpDataFdep$names <- c("PALB 2", "PR Positive", "Hormone Therapy", "CHEK 2", "Histol Subtype Mixed/Other", "ATM", " Er Status Measured by Ihc Positve", 
+#VarImpDataFdep$names <- c("PALB 2", "PR Positive", "Hormone Therapy", "CHEK 2", "Histol Subtype Mixed/Other", "ATM", " ER Status Measured by IHC", 
 #                          "Neoplasm Histologic Grade 3", "Nottingham Prognostic Index", "Chemotherapy")
 
 ## tau = 120
 VarImpDataF$names <- c("Neoplasm Histologic Grade 3", "Tumor Size", "PTEN", "Cohort 3", "Tumor Stage 1", 
-                       "Er Status Measured by Ihc Positve", "Molecular Subtype Lum A", "Chemotherapy", "PR Positive", "Nottingham Prognostic Index")
+                       "ER Status Measured by IHC", "Molecular Subtype Lum A", "Chemotherapy", "PR Positive", "Nottingham Prognostic Index")
 
 # Dep - informative
 
-VarImpDataFdep$names <- c("Cohort 2", "Integrative Cluster 5", "CHEK 2", "Tumor Size", "Tumor Stage 1", "Molecular SubtypeLumA", "Chemotherapy", 
-                          "PR Positive", "Er Status Measured by Ihc Positve", "Nottingham Prognostic Index")
+VarImpDataFdep$names <- c("Cohort 2", "Integrative Cluster 5", "CHEK 2", "Tumor Size", "Tumor Stage 1", "Molecular SubtypeLum A", "Chemotherapy", 
+                          "PR Positive", "ER Status Measured by IHC", "Nottingham Prognostic Index")
 
 
 # stacked bar chart
